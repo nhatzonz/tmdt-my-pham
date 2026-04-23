@@ -1,0 +1,13 @@
+# Profile cho test — dùng DB local `mypham` (hoặc đổi sang DB test riêng)
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mypham
+    username: mypham
+    password: mypham123
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+app:
+  jwt:
+    secret: dGVzdF9zZWNyZXRfa2V5X2Zvcl91bml0X3Rlc3RzX29ubHlfMzJfY2hhcnNfb3Jfbmdlcg==
