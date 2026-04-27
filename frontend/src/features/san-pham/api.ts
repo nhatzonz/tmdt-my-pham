@@ -38,6 +38,8 @@ export type ListParams = {
   danhMucId?: number[];
   loaiDa?: LoaiDa[];
   thuongHieu?: string[];
+  priceMin?: number;
+  priceMax?: number;
   sort?: SortKey;
 };
 

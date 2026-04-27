@@ -55,6 +55,8 @@ public class ProductService {
             List<Long> danhMucIds,
             List<Product.LoaiDa> loaiDas,
             List<String> thuongHieus,
+            java.math.BigDecimal priceMin,
+            java.math.BigDecimal priceMax,
             String sort
     ) {
         java.util.Set<String> brands = thuongHieus == null
@@ -70,7 +72,9 @@ public class ProductService {
                 .filter(p -> isEmpty(loaiDas) || loaiDas.contains(p.getLoaiDa()))
                 .filter(p -> brands.isEmpty()
                         || (p.getThuongHieu() != null
-                            && brands.contains(p.getThuongHieu().toLowerCase())));
+                            && brands.contains(p.getThuongHieu().toLowerCase())))
+                .filter(p -> priceMin == null || p.getGia().compareTo(priceMin) >= 0)
+                .filter(p -> priceMax == null || p.getGia().compareTo(priceMax) <= 0);
 
         if ("price_asc".equalsIgnoreCase(sort)) {
             stream = stream.sorted(java.util.Comparator.comparing(Product::getGia));

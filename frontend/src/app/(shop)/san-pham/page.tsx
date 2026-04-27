@@ -36,6 +36,8 @@ type RawParams = {
   danhMucId?: string | string[];
   loaiDa?: string | string[];
   thuongHieu?: string | string[];
+  priceMin?: string | string[];
+  priceMax?: string | string[];
   sort?: string | string[];
 };
 
@@ -79,6 +81,12 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
   const danhMucIds = asArray(params.danhMucId).map(Number).filter(Number.isFinite);
   const loaiDas = asArray(params.loaiDa) as LoaiDa[];
   const brands = asArray(params.thuongHieu);
+  const priceMinRaw = Array.isArray(params.priceMin) ? params.priceMin[0] : params.priceMin;
+  const priceMaxRaw = Array.isArray(params.priceMax) ? params.priceMax[0] : params.priceMax;
+  const priceMinNum = priceMinRaw ? Number(priceMinRaw) : NaN;
+  const priceMaxNum = priceMaxRaw ? Number(priceMaxRaw) : NaN;
+  const priceMin = Number.isFinite(priceMinNum) && priceMinNum > 0 ? priceMinNum : undefined;
+  const priceMax = Number.isFinite(priceMaxNum) && priceMaxNum > 0 ? priceMaxNum : undefined;
   const sortRaw = (Array.isArray(params.sort) ? params.sort[0] : params.sort) ?? "";
   const sort: SortKey | undefined =
     sortRaw === "price_asc" || sortRaw === "price_desc" ? sortRaw : undefined;
@@ -89,6 +97,8 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
         danhMucId: danhMucIds.length ? danhMucIds : undefined,
         loaiDa: loaiDas.length ? loaiDas : undefined,
         thuongHieu: brands.length ? brands : undefined,
+        priceMin,
+        priceMax,
         sort,
       })
       .catch(() => []),
@@ -106,6 +116,8 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
     for (const v of asArray(params.danhMucId)) sp.append("danhMucId", v);
     for (const v of asArray(params.loaiDa)) sp.append("loaiDa", v);
     for (const v of asArray(params.thuongHieu)) sp.append("thuongHieu", v);
+    if (priceMin !== undefined) sp.set("priceMin", String(priceMin));
+    if (priceMax !== undefined) sp.set("priceMax", String(priceMax));
     if (overrides && "sort" in overrides) {
       if (overrides.sort) sp.set("sort", overrides.sort);
     } else if (sort) {
@@ -115,19 +127,25 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
   }
 
   function buildRemoveHref(
-    key: "danhMucId" | "loaiDa" | "thuongHieu",
-    removeValue: string,
+    key: "danhMucId" | "loaiDa" | "thuongHieu" | "price",
+    removeValue?: string,
   ): string {
     const next = {
       danhMucId: asArray(params.danhMucId),
       loaiDa: asArray(params.loaiDa),
       thuongHieu: asArray(params.thuongHieu),
     };
-    next[key] = next[key].filter((v) => v !== removeValue);
+    if (key !== "price" && removeValue !== undefined) {
+      next[key] = next[key].filter((v) => v !== removeValue);
+    }
     const sp = new URLSearchParams();
     for (const v of next.danhMucId) sp.append("danhMucId", v);
     for (const v of next.loaiDa) sp.append("loaiDa", v);
     for (const v of next.thuongHieu) sp.append("thuongHieu", v);
+    if (key !== "price") {
+      if (priceMin !== undefined) sp.set("priceMin", String(priceMin));
+      if (priceMax !== undefined) sp.set("priceMax", String(priceMax));
+    }
     if (sort) sp.set("sort", sort);
     const qs = sp.toString();
     return qs ? `/san-pham?${qs}` : "/san-pham";
@@ -139,8 +157,22 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
     return qs ? `/san-pham?${qs}` : "/san-pham";
   }
 
+  function formatPriceLabel(): string {
+    const fmt = (n: number) => `${n.toLocaleString("vi-VN")}đ`;
+    if (priceMin !== undefined && priceMax !== undefined) {
+      return `${fmt(priceMin)} - ${fmt(priceMax)}`;
+    }
+    if (priceMin !== undefined) return `Từ ${fmt(priceMin)}`;
+    if (priceMax !== undefined) return `Đến ${fmt(priceMax)}`;
+    return "";
+  }
+
   const hasAnyFilter =
-    danhMucIds.length > 0 || loaiDas.length > 0 || brands.length > 0;
+    danhMucIds.length > 0 ||
+    loaiDas.length > 0 ||
+    brands.length > 0 ||
+    priceMin !== undefined ||
+    priceMax !== undefined;
 
   return (
     <div className="mx-auto w-4/5 px-6 py-10">
@@ -164,30 +196,13 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-[color:var(--color-muted)]">Sắp xếp theo</span>
-          <details className="group relative [&>summary::-webkit-details-marker]:hidden">
-            <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-white/80 px-4 py-2 text-sm">
-              {SORT_OPTIONS.find((o) => o.value === (sort ?? ""))?.label ?? "Phù hợp nhất"}
-              <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-[color:var(--color-border)]">
-              {SORT_OPTIONS.map((o) => {
-                const active = (sort ?? "") === o.value;
-                return (
-                  <Link
-                    key={o.value}
-                    href={buildSortHref(o.value)}
-                    className={cn(
-                      "flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-[color:var(--color-ivory-2)]",
-                      active && "bg-[color:var(--color-ivory-2)] font-medium",
-                    )}
-                  >
-                    {o.label}
-                    {active && <Check className="size-4" />}
-                  </Link>
-                );
-              })}
-            </div>
-          </details>
+          <SortDropdown
+            options={SORT_OPTIONS.map((o) => ({
+              label: o.label,
+              href: buildSortHref(o.value),
+              active: (sort ?? "") === o.value,
+            }))}
+          />
         </div>
       </div>
 
@@ -199,6 +214,9 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
           activeDanhMucIds={danhMucIds}
           activeLoaiDas={loaiDas}
           activeBrands={brands}
+          activePriceMin={priceMin}
+          activePriceMax={priceMax}
+          currentSort={sort}
         />
 
         <div>
@@ -225,6 +243,12 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
                   removeHref={buildRemoveHref("thuongHieu", b)}
                 />
               ))}
+              {(priceMin !== undefined || priceMax !== undefined) && (
+                <FilterChip
+                  label={formatPriceLabel()}
+                  removeHref={buildRemoveHref("price")}
+                />
+              )}
             </div>
           )}
 

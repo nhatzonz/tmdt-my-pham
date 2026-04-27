@@ -22,10 +22,14 @@ public class PublicProductController {
             @RequestParam(required = false) List<Long> danhMucId,
             @RequestParam(required = false) List<Product.LoaiDa> loaiDa,
             @RequestParam(required = false) List<String> thuongHieu,
+            @RequestParam(required = false) java.math.BigDecimal priceMin,
+            @RequestParam(required = false) java.math.BigDecimal priceMax,
             @RequestParam(required = false) String sort
     ) {
         return ResponseEntity.ok(
-                ApiResponse.success(productService.listPublic(danhMucId, loaiDa, thuongHieu, sort))
+                ApiResponse.success(
+                        productService.listPublic(danhMucId, loaiDa, thuongHieu, priceMin, priceMax, sort)
+                )
         );
     }
 

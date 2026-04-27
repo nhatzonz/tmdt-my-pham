@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -58,6 +59,22 @@ public class GlobalExceptionHandler {
                         ErrorCode.VALIDATION_FAILED.getDefaultMessage(),
                         Map.of("errorCode", ErrorCode.VALIDATION_FAILED.getCode(),
                                "fields", fieldErrors),
+                        Instant.now()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String type = ex.getRequiredType() == null ? "?" : ex.getRequiredType().getSimpleName();
+        String msg = String.format("Tham số '%s' giá trị '%s' không hợp lệ (kỳ vọng %s)",
+                ex.getName(), ex.getValue(), type);
+        log.warn("[TypeMismatch] {}", msg);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        400,
+                        msg,
+                        Map.of("errorCode", ErrorCode.VALIDATION_FAILED.getCode(),
+                               "param", ex.getName()),
                         Instant.now()));
     }
 
