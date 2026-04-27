@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -49,10 +50,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen bg-[color:var(--color-ivory)]">
       <aside className="flex w-64 flex-col border-r border-[color:var(--color-border)] bg-white p-6">
         <Link href="/quan-tri" className="flex items-center gap-2">
-          <span className="inline-flex size-6 items-center justify-center rounded-full border border-[color:var(--color-ink)] text-[10px] font-semibold">
-            i
-          </span>
-          <span className="font-serif text-xl italic leading-none">Lumière</span>
+          <Image
+            src="/logo.png"
+            alt="Ngọc Lan Beauty"
+            width={40}
+            height={40}
+            className="size-10 object-contain"
+            priority
+          />
+          <span className="font-serif text-xl italic leading-none">Ngọc Lan Beauty</span>
           <span className="text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
             Admin
           </span>

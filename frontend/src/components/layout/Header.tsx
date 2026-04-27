@@ -1,36 +1,37 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { LogOut, Search, User } from "lucide-react";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
 const NAV = [
-  { label: "Shop All", href: "/san-pham" },
-  { label: "Skincare", href: "/san-pham?danh_muc=skincare" },
-  { label: "Makeup", href: "/san-pham?danh_muc=makeup" },
-  { label: "Body & Hair", href: "/san-pham?danh_muc=body-hair" },
+  { label: "Shop All", href: "/" },
+ 
 ];
 
 export function Header() {
-  const router = useRouter();
   const { user, loaded, logout } = useAuth();
 
   function handleLogout() {
     logout();
-    router.push("/");
-    router.refresh();
+    window.location.replace("/dang-nhap");
   }
 
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--color-border)] bg-[color:var(--color-ivory)]/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-10 px-6 py-4">
         <Link href={routes.home} className="flex items-center gap-2">
-          <span className="inline-flex size-6 items-center justify-center rounded-full border border-[color:var(--color-ink)] text-[10px] font-semibold">
-            i
-          </span>
-          <span className="font-serif text-2xl italic leading-none">Lumière</span>
+          <Image
+            src="/logo.png"
+            alt="Ngọc Lan Beauty"
+            width={48}
+            height={48}
+            className="size-12 object-contain"
+            priority
+          />
+          <span className="font-serif text-2xl italic leading-none">Ngọc Lan Beauty</span>
         </Link>
 
         <nav className="flex flex-1 items-center gap-7 text-sm">

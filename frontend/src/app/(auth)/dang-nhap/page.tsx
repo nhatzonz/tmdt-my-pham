@@ -43,7 +43,7 @@ export default function DangNhapPage() {
       <div>
         <h1 className="font-serif text-4xl">Chào mừng trở lại</h1>
         <p className="mt-3 text-sm text-[color:var(--color-muted)]">
-          Đăng nhập để tiếp tục hành trình chăm da cùng Lumière.
+          Đăng nhập để tiếp tục hành trình chăm da cùng Ngọc Lan Beauty.
         </p>
       </div>
 
@@ -88,9 +88,6 @@ export default function DangNhapPage() {
         </Link>
       </p>
 
-      <p className="text-center text-[11px] text-[color:var(--color-muted)]">
-        Bảo mật JWT (Spring Security)
-      </p>
     </div>
   );
 }

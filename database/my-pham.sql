@@ -1,10 +1,4 @@
--- =====================================================================
--- HỆ THỐNG BÁN MỸ PHẨM TRỰC TUYẾN — SCHEMA DATABASE
--- Khớp với ERD PDF báo cáo tuần 3-4 mục 2.6
--- Chuẩn hóa 3NF
--- =====================================================================
 
--- Xóa bảng cũ nếu có (chạy lại script được)
 DROP TABLE IF EXISTS goi_y_ai CASCADE;
 DROP TABLE IF EXISTS chi_tiet_don_hang CASCADE;
 DROP TABLE IF EXISTS don_hang CASCADE;
@@ -14,9 +8,7 @@ DROP TABLE IF EXISTS san_pham CASCADE;
 DROP TABLE IF EXISTS danh_muc CASCADE;
 DROP TABLE IF EXISTS nguoi_dung CASCADE;
 
--- =====================================================================
--- 1. NGUOI_DUNG (Người dùng — khách hàng + quản trị viên)
--- =====================================================================
+
 CREATE TABLE nguoi_dung (
     id            BIGSERIAL PRIMARY KEY,
     ho_ten        VARCHAR(100) NOT NULL,
@@ -28,19 +20,14 @@ CREATE TABLE nguoi_dung (
     created_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================================
--- 2. DANH_MUC (Danh mục sản phẩm — Chăm sóc da, Trang điểm, Chăm sóc tóc...)
--- =====================================================================
+
 CREATE TABLE danh_muc (
     id            BIGSERIAL PRIMARY KEY,
     ten_danh_muc  VARCHAR(100) NOT NULL,
     parent_id     BIGINT REFERENCES danh_muc(id) ON DELETE SET NULL
 );
 
--- =====================================================================
--- 3. SAN_PHAM (Sản phẩm mỹ phẩm)
--- loai_da là DỮ LIỆU ĐẦU VÀO QUAN TRỌNG cho Module AI (UC 2.3.3)
--- =====================================================================
+
 CREATE TABLE san_pham (
     id            BIGSERIAL PRIMARY KEY,
     ten_san_pham  VARCHAR(255) NOT NULL,
@@ -57,9 +44,7 @@ CREATE TABLE san_pham (
 CREATE INDEX idx_san_pham_danh_muc ON san_pham(danh_muc_id);
 CREATE INDEX idx_san_pham_loai_da  ON san_pham(loai_da);
 
--- =====================================================================
--- 4. TON_KHO (Tồn kho — 1:1 với SAN_PHAM)
--- =====================================================================
+
 CREATE TABLE ton_kho (
     id            BIGSERIAL PRIMARY KEY,
     san_pham_id   BIGINT UNIQUE NOT NULL REFERENCES san_pham(id) ON DELETE CASCADE,
@@ -67,9 +52,7 @@ CREATE TABLE ton_kho (
     nguong_canh_bao INTEGER DEFAULT 10        -- dưới mức này thì cảnh báo
 );
 
--- =====================================================================
--- 5. KHUYEN_MAI (Mã giảm giá)
--- =====================================================================
+
 CREATE TABLE khuyen_mai (
     id              BIGSERIAL PRIMARY KEY,
     ma_code         VARCHAR(50) UNIQUE NOT NULL,
@@ -80,10 +63,7 @@ CREATE TABLE khuyen_mai (
     CHECK (end_at > start_at)
 );
 
--- =====================================================================
--- 6. DON_HANG (Đơn hàng)
--- Trạng thái khớp PDF: PENDING -> SHIPPING -> COMPLETED (thêm CANCELLED)
--- =====================================================================
+
 CREATE TABLE don_hang (
     id             BIGSERIAL PRIMARY KEY,
     nguoi_dung_id  BIGINT NOT NULL REFERENCES nguoi_dung(id),
@@ -97,9 +77,6 @@ CREATE TABLE don_hang (
 );
 CREATE INDEX idx_don_hang_nguoi_dung ON don_hang(nguoi_dung_id, created_at DESC);
 
--- =====================================================================
--- 7. CHI_TIET_DON_HANG (Chi tiết đơn hàng — composition với DON_HANG)
--- =====================================================================
 CREATE TABLE chi_tiet_don_hang (
     id            BIGSERIAL PRIMARY KEY,
     don_hang_id   BIGINT NOT NULL REFERENCES don_hang(id) ON DELETE CASCADE,
@@ -109,9 +86,6 @@ CREATE TABLE chi_tiet_don_hang (
 );
 CREATE INDEX idx_chi_tiet_don_hang_don_hang ON chi_tiet_don_hang(don_hang_id);
 
--- =====================================================================
--- 8. GOI_Y_AI (Kết quả gợi ý từ Module AI)
--- =====================================================================
 CREATE TABLE goi_y_ai (
     id                BIGSERIAL PRIMARY KEY,
     nguoi_dung_id     BIGINT NOT NULL REFERENCES nguoi_dung(id) ON DELETE CASCADE,
@@ -124,9 +98,7 @@ CREATE TABLE goi_y_ai (
 );
 CREATE INDEX idx_goi_y_ai_nguoi_dung ON goi_y_ai(nguoi_dung_id, created_at DESC);
 
--- =====================================================================
--- DỮ LIỆU KHỞI TẠO (SEED)
--- =====================================================================
+
 
 -- Tài khoản test sẽ được AuthSeeder tạo khi BE boot (profile=dev).
 --   admin@mypham.local / admin12345 (ADMIN)
@@ -163,10 +135,4 @@ INSERT INTO khuyen_mai (ma_code, phan_tram_giam, start_at, end_at) VALUES
   ('WELCOME10',  10, NOW(), NOW() + INTERVAL '30 days'),
   ('SALE20',     20, NOW(), NOW() + INTERVAL '7 days');
 
--- =====================================================================
--- KẾT THÚC
--- =====================================================================
--- Kiểm tra:
---   \dt                          -- xem danh sách bảng
---   SELECT COUNT(*) FROM san_pham;
--- =====================================================================
+

@@ -17,7 +17,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Lumière — Mỹ phẩm & nhân hoá theo làn da Á Đông",
+  title: "Ngọc Lan Beauty — Mỹ phẩm & nhân hoá theo làn da Á Đông",
   description:
     "Routine làm đẹp dành riêng cho làn da của bạn. Quiz 90 giây, gợi ý AI cá nhân hoá.",
 };

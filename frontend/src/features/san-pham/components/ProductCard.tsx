@@ -8,7 +8,7 @@ import { formatCurrency } from "@/lib/format";
 
 export function ProductCard({ product }: { product: Product }) {
   const bg = pastelBg(product.id);
-  const brand = (product.thuongHieu ?? "LUMIÈRE").toUpperCase();
+  const brand = (product.thuongHieu ?? "").toUpperCase();
 
   return (
     <Link href={`/san-pham/${product.id}`} className="group flex flex-col">

@@ -6,7 +6,7 @@ export default function AdminDashboardPage() {
     <div>
       <h1 className="font-serif text-3xl md:text-4xl">Bảng điều khiển</h1>
       <p className="mt-2 text-sm text-[color:var(--color-muted)]">
-        Quản trị hệ thống Lumière. Tuần 7 — quản lý danh mục và sản phẩm.
+        Quản trị hệ thống Ngọc Lan Beauty. Tuần 7 — quản lý danh mục và sản phẩm.
       </p>
 
       <div className="mt-10 grid max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">

@@ -54,9 +54,6 @@ export default function DangKyPage() {
 
       <div>
         <h1 className="font-serif text-4xl">Tạo tài khoản</h1>
-        <p className="mt-3 text-sm text-[color:var(--color-muted)]">
-          Nhận ngay —15% cho đơn đầu và mẫu thử miễn phí.
-        </p>
       </div>
 
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
