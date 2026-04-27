@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import type { Category } from "@/features/danh-muc/api";
 import type { LoaiDa } from "@/features/san-pham/api";
@@ -42,36 +41,12 @@ export function ProductFilters({
   activePriceMax,
   currentSort,
 }: Props) {
-  const router = useRouter();
   const [showAllBrands, setShowAllBrands] = useState(false);
-  const [priceMin, setPriceMin] = useState<string>(
-    activePriceMin !== undefined ? String(activePriceMin) : "",
-  );
-  const [priceMax, setPriceMax] = useState<string>(
-    activePriceMax !== undefined ? String(activePriceMax) : "",
-  );
-
-  // Sync local input state when URL changes
-  useEffect(() => {
-    setPriceMin(activePriceMin !== undefined ? String(activePriceMin) : "");
-    setPriceMax(activePriceMax !== undefined ? String(activePriceMax) : "");
-  }, [activePriceMin, activePriceMax]);
 
   const visibleBrands = showAllBrands
     ? brandCounts
     : brandCounts.slice(0, BRAND_INITIAL_LIMIT);
   const hiddenCount = brandCounts.length - BRAND_INITIAL_LIMIT;
-
-  function buildBaseParams(): URLSearchParams {
-    const params = new URLSearchParams();
-    for (const id of activeDanhMucIds) params.append("danhMucId", String(id));
-    for (const v of activeLoaiDas) params.append("loaiDa", v);
-    for (const b of activeBrands) params.append("thuongHieu", b);
-    if (activePriceMin !== undefined) params.set("priceMin", String(activePriceMin));
-    if (activePriceMax !== undefined) params.set("priceMax", String(activePriceMax));
-    if (currentSort) params.set("sort", currentSort);
-    return params;
-  }
 
   function buildHref(
     key: "danhMucId" | "loaiDa" | "thuongHieu",
@@ -98,32 +73,7 @@ export function ProductFilters({
     return qs ? `/san-pham?${qs}` : "/san-pham";
   }
 
-  function applyPrice(e: React.FormEvent) {
-    e.preventDefault();
-    const params = buildBaseParams();
-    params.delete("priceMin");
-    params.delete("priceMax");
-    const minN = Number(priceMin);
-    const maxN = Number(priceMax);
-    if (priceMin && Number.isFinite(minN) && minN > 0) params.set("priceMin", String(minN));
-    if (priceMax && Number.isFinite(maxN) && maxN > 0) params.set("priceMax", String(maxN));
-    const qs = params.toString();
-    router.push(qs ? `/san-pham?${qs}` : "/san-pham");
-  }
-
-  function clearPrice() {
-    setPriceMin("");
-    setPriceMax("");
-    const params = buildBaseParams();
-    params.delete("priceMin");
-    params.delete("priceMax");
-    const qs = params.toString();
-    router.push(qs ? `/san-pham?${qs}` : "/san-pham");
-  }
-
   const clearAllHref = currentSort ? `/san-pham?sort=${currentSort}` : "/san-pham";
-  const priceActive =
-    activePriceMin !== undefined || activePriceMax !== undefined;
 
   return (
     <aside className="flex flex-col gap-7 text-sm">
@@ -186,78 +136,6 @@ export function ProductFilters({
         </FilterGroup>
       )}
 
-      <details
-        open
-        className="group flex flex-col gap-3 [&>summary::-webkit-details-marker]:hidden"
-      >
-        <summary className="flex cursor-pointer list-none items-center justify-between">
-          <p className="font-medium text-[color:var(--color-ink)]">Giá (VND)</p>
-          <ChevronDown className="size-4 text-[color:var(--color-muted)] transition-transform group-open:rotate-180" />
-        </summary>
-        <form onSubmit={applyPrice} className="mt-3 flex flex-col gap-2.5">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
-                  Từ
-                </label>
-                {formatShort(priceMin) && (
-                  <span className="text-[10px] font-medium text-[color:var(--color-ink-soft)]">
-                    {formatShort(priceMin)}
-                  </span>
-                )}
-              </div>
-              <input
-                type="number"
-                min={0}
-                step={1000}
-                placeholder="0"
-                value={priceMin}
-                onChange={(e) => setPriceMin(e.target.value)}
-                className="rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm outline-none focus:border-[color:var(--color-ink)]"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
-                  Đến
-                </label>
-                {formatShort(priceMax) && (
-                  <span className="text-[10px] font-medium text-[color:var(--color-ink-soft)]">
-                    {formatShort(priceMax)}
-                  </span>
-                )}
-              </div>
-              <input
-                type="number"
-                min={0}
-                step={1000}
-                placeholder="∞"
-                value={priceMax}
-                onChange={(e) => setPriceMax(e.target.value)}
-                className="rounded-lg border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm outline-none focus:border-[color:var(--color-ink)]"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              className="flex-1 rounded-full bg-[color:var(--color-ink)] px-4 py-2 text-xs text-white transition hover:bg-black"
-            >
-              Áp dụng
-            </button>
-            {priceActive && (
-              <button
-                type="button"
-                onClick={clearPrice}
-                className="text-xs text-[color:var(--color-muted)] underline underline-offset-4"
-              >
-                Xoá
-              </button>
-            )}
-          </div>
-        </form>
-      </details>
     </aside>
   );
 }
@@ -315,24 +193,6 @@ function CheckRow({
   );
 }
 
-/** "100000" -> "100k", "1500000" -> "1.5M" */
-function formatShort(raw: string): string {
-  const n = Number(raw);
-  if (!raw || !Number.isFinite(n) || n <= 0) return "";
-  if (n >= 1_000_000) {
-    const v = n / 1_000_000;
-    return `${trim(v)}M`;
-  }
-  if (n >= 1000) {
-    const v = n / 1000;
-    return `${trim(v)}k`;
-  }
-  return String(n);
-}
-
-function trim(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
-}
 
 function CheckBox({ checked }: { checked: boolean }) {
   return (

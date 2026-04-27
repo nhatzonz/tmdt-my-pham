@@ -8,6 +8,7 @@ import {
   type Product,
   type SortKey,
 } from "@/features/san-pham/api";
+import { PriceFilter } from "@/features/san-pham/components/PriceFilter";
 import { ProductCard } from "@/features/san-pham/components/ProductCard";
 import { ProductFilters } from "@/features/san-pham/components/ProductFilters";
 import { SortDropdown } from "@/features/san-pham/components/SortDropdown";
@@ -195,6 +196,7 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <PriceFilter activePriceMin={priceMin} activePriceMax={priceMax} />
           <span className="text-xs text-[color:var(--color-muted)]">Sắp xếp theo</span>
           <SortDropdown
             options={SORT_OPTIONS.map((o) => ({
