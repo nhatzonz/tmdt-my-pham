@@ -6,24 +6,26 @@ export type TrangThai = "ACTIVE" | "HIDDEN";
 
 export type Product = {
   id: number;
+  maSanPham?: string;
   tenSanPham: string;
   gia: number;
   loaiDa: LoaiDa;
   danhMucId: number;
   moTa?: string;
   thuongHieu?: string;
-  hinhAnh?: string;
+  hinhAnh: string[];
   trangThai: TrangThai;
 };
 
 export type CreateProductRequest = {
+  maSanPham?: string;
   tenSanPham: string;
   gia: number;
   loaiDa: LoaiDa;
   danhMucId: number;
   moTa?: string;
   thuongHieu?: string;
-  hinhAnh?: string;
+  hinhAnh?: string[];
 };
 
 export type UploadResult = {

@@ -22,6 +22,9 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "ma_san_pham", unique = true, length = 50)
+    private String maSanPham;
+
     @Column(name = "ten_san_pham", nullable = false, length = 255)
     private String tenSanPham;
 
@@ -40,9 +43,6 @@ public class Product {
 
     @Column(name = "thuong_hieu", length = 100)
     private String thuongHieu;
-
-    @Column(name = "hinh_anh", columnDefinition = "text")
-    private String hinhAnh;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trang_thai", length = 20)

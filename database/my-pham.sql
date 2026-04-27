@@ -32,19 +32,29 @@ CREATE TABLE danh_muc (
 
 CREATE TABLE san_pham (
     id            BIGSERIAL PRIMARY KEY,
+    ma_san_pham   VARCHAR(50) UNIQUE,
     ten_san_pham  VARCHAR(255) NOT NULL,
     gia           NUMERIC(12,2) NOT NULL CHECK (gia >= 0),
     loai_da       VARCHAR(50)  NOT NULL,   -- OILY | DRY | COMBINATION | SENSITIVE | NORMAL | ALL
     danh_muc_id   BIGINT       NOT NULL REFERENCES danh_muc(id),
     mo_ta         TEXT,
     thuong_hieu   VARCHAR(100),
-    hinh_anh      TEXT,                    -- URL ảnh (served từ /uploads/*)
     trang_thai    VARCHAR(20) DEFAULT 'ACTIVE'
                   CHECK (trang_thai IN ('ACTIVE', 'HIDDEN')),
     created_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_san_pham_danh_muc ON san_pham(danh_muc_id);
 CREATE INDEX idx_san_pham_loai_da  ON san_pham(loai_da);
+
+-- Ảnh sản phẩm (1 sp - N ảnh)
+CREATE TABLE san_pham_anh (
+    id           BIGSERIAL PRIMARY KEY,
+    san_pham_id  BIGINT NOT NULL REFERENCES san_pham(id) ON DELETE CASCADE,
+    url          TEXT NOT NULL,
+    thu_tu       INT NOT NULL DEFAULT 0,
+    created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_san_pham_anh_san_pham ON san_pham_anh(san_pham_id);
 
 
 CREATE TABLE ton_kho (

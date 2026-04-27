@@ -63,4 +63,21 @@ public class UploadService {
                     "Lỗi lưu file: " + e.getMessage());
         }
     }
+
+    /** Xoá file vật lý nếu URL trỏ tới /uploads/ — bỏ qua nếu là URL ngoài. */
+    public void deleteByUrl(String url) {
+        if (url == null || !url.startsWith("/uploads/")) return;
+        String filename = url.substring("/uploads/".length());
+        if (filename.isBlank() || filename.contains("/") || filename.contains("..")) {
+            log.warn("Skip suspicious filename: {}", filename);
+            return;
+        }
+        try {
+            Path target = Paths.get(uploadsDir).toAbsolutePath().resolve(filename);
+            boolean deleted = Files.deleteIfExists(target);
+            log.info("Delete file {}: {}", target, deleted ? "ok" : "not found");
+        } catch (IOException e) {
+            log.warn("Lỗi xoá file {}: {}", url, e.getMessage());
+        }
+    }
 }
