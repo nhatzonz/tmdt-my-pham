@@ -19,10 +19,14 @@ public class PublicProductController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductResponse>>> list(
-            @RequestParam(required = false) Long danhMucId,
-            @RequestParam(required = false) Product.LoaiDa loaiDa
+            @RequestParam(required = false) List<Long> danhMucId,
+            @RequestParam(required = false) List<Product.LoaiDa> loaiDa,
+            @RequestParam(required = false) List<String> thuongHieu,
+            @RequestParam(required = false) String sort
     ) {
-        return ResponseEntity.ok(ApiResponse.success(productService.listPublic(danhMucId, loaiDa)));
+        return ResponseEntity.ok(
+                ApiResponse.success(productService.listPublic(danhMucId, loaiDa, thuongHieu, sort))
+        );
     }
 
     @GetMapping("/search")

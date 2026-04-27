@@ -16,7 +16,8 @@ export class ApiError extends Error {
   }
 }
 
-type QueryValue = string | number | boolean | undefined | null;
+type QueryScalar = string | number | boolean | undefined | null;
+type QueryValue = QueryScalar | Array<QueryScalar>;
 
 export type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
@@ -31,7 +32,14 @@ function buildUrl(path: string, query?: Record<string, QueryValue>): string {
   );
   if (query) {
     for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+      if (value === undefined || value === null) continue;
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          if (v !== undefined && v !== null) url.searchParams.append(key, String(v));
+        }
+      } else {
+        url.searchParams.set(key, String(value));
+      }
     }
   }
   return url.toString();

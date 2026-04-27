@@ -51,9 +51,38 @@ public class ProductService {
 
     // ---------- Public ----------
     @Transactional(readOnly = true)
-    public List<ProductResponse> listPublic(Long danhMucId, Product.LoaiDa loaiDa) {
-        return productRepository.findActiveWithFilters(danhMucId, loaiDa).stream()
-                .map(ProductResponse::from).toList();
+    public List<ProductResponse> listPublic(
+            List<Long> danhMucIds,
+            List<Product.LoaiDa> loaiDas,
+            List<String> thuongHieus,
+            String sort
+    ) {
+        java.util.Set<String> brands = thuongHieus == null
+                ? java.util.Set.of()
+                : thuongHieus.stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .collect(java.util.stream.Collectors.toSet());
+
+        var stream = productRepository.findByTrangThaiOrderByIdDesc(Product.TrangThai.ACTIVE).stream()
+                .filter(p -> isEmpty(danhMucIds) || danhMucIds.contains(p.getDanhMucId()))
+                .filter(p -> isEmpty(loaiDas) || loaiDas.contains(p.getLoaiDa()))
+                .filter(p -> brands.isEmpty()
+                        || (p.getThuongHieu() != null
+                            && brands.contains(p.getThuongHieu().toLowerCase())));
+
+        if ("price_asc".equalsIgnoreCase(sort)) {
+            stream = stream.sorted(java.util.Comparator.comparing(Product::getGia));
+        } else if ("price_desc".equalsIgnoreCase(sort)) {
+            stream = stream.sorted(java.util.Comparator.comparing(Product::getGia).reversed());
+        }
+
+        return stream.map(ProductResponse::from).toList();
+    }
+
+    private static boolean isEmpty(List<?> list) {
+        return list == null || list.isEmpty();
     }
 
     @Transactional(readOnly = true)

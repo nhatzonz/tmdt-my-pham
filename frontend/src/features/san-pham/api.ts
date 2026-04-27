@@ -32,9 +32,13 @@ export type UploadResult = {
   size: number;
 };
 
+export type SortKey = "price_asc" | "price_desc";
+
 export type ListParams = {
-  danhMucId?: number;
-  loaiDa?: LoaiDa;
+  danhMucId?: number[];
+  loaiDa?: LoaiDa[];
+  thuongHieu?: string[];
+  sort?: SortKey;
 };
 
 export const productApi = {
