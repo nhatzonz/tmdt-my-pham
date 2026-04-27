@@ -5,14 +5,13 @@ import Link from "next/link";
 import { LogOut, Search, User } from "lucide-react";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import type { Category } from "@/features/danh-muc/api";
 
-const NAV = [
-  { label: "Shop All", href: "/" },
- 
-];
+const STATIC_NAV = [{ label: "Sản phẩm", href: "/san-pham" }];
 
-export function Header() {
+export function Header({ categories = [] }: { categories?: Category[] }) {
   const { user, loaded, logout } = useAuth();
+  const topCategories = categories.slice(0, 3);
 
   function handleLogout() {
     logout();
@@ -35,13 +34,22 @@ export function Header() {
         </Link>
 
         <nav className="flex flex-1 items-center gap-7 text-sm">
-          {NAV.map((item) => (
+          {STATIC_NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className="text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
             >
               {item.label}
+            </Link>
+          ))}
+          {topCategories.map((c) => (
+            <Link
+              key={c.id}
+              href={`/san-pham?danhMucId=${c.id}`}
+              className="text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
+            >
+              {c.tenDanhMuc}
             </Link>
           ))}
         </nav>

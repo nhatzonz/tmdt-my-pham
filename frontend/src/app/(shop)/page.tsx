@@ -3,19 +3,26 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { categoryApi } from "@/features/danh-muc/api";
 import { CategoryCard } from "@/features/danh-muc/components/CategoryCard";
+import { productApi } from "@/features/san-pham/api";
+import { ProductCard } from "@/features/san-pham/components/ProductCard";
 
 export const dynamic = "force-dynamic";
 
-async function getCategories() {
+async function getData() {
   try {
-    return await categoryApi.list();
+    const [categories, products] = await Promise.all([
+      categoryApi.list(),
+      productApi.list(),
+    ]);
+    return { categories, products };
   } catch {
-    return [];
+    return { categories: [], products: [] };
   }
 }
 
 export default async function HomePage() {
-  const categories = await getCategories();
+  const { categories, products } = await getData();
+  const featured = products.slice(0, 8);
 
   return (
     <>
@@ -83,6 +90,38 @@ export default async function HomePage() {
                 productCount={c.productCount}
               />
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* FEATURED PRODUCTS */}
+      {featured.length > 0 && (
+        <section className="mx-auto w-4/5 px-6 pb-20">
+          <div className="mb-10 flex items-end justify-between">
+            <div>
+              <p className="mb-2 text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">
+                ✦ Sản phẩm
+              </p>
+              <h2 className="font-serif text-3xl md:text-4xl">Sản phẩm nổi bật</h2>
+            </div>
+            <Link
+              href="/san-pham"
+              className="text-sm underline underline-offset-4 hover:text-[color:var(--color-ink)]"
+            >
+              Xem tất cả
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+          <div className="mt-10 flex justify-center">
+            <Link href="/san-pham">
+              <Button size="lg" variant="outline">
+                Xem tất cả sản phẩm <ArrowRight className="size-4" />
+              </Button>
+            </Link>
           </div>
         </section>
       )}

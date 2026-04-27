@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { Bookmark } from "lucide-react";
 import { imageUrl, pastelBg, type Product } from "@/features/san-pham/api";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
@@ -14,16 +11,6 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link href={`/san-pham/${product.id}`} className="group flex flex-col">
       <div className={cn("relative aspect-square overflow-hidden rounded-xl", bg)}>
-        <button
-          type="button"
-          aria-label="Lưu"
-          className="absolute bottom-3 right-3 z-10 rounded-full bg-white/80 p-2 backdrop-blur transition hover:bg-white"
-          onClick={(e) => {
-            e.preventDefault();
-          }}
-        >
-          <Bookmark className="size-4" />
-        </button>
         {img ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
