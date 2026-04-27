@@ -23,8 +23,22 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CategoryRequest req) {
-        CategoryResponse result = categoryService.create(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created(categoryService.create(req)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CategoryRequest req
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(categoryService.update(id, req)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+        categoryService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success("Đã xoá", null));
     }
 
     @GetMapping

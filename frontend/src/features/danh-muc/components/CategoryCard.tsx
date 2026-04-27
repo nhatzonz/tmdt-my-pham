@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Category } from "@/features/danh-muc/api";
-import { pastelBg } from "@/features/san-pham/api";
+import { imageUrl, pastelBg } from "@/features/san-pham/api";
 import { cn } from "@/lib/cn";
 
 export function CategoryCard({
@@ -10,18 +10,26 @@ export function CategoryCard({
   category: Category;
   productCount?: number;
 }) {
+  const img = imageUrl(category.hinhAnh);
+
   return (
-    <Link
-      href={`/san-pham?danhMucId=${category.id}`}
-      className="group flex flex-col"
-    >
+    <Link href={`/san-pham?danhMucId=${category.id}`} className="group flex flex-col">
       <div
         className={cn(
-          "flex aspect-square items-center justify-center rounded-xl transition-transform group-hover:-translate-y-1",
-          pastelBg(category.id),
+          "relative flex aspect-square items-center justify-center overflow-hidden rounded-xl transition-transform group-hover:-translate-y-1",
+          !img && pastelBg(category.id),
         )}
       >
-        <DropIcon />
+        {img ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={img}
+            alt={category.tenDanhMuc}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <DropIcon />
+        )}
       </div>
       <p className="mt-3 text-sm font-medium">{category.tenDanhMuc}</p>
       {productCount !== undefined && (

@@ -25,4 +25,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             ORDER BY p.id DESC
             """)
     List<Product> searchActive(@Param("q") String q);
+
+    @Query("""
+            SELECT COUNT(p) FROM Product p
+            WHERE p.danhMucId = :danhMucId
+              AND p.trangThai = com.mypham.san_pham.Product.TrangThai.ACTIVE
+            """)
+    long countActiveByDanhMucId(@Param("danhMucId") Long danhMucId);
 }

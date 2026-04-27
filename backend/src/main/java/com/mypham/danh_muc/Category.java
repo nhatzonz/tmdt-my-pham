@@ -20,4 +20,10 @@ public class Category {
 
     @Column(name = "ten_danh_muc", nullable = false, length = 100)
     private String tenDanhMuc;
+
+    @Column(name = "hinh_anh", columnDefinition = "text")
+    private String hinhAnh;
+
+    @Column(name = "thu_tu", nullable = false)
+    private Integer thuTu = 0;
 }

@@ -24,7 +24,9 @@ CREATE TABLE nguoi_dung (
 CREATE TABLE danh_muc (
     id            BIGSERIAL PRIMARY KEY,
     ten_danh_muc  VARCHAR(100) NOT NULL,
-    parent_id     BIGINT REFERENCES danh_muc(id) ON DELETE SET NULL
+    parent_id     BIGINT REFERENCES danh_muc(id) ON DELETE SET NULL,
+    hinh_anh      TEXT,
+    thu_tu        INT NOT NULL DEFAULT 0
 );
 
 
