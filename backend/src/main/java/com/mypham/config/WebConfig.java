@@ -6,18 +6,24 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
- * Cấu hình CORS cho phép frontend Next.js gọi backend.
- * Origin config qua property `app.cors.allowed-origins`.
+ * CORS + serve static `/uploads/**` từ thư mục đĩa.
  */
 @Configuration
-public class WebConfig {
+public class WebConfig implements WebMvcConfigurer {
 
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private List<String> allowedOrigins;
+
+    @Value("${app.uploads.dir:uploads}")
+    private String uploadsDir;
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
@@ -32,5 +38,12 @@ public class WebConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         return source;
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        Path uploads = Paths.get(uploadsDir).toAbsolutePath();
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploads + "/");
     }
 }

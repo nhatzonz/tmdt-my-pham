@@ -68,6 +68,9 @@ app:
   cors:
     allowed-origins: http://localhost:3000,http://localhost:3001
 
+  uploads:
+    dir: ${UPLOADS_DIR:uploads}
+
 springdoc:
   api-docs:
     path: /v3/api-docs

@@ -67,7 +67,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const url = buildUrl(path, query);
   const finalHeaders = new Headers(headers);
   finalHeaders.set("Accept", "application/json");
-  if (body !== undefined) finalHeaders.set("Content-Type", "application/json");
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isFormData) {
+    finalHeaders.set("Content-Type", "application/json");
+  }
   if (auth) {
     const token = authStorage.getToken();
     if (token) finalHeaders.set("Authorization", `Bearer ${token}`);
@@ -78,7 +81,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     response = await fetch(url, {
       ...rest,
       headers: finalHeaders,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isFormData
+            ? (body as FormData)
+            : JSON.stringify(body),
     });
   } catch (cause) {
     throw new ApiError({

@@ -20,7 +20,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[color:var(--color-border)] bg-[color:var(--color-ivory)]/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-[color:var(--color-border)] bg-white/80 shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center gap-10 px-6 py-4">
         <Link href={routes.home} className="flex items-center gap-2">
           <Image

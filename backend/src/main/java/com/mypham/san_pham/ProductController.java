@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Admin CRUD sản phẩm (plan Tuần 7, sequence 2.5.6).
- * UC 2.3.3 "include Thiết lập thuộc tính da cho AI": validate loai_da bắt buộc (xem ProductRequest).
+ * UC 2.3.3: validate loai_da bắt buộc (xem ProductRequest).
  */
 @RestController
 @RequestMapping("/api/admin/products")
@@ -26,6 +26,20 @@ public class ProductController {
     public ResponseEntity<ApiResponse<ProductResponse>> create(@Valid @RequestBody ProductRequest req) {
         ProductResponse result = productService.create(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProductResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductRequest req
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(productService.update(id, req)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+        productService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success("Đã xoá", null));
     }
 
     @GetMapping

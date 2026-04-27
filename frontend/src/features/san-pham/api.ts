@@ -1,3 +1,4 @@
+import { env } from "@/config/env";
 import { apiClient } from "@/lib/api-client";
 
 export type LoaiDa = "OILY" | "DRY" | "COMBINATION" | "SENSITIVE" | "NORMAL" | "ALL";
@@ -11,6 +12,7 @@ export type Product = {
   danhMucId: number;
   moTa?: string;
   thuongHieu?: string;
+  hinhAnh?: string;
   trangThai: TrangThai;
 };
 
@@ -21,6 +23,13 @@ export type CreateProductRequest = {
   danhMucId: number;
   moTa?: string;
   thuongHieu?: string;
+  hinhAnh?: string;
+};
+
+export type UploadResult = {
+  url: string;
+  filename: string;
+  size: number;
 };
 
 export type ListParams = {
@@ -29,7 +38,7 @@ export type ListParams = {
 };
 
 export const productApi = {
-  // Public — plan §2.3 sequence 2.5.2
+  // Public
   list: (params?: ListParams) =>
     apiClient.get<Product[]>("/api/products", {
       query: params,
@@ -43,11 +52,27 @@ export const productApi = {
       cache: "no-store",
     }),
 
-  // Admin — plan §2.3 sequence 2.5.6
+  // Admin
   listAdmin: () => apiClient.get<Product[]>("/api/admin/products"),
   createAdmin: (body: CreateProductRequest) =>
     apiClient.post<Product>("/api/admin/products", body),
+  updateAdmin: (id: number, body: CreateProductRequest) =>
+    apiClient.put<Product>(`/api/admin/products/${id}`, body),
+  deleteAdmin: (id: number) =>
+    apiClient.delete<null>(`/api/admin/products/${id}`),
+  uploadImage: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiClient.post<UploadResult>("/api/admin/upload", form);
+  },
 };
+
+/** Build full URL cho ảnh server: `/uploads/abc.jpg` → `http://localhost:8080/uploads/abc.jpg`. */
+export function imageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${env.apiBaseUrl}${path}`;
+}
 
 // Helper: pastel background class từ id (deterministic)
 const PASTELS = [

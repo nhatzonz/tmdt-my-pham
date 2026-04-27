@@ -20,18 +20,28 @@ public class ProductService {
     // ---------- Admin ----------
     @Transactional
     public ProductResponse create(ProductRequest req) {
-        if (!categoryRepository.existsById(req.danhMucId())) {
-            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục không tồn tại");
-        }
+        validateCategory(req.danhMucId());
         Product p = new Product();
-        p.setTenSanPham(req.tenSanPham());
-        p.setGia(req.gia());
-        p.setLoaiDa(req.loaiDa());
-        p.setDanhMucId(req.danhMucId());
-        p.setMoTa(req.moTa());
-        p.setThuongHieu(req.thuongHieu());
+        applyFields(p, req);
         p.setTrangThai(Product.TrangThai.ACTIVE);
         return ProductResponse.from(productRepository.save(p));
+    }
+
+    @Transactional
+    public ProductResponse update(Long id, ProductRequest req) {
+        Product p = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("sản phẩm", id));
+        validateCategory(req.danhMucId());
+        applyFields(p, req);
+        return ProductResponse.from(productRepository.save(p));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException("sản phẩm", id);
+        }
+        productRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
@@ -61,5 +71,22 @@ public class ProductService {
         String keyword = q == null ? "" : q.trim();
         return productRepository.searchActive(keyword).stream()
                 .map(ProductResponse::from).toList();
+    }
+
+    // ---------- Helpers ----------
+    private void validateCategory(Long danhMucId) {
+        if (!categoryRepository.existsById(danhMucId)) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục không tồn tại");
+        }
+    }
+
+    private void applyFields(Product p, ProductRequest req) {
+        p.setTenSanPham(req.tenSanPham());
+        p.setGia(req.gia());
+        p.setLoaiDa(req.loaiDa());
+        p.setDanhMucId(req.danhMucId());
+        p.setMoTa(req.moTa());
+        p.setThuongHieu(req.thuongHieu());
+        p.setHinhAnh(req.hinhAnh());
     }
 }

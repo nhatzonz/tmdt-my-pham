@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pencil, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { categoryApi, type Category } from "@/features/danh-muc/api";
-import { productApi, type LoaiDa, type Product } from "@/features/san-pham/api";
+import {
+  imageUrl,
+  productApi,
+  type LoaiDa,
+  type Product,
+} from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/format";
 
@@ -24,6 +30,7 @@ type FormState = {
   danhMucId: string;
   moTa: string;
   thuongHieu: string;
+  hinhAnh: string;
 };
 
 const INITIAL_FORM: FormState = {
@@ -33,14 +40,18 @@ const INITIAL_FORM: FormState = {
   danhMucId: "",
   moTa: "",
   thuongHieu: "",
+  hinhAnh: "",
 };
 
 export default function AdminSanPhamPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   async function loadAll() {
     try {
@@ -65,26 +76,81 @@ export default function AdminSanPhamPage() {
     [categories],
   );
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const result = await productApi.uploadImage(file);
+      setForm((f) => ({ ...f, hinhAnh: result.url }));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Upload thất bại");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  function startEdit(p: Product) {
+    setEditingId(p.id);
+    setForm({
+      tenSanPham: p.tenSanPham,
+      gia: String(p.gia),
+      loaiDa: p.loaiDa,
+      danhMucId: String(p.danhMucId),
+      moTa: p.moTa ?? "",
+      thuongHieu: p.thuongHieu ?? "",
+      hinhAnh: p.hinhAnh ?? "",
+    });
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(INITIAL_FORM);
+    setError(null);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.loaiDa || !form.danhMucId) return;
-    setLoading(true);
+    setSubmitting(true);
     setError(null);
     try {
-      await productApi.createAdmin({
+      const reqBody = {
         tenSanPham: form.tenSanPham,
         gia: Number(form.gia),
         loaiDa: form.loaiDa,
         danhMucId: Number(form.danhMucId),
         moTa: form.moTa || undefined,
         thuongHieu: form.thuongHieu || undefined,
-      });
+        hinhAnh: form.hinhAnh || undefined,
+      };
+      if (editingId !== null) {
+        await productApi.updateAdmin(editingId, reqBody);
+      } else {
+        await productApi.createAdmin(reqBody);
+      }
       setForm(INITIAL_FORM);
+      setEditingId(null);
       await loadAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Lỗi không xác định");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm("Xoá sản phẩm này? Hành động không thể hoàn tác.")) return;
+    try {
+      await productApi.deleteAdmin(id);
+      if (editingId === id) cancelEdit();
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Lỗi xoá");
     }
   }
 
@@ -92,15 +158,28 @@ export default function AdminSanPhamPage() {
     <div>
       <h1 className="font-serif text-3xl md:text-4xl">Sản phẩm</h1>
       <p className="mt-2 text-sm text-[color:var(--color-muted)]">
-        Tạo sản phẩm — loại da bắt buộc cho AI (UC 2.3.3).
+        Tạo / sửa / xoá sản phẩm — loại da bắt buộc cho AI (UC 2.3.3).
       </p>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[400px_1fr]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[420px_1fr]">
         <form
           onSubmit={handleSubmit}
           className="flex h-fit flex-col gap-4 rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]"
         >
-          <h2 className="font-medium">Thêm sản phẩm</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">
+              {editingId !== null ? `Sửa #${editingId}` : "Thêm sản phẩm"}
+            </h2>
+            {editingId !== null && (
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="text-xs text-[color:var(--color-muted)] underline underline-offset-4"
+              >
+                Huỷ
+              </button>
+            )}
+          </div>
 
           <Input
             name="tenSanPham"
@@ -183,12 +262,60 @@ export default function AdminSanPhamPage() {
             />
           </div>
 
+          {/* Image upload */}
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">
+              Hình ảnh
+            </label>
+            {form.hinhAnh ? (
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl(form.hinhAnh) ?? ""}
+                  alt="Preview"
+                  className="h-40 w-full rounded-lg border border-[color:var(--color-border)] object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, hinhAnh: "" })}
+                  aria-label="Xoá ảnh"
+                  className="absolute right-2 top-2 rounded-full bg-white p-1.5 shadow ring-1 ring-[color:var(--color-border)] hover:bg-rose-50"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-ivory-2)]/40 text-xs text-[color:var(--color-muted)] transition hover:border-[color:var(--color-ink)] hover:text-[color:var(--color-ink)] disabled:opacity-50"
+              >
+                <Upload className="size-5" />
+                {uploading ? "Đang tải lên..." : "Chọn ảnh (JPEG/PNG/WEBP, ≤10MB)"}
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+
           {error && (
             <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
           )}
 
-          <Button type="submit" disabled={loading}>
-            {loading ? "Đang tạo..." : "Tạo sản phẩm"}
+          <Button type="submit" disabled={submitting || uploading}>
+            {submitting
+              ? editingId !== null
+                ? "Đang lưu..."
+                : "Đang tạo..."
+              : editingId !== null
+                ? "Lưu thay đổi"
+                : "Tạo sản phẩm"}
           </Button>
         </form>
 
@@ -202,30 +329,70 @@ export default function AdminSanPhamPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[color:var(--color-border)] text-left text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
-                  <th className="pb-2">ID</th>
+                  <th className="pb-2">Ảnh</th>
                   <th className="pb-2">Tên</th>
                   <th className="pb-2">Giá</th>
                   <th className="pb-2">Loại da</th>
                   <th className="pb-2">Danh mục</th>
+                  <th className="pb-2 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-[color:var(--color-border)] last:border-0"
-                  >
-                    <td className="py-3 text-[color:var(--color-muted)]">#{p.id}</td>
-                    <td className="py-3">{p.tenSanPham}</td>
-                    <td className="py-3">{formatCurrency(p.gia)}</td>
-                    <td className="py-3">
-                      <span className="rounded-full bg-[color:var(--color-ivory-2)] px-2 py-0.5 text-xs">
-                        {p.loaiDa}
-                      </span>
-                    </td>
-                    <td className="py-3">{catMap.get(p.danhMucId) ?? "—"}</td>
-                  </tr>
-                ))}
+                {products.map((p) => {
+                  const img = imageUrl(p.hinhAnh);
+                  return (
+                    <tr
+                      key={p.id}
+                      className="border-b border-[color:var(--color-border)] last:border-0"
+                    >
+                      <td className="py-3">
+                        {img ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={img}
+                            alt={p.tenSanPham}
+                            className="size-12 rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="size-12 rounded-md bg-[color:var(--color-ivory-2)]" />
+                        )}
+                      </td>
+                      <td className="py-3">
+                        <p className="font-medium">{p.tenSanPham}</p>
+                        <p className="text-xs text-[color:var(--color-muted)]">
+                          #{p.id}
+                        </p>
+                      </td>
+                      <td className="py-3">{formatCurrency(p.gia)}</td>
+                      <td className="py-3">
+                        <span className="rounded-full bg-[color:var(--color-ivory-2)] px-2 py-0.5 text-xs">
+                          {p.loaiDa}
+                        </span>
+                      </td>
+                      <td className="py-3">{catMap.get(p.danhMucId) ?? "—"}</td>
+                      <td className="py-3">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEdit(p)}
+                            aria-label="Sửa"
+                            className="rounded-md p-1.5 text-[color:var(--color-muted)] transition hover:bg-[color:var(--color-ivory-2)] hover:text-[color:var(--color-ink)]"
+                          >
+                            <Pencil className="size-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(p.id)}
+                            aria-label="Xoá"
+                            className="rounded-md p-1.5 text-[color:var(--color-muted)] transition hover:bg-rose-50 hover:text-rose-600"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
