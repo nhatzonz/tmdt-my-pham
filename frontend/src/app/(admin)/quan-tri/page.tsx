@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Boxes, Package, Tag } from "lucide-react";
+import { ArrowRight, Boxes, Package, Tag, Ticket } from "lucide-react";
 
 export default function AdminDashboardPage() {
   return (
@@ -27,6 +27,12 @@ export default function AdminDashboardPage() {
           icon={<Boxes className="size-7" />}
           title="Tồn kho"
           desc="Nhập / xuất / cảnh báo hết hàng"
+        />
+        <AdminCard
+          href="/quan-tri/khuyen-mai"
+          icon={<Ticket className="size-7" />}
+          title="Khuyến mãi"
+          desc="Mã giảm giá theo % và thời hạn"
         />
       </div>
     </div>

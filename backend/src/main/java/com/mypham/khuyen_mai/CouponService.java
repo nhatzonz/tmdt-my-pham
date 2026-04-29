@@ -2,11 +2,13 @@ package com.mypham.khuyen_mai;
 
 import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
+import com.mypham.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -37,5 +39,76 @@ public class CouponService {
             throw new BusinessException(ErrorCode.COUPON_INVALID, "Mã giảm giá hết hạn");
         }
         return c;
+    }
+
+    // ---------- Admin CRUD ----------
+
+    @Transactional(readOnly = true)
+    public List<CouponResponse> listAdmin() {
+        return couponRepository.findAll().stream()
+                .sorted((a, b) -> Long.compare(b.getId(), a.getId()))
+                .map(CouponResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public CouponResponse create(CouponRequest req) {
+        validatePeriod(req);
+        String code = req.maCode().trim().toUpperCase();
+        if (couponRepository.findByMaCode(code).isPresent()) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
+        }
+        Coupon c = new Coupon();
+        c.setMaCode(code);
+        c.setPhanTramGiam(req.phanTramGiam());
+        c.setStartAt(req.startAt());
+        c.setEndAt(req.endAt());
+        c.setStatus(normalizeStatus(req.status()));
+        return CouponResponse.from(couponRepository.save(c));
+    }
+
+    @Transactional
+    public CouponResponse update(Long id, CouponRequest req) {
+        validatePeriod(req);
+        Coupon c = couponRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("mã giảm giá", id));
+        String newCode = req.maCode().trim().toUpperCase();
+        if (!c.getMaCode().equalsIgnoreCase(newCode)
+                && couponRepository.findByMaCode(newCode).isPresent()) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
+        }
+        c.setMaCode(newCode);
+        c.setPhanTramGiam(req.phanTramGiam());
+        c.setStartAt(req.startAt());
+        c.setEndAt(req.endAt());
+        c.setStatus(normalizeStatus(req.status()));
+        return CouponResponse.from(couponRepository.save(c));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!couponRepository.existsById(id)) {
+            throw new ResourceNotFoundException("mã giảm giá", id);
+        }
+        couponRepository.deleteById(id);
+    }
+
+    private void validatePeriod(CouponRequest req) {
+        if (!req.endAt().isAfter(req.startAt())) {
+            throw new BusinessException(
+                    ErrorCode.VALIDATION_FAILED,
+                    "Ngày kết thúc phải sau ngày bắt đầu");
+        }
+    }
+
+    private String normalizeStatus(String s) {
+        if (s == null || s.isBlank()) return "ACTIVE";
+        String up = s.trim().toUpperCase();
+        if (!up.equals("ACTIVE") && !up.equals("INACTIVE")) {
+            throw new BusinessException(
+                    ErrorCode.VALIDATION_FAILED,
+                    "Trạng thái phải là ACTIVE hoặc INACTIVE");
+        }
+        return up;
     }
 }
