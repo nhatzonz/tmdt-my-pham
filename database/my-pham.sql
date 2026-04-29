@@ -64,6 +64,21 @@ CREATE TABLE ton_kho (
     nguong_canh_bao INTEGER DEFAULT 10        -- dưới mức này thì cảnh báo
 );
 
+-- Audit log nhập / xuất / đặt / đơn hàng (mỗi thay đổi 1 row)
+CREATE TABLE lich_su_kho (
+    id            BIGSERIAL PRIMARY KEY,
+    san_pham_id   BIGINT NOT NULL REFERENCES san_pham(id) ON DELETE CASCADE,
+    nguoi_dung_id BIGINT REFERENCES nguoi_dung(id),
+    action        VARCHAR(20) NOT NULL CHECK (action IN ('IMPORT','EXPORT','SET','ORDER')),
+    so_luong      INT NOT NULL,                  -- giá trị input
+    ton_truoc     INT NOT NULL,                  -- snapshot trước
+    ton_sau       INT NOT NULL,                  -- snapshot sau
+    nguon         VARCHAR(100),                  -- 'admin_panel' | 'don_hang_<id>'
+    ghi_chu       TEXT,
+    created_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_lich_su_kho_san_pham ON lich_su_kho(san_pham_id, created_at DESC);
+
 
 CREATE TABLE khuyen_mai (
     id              BIGSERIAL PRIMARY KEY,

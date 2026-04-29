@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, Package, Tag } from "lucide-react";
+import { ArrowRight, Boxes, Package, Tag } from "lucide-react";
 
 export default function AdminDashboardPage() {
   return (
     <div>
       <h1 className="font-serif text-3xl md:text-4xl">Bảng điều khiển</h1>
       <p className="mt-2 text-sm text-[color:var(--color-muted)]">
-        Quản trị hệ thống Ngọc Lan Beauty. Tuần 7 — quản lý danh mục và sản phẩm.
+        Quản trị hệ thống Ngọc Lan Beauty.
       </p>
 
-      <div className="mt-10 grid max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="mt-10 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
         <AdminCard
           href="/quan-tri/danh-muc"
           icon={<Tag className="size-7" />}
@@ -21,6 +21,12 @@ export default function AdminDashboardPage() {
           icon={<Package className="size-7" />}
           title="Sản phẩm"
           desc="Tạo sản phẩm (kèm loại da cho AI - UC 2.3.3)"
+        />
+        <AdminCard
+          href="/quan-tri/ton-kho"
+          icon={<Boxes className="size-7" />}
+          title="Tồn kho"
+          desc="Nhập / xuất / cảnh báo hết hàng"
         />
       </div>
     </div>

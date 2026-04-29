@@ -14,6 +14,7 @@ import com.mypham.san_pham.ProductImageRepository;
 import com.mypham.san_pham.ProductRepository;
 import com.mypham.ton_kho.Inventory;
 import com.mypham.ton_kho.InventoryRepository;
+import com.mypham.ton_kho.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final ProductImageRepository imageRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventoryService inventoryService;
     private final CouponRepository couponRepository;
     private final CouponService couponService;
     private final UserRepository userRepository;
@@ -111,8 +113,19 @@ public class OrderService {
             detailRepository.save(detail);
 
             Inventory inv = invMap.get(line.sanPhamId());
-            inv.setSoLuongTon(inv.getSoLuongTon() - line.soLuong());
+            int truoc = inv.getSoLuongTon();
+            int sau = truoc - line.soLuong();
+            inv.setSoLuongTon(sau);
             inventoryRepository.save(inv);
+
+            // Audit log: ORDER consumption
+            inventoryService.recordOrderConsumption(
+                    line.sanPhamId(),
+                    user.getId(),
+                    truoc,
+                    sau,
+                    line.soLuong(),
+                    saved.getId());
         }
 
         return toResponse(saved);

@@ -4,6 +4,7 @@ import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
 import com.mypham.danh_muc.CategoryRepository;
+import com.mypham.ton_kho.InventoryService;
 import com.mypham.upload.UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class ProductService {
     private final ProductImageRepository imageRepository;
     private final CategoryRepository categoryRepository;
     private final UploadService uploadService;
+    private final InventoryService inventoryService;
 
     // ---------- Admin ----------
     @Transactional
@@ -33,6 +35,8 @@ public class ProductService {
         Product saved = productRepository.save(p);
 
         List<String> urls = saveImages(saved.getId(), req.hinhAnh());
+        // Auto-tạo row ton_kho (so_luong_ton=0, ngưỡng=10)
+        inventoryService.ensureRow(saved.getId());
         return ProductResponse.from(saved, urls);
     }
 
