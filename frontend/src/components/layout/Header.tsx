@@ -2,15 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut, Search, User } from "lucide-react";
+import { LogOut, Search, ShoppingBag, User } from "lucide-react";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import type { Category } from "@/features/danh-muc/api";
+import { useCart } from "@/features/gio-hang/hooks/use-cart";
 
 const STATIC_NAV = [{ label: "Sản phẩm", href: "/san-pham" }];
 
 export function Header({ categories = [] }: { categories?: Category[] }) {
   const { user, loaded, logout } = useAuth();
+  const { totalCount } = useCart();
   const topCategories = categories.slice(0, 3);
 
   function handleLogout() {
@@ -64,6 +66,18 @@ export function Header({ categories = [] }: { categories?: Category[] }) {
         </div>
 
         <div className="flex items-center gap-4">
+          <Link
+            href="/gio-hang"
+            aria-label="Giỏ hàng"
+            className="relative text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
+          >
+            <ShoppingBag className="size-5" />
+            {totalCount > 0 && (
+              <span className="absolute -right-2 -top-2 inline-flex size-4 items-center justify-center rounded-full bg-[color:var(--color-ink)] px-1 text-[10px] text-white">
+                {totalCount > 99 ? "99+" : totalCount}
+              </span>
+            )}
+          </Link>
           {!loaded ? (
             <div className="size-5" aria-hidden />
           ) : user ? (

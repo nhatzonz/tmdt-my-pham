@@ -2,13 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Leaf, RotateCcw, Truck } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { Button } from "@/components/ui/Button";
 import { categoryApi } from "@/features/danh-muc/api";
 import { pastelBg, productApi, type Product } from "@/features/san-pham/api";
 import { ProductCard } from "@/features/san-pham/components/ProductCard";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
+import { AddToCartBlock } from "./AddToCartBlock";
 import { ProductGallery } from "./ProductGallery";
 
 export const dynamic = "force-dynamic";
@@ -110,11 +110,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
             <span className="text-xs text-[color:var(--color-muted)]">đã bao gồm VAT</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button size="lg" className="flex-1" disabled>
-              Thêm vào giỏ (sẵn Tuần 8)
-            </Button>
-          </div>
+          <AddToCartBlock productId={product.id} price={Number(product.gia)} />
 
           <div className="grid grid-cols-3 gap-2">
             <InfoTile icon={<Truck className="size-4" />} label="Free ship từ 500K" />
