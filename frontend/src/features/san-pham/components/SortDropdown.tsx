@@ -39,7 +39,7 @@ export function SortDropdown({ options }: { options: SortOption[] }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-white/80 px-4 py-2 text-sm"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-white/80 px-4 py-2 text-sm"
       >
         {current?.label}
         <ChevronDown

@@ -8,6 +8,7 @@ import { NumberStepper } from "@/components/ui/NumberStepper";
 import { orderApi } from "@/features/don-hang/api";
 import { useCart } from "@/features/gio-hang/hooks/use-cart";
 import { ApiError } from "@/lib/api-client";
+import { buyNowStorage } from "@/lib/buy-now-storage";
 import { formatCurrency } from "@/lib/format";
 
 type Props = {
@@ -25,7 +26,7 @@ export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props)
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function checkAndAdd(): Promise<boolean> {
+  async function checkStock(): Promise<boolean> {
     setBusy(true);
     setError(null);
     try {
@@ -34,7 +35,6 @@ export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props)
         setError(res.error ?? "Hết hàng");
         return false;
       }
-      upsert({ sanPhamId: productId, soLuong: qty });
       return true;
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Lỗi kiểm tồn kho");
@@ -45,16 +45,20 @@ export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props)
   }
 
   async function handleAdd() {
-    const ok = await checkAndAdd();
-    if (ok) {
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1800);
-    }
+    const ok = await checkStock();
+    if (!ok) return;
+    upsert({ sanPhamId: productId, soLuong: qty });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1800);
   }
 
   async function handleBuyNow() {
-    const ok = await checkAndAdd();
-    if (ok) router.push("/thanh-toan");
+    const ok = await checkStock();
+    if (!ok) return;
+    // Mua ngay không động vào giỏ — lưu sản phẩm vào buyNowStorage
+    // để /thanh-toan đọc và checkout 1 sản phẩm duy nhất.
+    buyNowStorage.set({ sanPhamId: productId, soLuong: qty });
+    router.push("/thanh-toan");
   }
 
   if (hetHang) {

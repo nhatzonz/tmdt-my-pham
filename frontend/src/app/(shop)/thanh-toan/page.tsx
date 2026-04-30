@@ -20,13 +20,16 @@ import {
   type Product,
 } from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
+import { buyNowStorage, type BuyNowItem } from "@/lib/buy-now-storage";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
 
 export default function ThanhToanPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { items, loaded: cartLoaded, clear: clearCart } = useCart();
+  const { items: cartItems, loaded: cartLoaded, clear: clearCart } = useCart();
+  const [buyNow, setBuyNow] = useState<BuyNowItem | null>(null);
+  const [buyNowLoaded, setBuyNowLoaded] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
@@ -44,6 +47,11 @@ export default function ThanhToanPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setBuyNow(buyNowStorage.get());
+    setBuyNowLoaded(true);
+  }, []);
+
+  useEffect(() => {
     productApi
       .list()
       .then(setProducts)
@@ -58,7 +66,7 @@ export default function ThanhToanPage() {
     }
   }, [user]);
 
-  if (!cartLoaded || loadingProducts) {
+  if (!cartLoaded || !buyNowLoaded || loadingProducts) {
     return (
       <div className="mx-auto w-4/5 px-6 py-20 text-center text-sm text-[color:var(--color-muted)]">
         Đang tải...
@@ -66,7 +74,10 @@ export default function ThanhToanPage() {
     );
   }
 
-  if (items.length === 0) {
+  // Mua ngay: chỉ checkout 1 sp duy nhất, không dùng giỏ.
+  const checkoutItems = buyNow ? [buyNow] : cartItems;
+
+  if (checkoutItems.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-20 text-center">
         <h1 className="font-serif text-4xl">Thanh toán</h1>
@@ -81,13 +92,13 @@ export default function ThanhToanPage() {
   }
 
   const productMap = new Map(products.map((p) => [p.id, p]));
-  const rows = items
+  const rows = checkoutItems
     .map((item) => {
       const product = productMap.get(item.sanPhamId);
       return product ? { item, product } : null;
     })
     .filter(
-      (r): r is { item: (typeof items)[number]; product: Product } => r !== null,
+      (r): r is { item: (typeof checkoutItems)[number]; product: Product } => r !== null,
     );
 
   const subtotal = rows.reduce((s, r) => s + r.product.gia * r.item.soLuong, 0);
@@ -104,7 +115,7 @@ export default function ThanhToanPage() {
     try {
       const fullAddress = [diaChi, vnAddress.fullText].filter(Boolean).join(", ");
       const order = await orderApi.checkout({
-        items: items.map((it) => ({
+        items: checkoutItems.map((it) => ({
           sanPhamId: it.sanPhamId,
           soLuong: it.soLuong,
         })),
@@ -112,7 +123,13 @@ export default function ThanhToanPage() {
         maCoupon: maCoupon || undefined,
         phuongThucTt: "COD",
       });
-      clearCart();
+      // Mua ngay: chỉ xoá buyNowStorage; giỏ giữ nguyên.
+      // Checkout từ giỏ: clear cart như cũ.
+      if (buyNow) {
+        buyNowStorage.clear();
+      } else {
+        clearCart();
+      }
       router.push(`/don-hang/${order.id}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Đặt hàng thất bại");

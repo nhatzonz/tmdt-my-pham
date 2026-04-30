@@ -1,6 +1,27 @@
 import { env } from "@/config/env";
 import { authStorage } from "@/lib/auth-storage";
+import { cartStorage } from "@/lib/cart-storage";
 import type { ApiResponse } from "@/types/api";
+
+/**
+ * Global 401 handler — chỉ trigger 1 lần (debounce qua sessionExpired flag)
+ * để tránh nhiều request đồng thời cùng spam alert.
+ */
+let sessionExpired = false;
+function handleSessionExpired() {
+  if (sessionExpired) return;
+  if (typeof window === "undefined") return;
+  // Chỉ áp dụng cho user đã có token (đã đăng nhập trước đó).
+  // Public 401 (vd: form đăng nhập sai mật khẩu) — không xử lý ở đây.
+  if (!authStorage.getToken()) return;
+  sessionExpired = true;
+  authStorage.clear();
+  cartStorage.clear();
+  window.dispatchEvent(new Event("cart:updated"));
+  window.alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+  const next = encodeURIComponent(window.location.pathname + window.location.search);
+  window.location.replace(`/dang-nhap?next=${next}`);
+}
 
 export class ApiError extends Error {
   readonly status: number;
@@ -108,6 +129,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const payload = text ? safeParseJson(text) : null;
 
   if (!response.ok) {
+    if (response.status === 401 && auth) {
+      handleSessionExpired();
+    }
     throw new ApiError({
       status: response.status,
       message: extractMessage(payload, response.statusText || "Lỗi không xác định"),

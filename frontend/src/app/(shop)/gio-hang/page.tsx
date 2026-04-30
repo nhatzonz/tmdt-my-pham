@@ -13,6 +13,7 @@ import {
   type Product,
 } from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
+import { buyNowStorage } from "@/lib/buy-now-storage";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
 
@@ -154,11 +155,17 @@ export default function GioHangPage() {
             <span className="font-serif text-3xl">{formatCurrency(total)}</span>
           </div>
 
-          <Link href="/thanh-toan" className="w-full">
-            <Button size="lg" className="w-full">
-              Tiến hành thanh toán
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              // Đảm bảo checkout từ giỏ không bị buy-now session cũ override.
+              buyNowStorage.clear();
+              window.location.href = "/thanh-toan";
+            }}
+          >
+            Tiến hành thanh toán
+          </Button>
           <Link
             href="/san-pham"
             className="text-center text-sm text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]"

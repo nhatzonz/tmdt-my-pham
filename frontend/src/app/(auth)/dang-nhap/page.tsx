@@ -27,7 +27,17 @@ export default function DangNhapPage() {
     try {
       const result = await authApi.login({ email, matKhau });
       login(result.token, result.user);
-      router.push(result.user.vaiTro === "ADMIN" ? "/quan-tri" : "/");
+      // Nếu bị redirect tới đăng nhập do session expired (?next=...), quay lại trang gốc.
+      // Chỉ accept relative path để chống open-redirect.
+      let target: string;
+      if (result.user.vaiTro === "ADMIN") {
+        target = "/quan-tri";
+      } else {
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+      }
+      router.push(target);
       router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Lỗi không xác định");

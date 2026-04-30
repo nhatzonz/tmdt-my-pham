@@ -8,7 +8,7 @@ export function FilterPill({ active, className, ...rest }: Props) {
     <button
       type="button"
       className={cn(
-        "rounded-full border px-4 py-1.5 text-xs transition",
+        "cursor-pointer rounded-full border px-4 py-1.5 text-xs transition disabled:cursor-not-allowed disabled:opacity-50",
         active
           ? "border-[color:var(--color-ink)] bg-[color:var(--color-ink)] text-white"
           : "border-[color:var(--color-border)] text-[color:var(--color-ink-soft)] hover:border-[color:var(--color-ink)]",
