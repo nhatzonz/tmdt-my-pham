@@ -23,6 +23,7 @@ import { ApiError } from "@/lib/api-client";
 import { buyNowStorage, type BuyNowItem } from "@/lib/buy-now-storage";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
+import { shippingStorage } from "@/lib/shipping-storage";
 
 export default function ThanhToanPage() {
   const router = useRouter();
@@ -45,6 +46,8 @@ export default function ThanhToanPage() {
   const [maCoupon, setMaCoupon] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const [hasSavedShipping, setHasSavedShipping] = useState(false);
 
   useEffect(() => {
     setBuyNow(buyNowStorage.get());
@@ -59,12 +62,51 @@ export default function ThanhToanPage() {
       .finally(() => setLoadingProducts(false));
   }, []);
 
+  // Prefill: ưu tiên shippingStorage (đã lưu lần trước), fallback về user.
   useEffect(() => {
+    const saved = shippingStorage.get();
+    if (saved) {
+      setHasSavedShipping(true);
+      setHoTen(saved.hoTen ?? "");
+      setSoDienThoai(saved.soDienThoai ?? "");
+      setDiaChi(saved.diaChi ?? "");
+      setVnAddress({
+        tinh: saved.tinh ?? "",
+        quan: saved.quan ?? "",
+        phuong: saved.phuong ?? "",
+        fullText: saved.fullText ?? "",
+      });
+      return;
+    }
     if (user) {
       setHoTen(user.hoTen);
       if (user.soDienThoai) setSoDienThoai(user.soDienThoai);
     }
   }, [user]);
+
+  function persistShipping() {
+    shippingStorage.set({
+      hoTen,
+      soDienThoai,
+      diaChi,
+      tinh: vnAddress.tinh,
+      quan: vnAddress.quan,
+      phuong: vnAddress.phuong,
+      fullText: vnAddress.fullText,
+    });
+    setHasSavedShipping(true);
+  }
+
+  function handleSaveShipping() {
+    if (!hoTen.trim() || !soDienThoai.trim() || !vnAddress.fullText) {
+      setSavedMsg("Vui lòng nhập đủ Tên, SĐT và Tỉnh/Quận/Phường trước khi lưu.");
+      setTimeout(() => setSavedMsg(null), 3000);
+      return;
+    }
+    persistShipping();
+    setSavedMsg("Đã lưu thông tin giao hàng cho lần sau.");
+    setTimeout(() => setSavedMsg(null), 2500);
+  }
 
   if (!cartLoaded || !buyNowLoaded || loadingProducts) {
     return (
@@ -123,6 +165,8 @@ export default function ThanhToanPage() {
         maCoupon: maCoupon || undefined,
         phuongThucTt: "COD",
       });
+      // Lưu thông tin giao hàng cho lần sau (đặt thành công = thông tin hợp lệ).
+      persistShipping();
       // Mua ngay: chỉ xoá buyNowStorage; giỏ giữ nguyên.
       // Checkout từ giỏ: clear cart như cũ.
       if (buyNow) {
@@ -178,6 +222,29 @@ export default function ThanhToanPage() {
             </div>
             <div className="mt-4">
               <VietnamAddressPicker value={vnAddress} onChange={setVnAddress} />
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Button type="button" variant="outline" size="sm" onClick={handleSaveShipping}>
+                Lưu thông tin giao hàng
+              </Button>
+              {hasSavedShipping && (
+                <span className="text-xs text-[color:var(--color-muted)]">
+                  Đã lưu — lần sau sẽ tự điền lại
+                </span>
+              )}
+              {savedMsg && (
+                <span
+                  className={cn(
+                    "text-xs",
+                    savedMsg.startsWith("Đã lưu")
+                      ? "text-emerald-700"
+                      : "text-rose-700",
+                  )}
+                >
+                  {savedMsg}
+                </span>
+              )}
             </div>
           </section>
 

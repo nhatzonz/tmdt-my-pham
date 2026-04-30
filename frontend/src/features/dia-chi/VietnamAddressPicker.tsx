@@ -31,6 +31,9 @@ export function VietnamAddressPicker({ value, onChange }: Props) {
   const [loadingDist, setLoadingDist] = useState(false);
   const [loadingWard, setLoadingWard] = useState(false);
 
+  // Đánh dấu đã rehydrate từng cấp để useEffect không hydrate lại sau khi user đã chọn.
+  const [hydrated, setHydrated] = useState({ p: false, d: false, w: false });
+
   // Load provinces once
   useEffect(() => {
     setLoadingProv(true);
@@ -104,11 +107,31 @@ export function VietnamAddressPicker({ value, onChange }: Props) {
     onChange({ tinh, quan, phuong, fullText: parts.join(", ") });
   }
 
-  // Sync external value (rare — usually one-way)
+  // Rehydrate từ value (do shippingStorage prefill) — match theo tên → code.
+  // Mỗi cấp chỉ chạy 1 lần khi danh sách tương ứng load xong.
   useEffect(() => {
-    if (!value) return;
-    // skip — uncontrolled by code, only by selection
-  }, [value]);
+    if (hydrated.p) return;
+    if (!value?.tinh || provinces.length === 0) return;
+    const match = provinces.find((p) => p.name === value.tinh);
+    if (match) setProvinceCode(match.code);
+    setHydrated((h) => ({ ...h, p: true }));
+  }, [provinces, value, hydrated.p]);
+
+  useEffect(() => {
+    if (hydrated.d) return;
+    if (!value?.quan || districts.length === 0) return;
+    const match = districts.find((d) => d.name === value.quan);
+    if (match) setDistrictCode(match.code);
+    setHydrated((h) => ({ ...h, d: true }));
+  }, [districts, value, hydrated.d]);
+
+  useEffect(() => {
+    if (hydrated.w) return;
+    if (!value?.phuong || wards.length === 0) return;
+    const match = wards.find((w) => w.name === value.phuong);
+    if (match) setWardCode(match.code);
+    setHydrated((h) => ({ ...h, w: true }));
+  }, [wards, value, hydrated.w]);
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
