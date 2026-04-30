@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut, Search, ShoppingBag, User } from "lucide-react";
+import { LogOut, Package, Search, ShoppingBag, User } from "lucide-react";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import type { Category } from "@/features/danh-muc/api";
@@ -82,6 +82,14 @@ export function Header({ categories = [] }: { categories?: Category[] }) {
             <div className="size-5" aria-hidden />
           ) : user ? (
             <>
+              <Link
+                href="/don-hang"
+                aria-label="Đơn hàng của tôi"
+                title="Đơn hàng của tôi"
+                className="text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
+              >
+                <Package className="size-5" />
+              </Link>
               <span
                 className="flex size-8 items-center justify-center rounded-full bg-[color:var(--color-pastel-blush)] text-xs font-medium text-[color:var(--color-ink)]"
                 title={user.hoTen}

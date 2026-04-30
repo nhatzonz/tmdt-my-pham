@@ -26,6 +26,7 @@ export default function OrderDetailPage({ params }: PageProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     orderApi
@@ -34,6 +35,23 @@ export default function OrderDetailPage({ params }: PageProps) {
       .catch((err) => setError(err instanceof ApiError ? err.message : "Lỗi tải đơn"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function handleCancel() {
+    if (!order) return;
+    if (!window.confirm(`Huỷ đơn LM-${String(order.id).padStart(6, "0")}? Hệ thống sẽ hoàn lại sản phẩm về kho.`)) {
+      return;
+    }
+    setCancelling(true);
+    setError(null);
+    try {
+      const updated = await orderApi.cancel(order.id);
+      setOrder(updated);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Không thể huỷ đơn");
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -80,12 +98,31 @@ export default function OrderDetailPage({ params }: PageProps) {
             Đặt lúc {formatDateTime(order.createdAt)}
           </p>
         </div>
-        <Link href="/don-hang">
-          <Button variant="outline" size="sm">
-            ← Quay lại danh sách
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {order.trangThai === "PENDING" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="border-rose-300 text-rose-700 hover:bg-rose-50 hover:text-rose-700"
+            >
+              {cancelling ? "Đang huỷ..." : "Huỷ đơn"}
+            </Button>
+          )}
+          <Link href="/don-hang">
+            <Button variant="outline" size="sm">
+              ← Quay lại danh sách
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          {error}
+        </div>
+      )}
 
       <div className="mt-8 rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         {order.trangThai === "CANCELLED" ? (

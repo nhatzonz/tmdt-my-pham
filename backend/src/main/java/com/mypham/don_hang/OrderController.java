@@ -44,4 +44,13 @@ public class OrderController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(orderService.getById(id, auth.getName())));
     }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancel(
+            Authentication auth,
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.cancelMine(id, auth.getName())));
+    }
 }

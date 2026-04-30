@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Boxes, Package, Tag, Ticket } from "lucide-react";
+import { ArrowRight, Boxes, Package, Receipt, Tag, Ticket } from "lucide-react";
 
 export default function AdminDashboardPage() {
   return (
@@ -33,6 +33,12 @@ export default function AdminDashboardPage() {
           icon={<Ticket className="size-7" />}
           title="Khuyến mãi"
           desc="Mã giảm giá theo % và thời hạn"
+        />
+        <AdminCard
+          href="/quan-tri/don-hang"
+          icon={<Receipt className="size-7" />}
+          title="Đơn hàng"
+          desc="Xử lý đơn — chuyển trạng thái và huỷ"
         />
       </div>
     </div>

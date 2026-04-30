@@ -54,6 +54,9 @@ export const orderApi = {
 
   getById: (id: number | string) =>
     apiClient.get<Order>(`/api/orders/${id}`, { cache: "no-store" }),
+
+  cancel: (id: number | string) =>
+    apiClient.post<Order>(`/api/orders/${id}/cancel`),
 };
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
