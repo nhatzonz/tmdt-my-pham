@@ -31,7 +31,6 @@ public class SecurityConfig {
             "/api/ping",
             "/api/auth/register",
             "/api/auth/login",
-            "/api/auth/refresh",
             "/api/products/**",
             "/api/categories/**",
             "/api/cart/**",

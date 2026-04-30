@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface ProductImageRepository extends JpaRepository<ProductImage, Long> {
     List<ProductImage> findBySanPhamIdOrderByThuTuAsc(Long sanPhamId);
+    List<ProductImage> findBySanPhamIdInOrderBySanPhamIdAscThuTuAsc(java.util.Collection<Long> sanPhamIds);
     void deleteBySanPhamId(Long sanPhamId);
 }

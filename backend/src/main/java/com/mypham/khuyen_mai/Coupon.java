@@ -29,6 +29,12 @@ public class Coupon {
     @Column(name = "end_at", nullable = false)
     private Instant endAt;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private String status = "ACTIVE";
+    private Status status = Status.ACTIVE;
+
+    public enum Status {
+        ACTIVE,
+        INACTIVE
+    }
 }

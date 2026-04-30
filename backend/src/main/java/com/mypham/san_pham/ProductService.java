@@ -48,18 +48,46 @@ public class ProductService {
         applyFields(p, req);
         Product saved = productRepository.save(p);
 
-        // Cleanup ảnh cũ không còn trong list mới
+        // Diff ảnh cũ vs mới — chỉ delete ảnh bị bỏ + insert ảnh mới + update thứ tự khi cần.
+        // Không wipe-all để khách đọc giữa lúc update không thấy mảng rỗng tạm thời.
         List<ProductImage> oldImages = imageRepository.findBySanPhamIdOrderByThuTuAsc(id);
-        Set<String> newUrls = req.hinhAnh() == null ? Set.of() : new HashSet<>(req.hinhAnh());
+        List<String> newUrls = req.hinhAnh() == null
+                ? List.of()
+                : req.hinhAnh().stream()
+                        .filter(u -> u != null && !u.isBlank())
+                        .distinct()
+                        .toList();
+        Set<String> newUrlSet = new HashSet<>(newUrls);
+
+        // 1. Xoá ảnh cũ không còn trong list mới (cả file + DB row)
         for (ProductImage img : oldImages) {
-            if (!newUrls.contains(img.getUrl())) {
+            if (!newUrlSet.contains(img.getUrl())) {
                 uploadService.deleteByUrl(img.getUrl());
+                imageRepository.delete(img);
             }
         }
-        imageRepository.deleteBySanPhamId(id);
 
-        List<String> urls = saveImages(id, req.hinhAnh());
-        return ProductResponse.from(saved, urls);
+        // 2. Update thứ tự + insert ảnh mới
+        java.util.Map<String, ProductImage> existingByUrl = new java.util.HashMap<>();
+        for (ProductImage img : oldImages) existingByUrl.put(img.getUrl(), img);
+        int order = 0;
+        for (String url : newUrls) {
+            ProductImage existing = existingByUrl.get(url);
+            if (existing != null) {
+                if (existing.getThuTu() == null || existing.getThuTu() != order) {
+                    existing.setThuTu(order);
+                    imageRepository.save(existing);
+                }
+            } else {
+                ProductImage img = new ProductImage();
+                img.setSanPhamId(id);
+                img.setUrl(url);
+                img.setThuTu(order);
+                imageRepository.save(img);
+            }
+            order++;
+        }
+        return ProductResponse.from(saved, newUrls);
     }
 
     @Transactional

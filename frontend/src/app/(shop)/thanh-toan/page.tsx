@@ -23,8 +23,6 @@ import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
 
-const VAT_RATE = 0.08;
-
 export default function ThanhToanPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -54,7 +52,10 @@ export default function ThanhToanPage() {
   }, []);
 
   useEffect(() => {
-    if (user) setHoTen(user.hoTen);
+    if (user) {
+      setHoTen(user.hoTen);
+      if (user.soDienThoai) setSoDienThoai(user.soDienThoai);
+    }
   }, [user]);
 
   if (!cartLoaded || loadingProducts) {
@@ -90,8 +91,7 @@ export default function ThanhToanPage() {
     );
 
   const subtotal = rows.reduce((s, r) => s + r.product.gia * r.item.soLuong, 0);
-  const vat = Math.round(subtotal * VAT_RATE);
-  const total = subtotal + vat;
+  const total = subtotal;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -243,13 +243,15 @@ export default function ThanhToanPage() {
           <div className="flex flex-col gap-2 border-t border-[color:var(--color-border)] pt-4 text-sm">
             <Row label="Tạm tính" value={formatCurrency(subtotal)} />
             <Row label="Vận chuyển" value="Miễn phí" />
-            <Row label={`VAT (${Math.round(VAT_RATE * 100)}%)`} value={formatCurrency(vat)} />
           </div>
 
           <div className="flex items-baseline justify-between border-t border-[color:var(--color-border)] pt-4">
             <span className="text-sm">Tổng (chưa giảm)</span>
             <span className="font-serif text-2xl">{formatCurrency(total)}</span>
           </div>
+          <p className="text-[11px] text-[color:var(--color-muted)]">
+            Mã giảm giá sẽ được áp dụng ở bước cuối khi đặt hàng.
+          </p>
 
           {error && (
             <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">

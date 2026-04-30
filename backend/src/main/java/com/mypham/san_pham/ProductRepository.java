@@ -24,4 +24,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               AND p.trangThai = com.mypham.san_pham.Product.TrangThai.ACTIVE
             """)
     long countActiveByDanhMucId(@Param("danhMucId") Long danhMucId);
+
+    /** Batch count cho danh sách danh mục — tránh N+1 trên category list. */
+    @Query("""
+            SELECT p.danhMucId, COUNT(p) FROM Product p
+            WHERE p.trangThai = com.mypham.san_pham.Product.TrangThai.ACTIVE
+            GROUP BY p.danhMucId
+            """)
+    List<Object[]> countActiveGroupByDanhMucId();
 }

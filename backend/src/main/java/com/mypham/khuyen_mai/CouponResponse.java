@@ -14,7 +14,7 @@ public record CouponResponse(
 ) {
     public static CouponResponse from(Coupon c) {
         Instant now = Instant.now();
-        boolean live = "ACTIVE".equalsIgnoreCase(c.getStatus())
+        boolean live = c.getStatus() == Coupon.Status.ACTIVE
                 && !c.getStartAt().isAfter(now)
                 && !c.getEndAt().isBefore(now);
         return new CouponResponse(
@@ -23,7 +23,7 @@ public record CouponResponse(
                 c.getPhanTramGiam(),
                 c.getStartAt(),
                 c.getEndAt(),
-                c.getStatus(),
+                c.getStatus() == null ? null : c.getStatus().name(),
                 live);
     }
 }

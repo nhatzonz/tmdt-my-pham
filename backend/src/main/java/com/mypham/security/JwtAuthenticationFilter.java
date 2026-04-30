@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain chain) throws ServletException, IOException {
 
         String token = extractToken(request);
-        if (token != null && jwtService.isValid(token)) {
+        if (token != null) {
             try {
                 Claims claims = jwtService.parse(token);
                 String subject = claims.getSubject();
@@ -58,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
-                log.debug("Cannot set JWT auth: {}", ex.getMessage());
+                log.debug("JWT invalid: {}", ex.getMessage());
                 SecurityContextHolder.clearContext();
             }
         }

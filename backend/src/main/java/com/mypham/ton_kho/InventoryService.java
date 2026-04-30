@@ -75,6 +75,13 @@ public class InventoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("sản phẩm", req.sanPhamId()));
         Inventory inv = ensureRow(p.getId());
 
+        if ((req.action() == InventoryAction.IMPORT || req.action() == InventoryAction.EXPORT)
+                && req.soLuong() < 1) {
+            throw new BusinessException(
+                    ErrorCode.VALIDATION_FAILED,
+                    "Số lượng nhập/xuất phải ≥ 1");
+        }
+
         int truoc = inv.getSoLuongTon();
         int sau = switch (req.action()) {
             case IMPORT -> truoc + req.soLuong();

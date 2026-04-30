@@ -31,7 +31,7 @@ public class CouponService {
             throw new BusinessException(ErrorCode.COUPON_INVALID, "Mã giảm giá không tồn tại");
         }
         Coupon c = opt.get();
-        if (!"ACTIVE".equalsIgnoreCase(c.getStatus())) {
+        if (c.getStatus() != Coupon.Status.ACTIVE) {
             throw new BusinessException(ErrorCode.COUPON_INVALID, "Mã giảm giá đã ngừng hoạt động");
         }
         Instant now = Instant.now();
@@ -101,14 +101,14 @@ public class CouponService {
         }
     }
 
-    private String normalizeStatus(String s) {
-        if (s == null || s.isBlank()) return "ACTIVE";
-        String up = s.trim().toUpperCase();
-        if (!up.equals("ACTIVE") && !up.equals("INACTIVE")) {
+    private Coupon.Status normalizeStatus(String s) {
+        if (s == null || s.isBlank()) return Coupon.Status.ACTIVE;
+        try {
+            return Coupon.Status.valueOf(s.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
             throw new BusinessException(
                     ErrorCode.VALIDATION_FAILED,
                     "Trạng thái phải là ACTIVE hoặc INACTIVE");
         }
-        return up;
     }
 }

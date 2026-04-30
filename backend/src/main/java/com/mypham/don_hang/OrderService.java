@@ -67,12 +67,21 @@ public class OrderService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
+        // 0. Dedup items theo sanPhamId — phòng trường hợp client gửi 2 dòng cùng sản phẩm
+        Map<Long, Integer> mergedQuantities = new java.util.LinkedHashMap<>();
+        for (CartLineRequest line : req.items()) {
+            mergedQuantities.merge(line.sanPhamId(), line.soLuong(), Integer::sum);
+        }
+        List<CartLineRequest> mergedItems = mergedQuantities.entrySet().stream()
+                .map(e -> new CartLineRequest(e.getKey(), e.getValue()))
+                .toList();
+
         // 1. Validate items + lock product/inventory in memory
         Map<Long, Product> productMap = new HashMap<>();
         Map<Long, Inventory> invMap = new HashMap<>();
         BigDecimal subtotal = BigDecimal.ZERO;
 
-        for (CartLineRequest line : req.items()) {
+        for (CartLineRequest line : mergedItems) {
             Product p = productRepository.findById(line.sanPhamId())
                     .orElseThrow(() -> new BusinessException(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -82,7 +91,7 @@ public class OrderService {
                         ErrorCode.RESOURCE_NOT_FOUND,
                         "Sản phẩm \"" + p.getTenSanPham() + "\" đã ngừng bán");
             }
-            Inventory inv = inventoryRepository.findBySanPhamId(p.getId())
+            Inventory inv = inventoryRepository.findBySanPhamIdForUpdate(p.getId())
                     .orElseThrow(() -> new BusinessException(
                             ErrorCode.OUT_OF_STOCK,
                             "\"" + p.getTenSanPham() + "\" chưa có tồn kho"));
@@ -121,7 +130,7 @@ public class OrderService {
         Order saved = orderRepository.save(order);
 
         // 4. INSERT details + UPDATE stock
-        for (CartLineRequest line : req.items()) {
+        for (CartLineRequest line : mergedItems) {
             Product p = productMap.get(line.sanPhamId());
             OrderDetail detail = new OrderDetail();
             detail.setDonHangId(saved.getId());
@@ -153,9 +162,8 @@ public class OrderService {
     public List<OrderResponse> getMine(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
-        return orderRepository.findByNguoiDungIdOrderByIdDesc(user.getId()).stream()
-                .map(this::toResponse)
-                .toList();
+        List<Order> orders = orderRepository.findByNguoiDungIdOrderByIdDesc(user.getId());
+        return buildOrderResponses(orders);
     }
 
     /**
@@ -189,43 +197,85 @@ public class OrderService {
     }
 
     private OrderResponse toResponse(Order o) {
-        List<OrderDetail> details = detailRepository.findByDonHangId(o.getId());
-        List<OrderLineResponse> items = details.stream().map(d -> {
-            Product p = productRepository.findById(d.getSanPhamId()).orElse(null);
-            String image = imageRepository.findBySanPhamIdOrderByThuTuAsc(d.getSanPhamId())
-                    .stream().findFirst().map(ProductImage::getUrl).orElse(null);
-            BigDecimal lineTotal = d.getGiaBan().multiply(BigDecimal.valueOf(d.getSoLuong()));
-            return new OrderLineResponse(
-                    d.getId(),
-                    d.getSanPhamId(),
-                    p == null ? "(sản phẩm đã xoá)" : p.getTenSanPham(),
-                    image,
-                    d.getSoLuong(),
-                    d.getGiaBan(),
-                    lineTotal);
-        }).toList();
+        return buildOrderResponses(List.of(o)).get(0);
+    }
 
-        String maCoupon = null;
-        BigDecimal phanTramGiam = null;
-        if (o.getKhuyenMaiId() != null) {
-            Coupon c = couponRepository.findById(o.getKhuyenMaiId()).orElse(null);
-            if (c != null) {
-                maCoupon = c.getMaCode();
-                phanTramGiam = c.getPhanTramGiam();
+    /**
+     * Batch-build responses cho nhiều đơn — tránh N+1 trên list page.
+     * Một query: details, products, images, coupons.
+     */
+    private List<OrderResponse> buildOrderResponses(List<Order> orders) {
+        if (orders.isEmpty()) return List.of();
+
+        // 1. fetch all order details in one query
+        List<Long> orderIds = orders.stream().map(Order::getId).toList();
+        List<OrderDetail> allDetails = detailRepository.findByDonHangIdIn(orderIds);
+        Map<Long, List<OrderDetail>> detailsByOrderId = new HashMap<>();
+        for (OrderDetail d : allDetails) {
+            detailsByOrderId.computeIfAbsent(d.getDonHangId(), k -> new java.util.ArrayList<>()).add(d);
+        }
+
+        // 2. fetch all products + first-image per product in batch
+        java.util.Set<Long> productIds = new java.util.HashSet<>();
+        for (OrderDetail d : allDetails) productIds.add(d.getSanPhamId());
+        Map<Long, Product> productMap = new HashMap<>();
+        for (Product p : productRepository.findAllById(productIds)) {
+            productMap.put(p.getId(), p);
+        }
+        Map<Long, String> firstImageMap = new HashMap<>();
+        for (ProductImage img : imageRepository.findBySanPhamIdInOrderBySanPhamIdAscThuTuAsc(productIds)) {
+            firstImageMap.putIfAbsent(img.getSanPhamId(), img.getUrl());
+        }
+
+        // 3. fetch coupons referenced by these orders in batch
+        java.util.Set<Long> couponIds = new java.util.HashSet<>();
+        for (Order o : orders) if (o.getKhuyenMaiId() != null) couponIds.add(o.getKhuyenMaiId());
+        Map<Long, Coupon> couponMap = new HashMap<>();
+        if (!couponIds.isEmpty()) {
+            for (Coupon c : couponRepository.findAllById(couponIds)) {
+                couponMap.put(c.getId(), c);
             }
         }
 
-        return new OrderResponse(
-                o.getId(),
-                o.getNguoiDungId(),
-                o.getTongTien(),
-                o.getTrangThai(),
-                o.getDiaChiGiao(),
-                o.getPhuongThucTt(),
-                maCoupon,
-                phanTramGiam,
-                o.getCreatedAt(),
-                items);
+        // 4. assemble
+        return orders.stream().map(o -> {
+            List<OrderDetail> details = detailsByOrderId.getOrDefault(o.getId(), List.of());
+            List<OrderLineResponse> items = details.stream().map(d -> {
+                Product p = productMap.get(d.getSanPhamId());
+                String image = firstImageMap.get(d.getSanPhamId());
+                BigDecimal lineTotal = d.getGiaBan().multiply(BigDecimal.valueOf(d.getSoLuong()));
+                return new OrderLineResponse(
+                        d.getId(),
+                        d.getSanPhamId(),
+                        p == null ? "(sản phẩm đã xoá)" : p.getTenSanPham(),
+                        image,
+                        d.getSoLuong(),
+                        d.getGiaBan(),
+                        lineTotal);
+            }).toList();
+
+            String maCoupon = null;
+            BigDecimal phanTramGiam = null;
+            if (o.getKhuyenMaiId() != null) {
+                Coupon c = couponMap.get(o.getKhuyenMaiId());
+                if (c != null) {
+                    maCoupon = c.getMaCode();
+                    phanTramGiam = c.getPhanTramGiam();
+                }
+            }
+
+            return new OrderResponse(
+                    o.getId(),
+                    o.getNguoiDungId(),
+                    o.getTongTien(),
+                    o.getTrangThai(),
+                    o.getDiaChiGiao(),
+                    o.getPhuongThucTt(),
+                    maCoupon,
+                    phanTramGiam,
+                    o.getCreatedAt(),
+                    items);
+        }).toList();
     }
 
     // ===== ADMIN =====
@@ -235,7 +285,7 @@ public class OrderService {
         List<Order> rows = status == null
                 ? orderRepository.findAllByOrderByIdDesc()
                 : orderRepository.findByTrangThaiOrderByIdDesc(status);
-        return rows.stream().map(this::toAdminResponse).toList();
+        return buildAdminOrderResponses(rows);
     }
 
     @Transactional(readOnly = true)
@@ -288,7 +338,7 @@ public class OrderService {
         Long adminId = userRepository.findByEmail(adminEmail).map(User::getId).orElse(null);
         List<OrderDetail> details = detailRepository.findByDonHangId(order.getId());
         for (OrderDetail d : details) {
-            Inventory inv = inventoryRepository.findBySanPhamId(d.getSanPhamId())
+            Inventory inv = inventoryRepository.findBySanPhamIdForUpdate(d.getSanPhamId())
                     .orElseGet(() -> inventoryService.ensureRow(d.getSanPhamId()));
             int truoc = inv.getSoLuongTon();
             int sau = truoc + d.getSoLuong();
@@ -309,23 +359,43 @@ public class OrderService {
     }
 
     private AdminOrderResponse toAdminResponse(Order o) {
-        OrderResponse base = toResponse(o);
-        User u = userRepository.findById(o.getNguoiDungId()).orElse(null);
-        int soLuongMon = base.items().stream().mapToInt(it -> it.soLuong() == null ? 0 : it.soLuong()).sum();
-        return new AdminOrderResponse(
-                o.getId(),
-                o.getNguoiDungId(),
-                u == null ? "(đã xoá)" : u.getHoTen(),
-                u == null ? null : u.getEmail(),
-                u == null ? null : u.getSoDienThoai(),
-                o.getTongTien(),
-                o.getTrangThai(),
-                o.getDiaChiGiao(),
-                o.getPhuongThucTt(),
-                base.maCoupon(),
-                base.phanTramGiam(),
-                o.getCreatedAt(),
-                base.items(),
-                soLuongMon);
+        return buildAdminOrderResponses(List.of(o)).get(0);
+    }
+
+    /** Batch admin response — fetch users theo batch + reuse buildOrderResponses. */
+    private List<AdminOrderResponse> buildAdminOrderResponses(List<Order> orders) {
+        if (orders.isEmpty()) return List.of();
+
+        List<OrderResponse> bases = buildOrderResponses(orders);
+        Map<Long, OrderResponse> baseById = new HashMap<>();
+        for (OrderResponse b : bases) baseById.put(b.id(), b);
+
+        java.util.Set<Long> userIds = new java.util.HashSet<>();
+        for (Order o : orders) userIds.add(o.getNguoiDungId());
+        Map<Long, User> userMap = new HashMap<>();
+        for (User u : userRepository.findAllById(userIds)) userMap.put(u.getId(), u);
+
+        return orders.stream().map(o -> {
+            OrderResponse base = baseById.get(o.getId());
+            User u = userMap.get(o.getNguoiDungId());
+            int soLuongMon = base.items().stream()
+                    .mapToInt(it -> it.soLuong() == null ? 0 : it.soLuong())
+                    .sum();
+            return new AdminOrderResponse(
+                    o.getId(),
+                    o.getNguoiDungId(),
+                    u == null ? "(đã xoá)" : u.getHoTen(),
+                    u == null ? null : u.getEmail(),
+                    u == null ? null : u.getSoDienThoai(),
+                    o.getTongTien(),
+                    o.getTrangThai(),
+                    o.getDiaChiGiao(),
+                    o.getPhuongThucTt(),
+                    base.maCoupon(),
+                    base.phanTramGiam(),
+                    o.getCreatedAt(),
+                    base.items(),
+                    soLuongMon);
+        }).toList();
     }
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { authStorage, type StoredUser } from "@/lib/auth-storage";
+import { cartStorage } from "@/lib/cart-storage";
 
 /**
  * Read + write JWT auth state từ localStorage.
@@ -28,6 +29,10 @@ export function useAuth() {
 
   function logout() {
     authStorage.clear();
+    cartStorage.clear();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("cart:updated"));
+    }
     setUser(null);
   }
 

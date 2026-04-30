@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -45,8 +47,13 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> list() {
-        return categoryRepository.findAllByOrderByThuTuAscIdAsc().stream()
-                .map(this::toResponse)
+        List<Category> categories = categoryRepository.findAllByOrderByThuTuAscIdAsc();
+        Map<Long, Long> countMap = new HashMap<>();
+        for (Object[] row : productRepository.countActiveGroupByDanhMucId()) {
+            countMap.put((Long) row[0], (Long) row[1]);
+        }
+        return categories.stream()
+                .map(c -> CategoryResponse.from(c, countMap.getOrDefault(c.getId(), 0L)))
                 .toList();
     }
 

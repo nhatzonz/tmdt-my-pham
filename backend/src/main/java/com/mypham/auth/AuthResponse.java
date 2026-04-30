@@ -8,6 +8,7 @@ public record AuthResponse(
             Long id,
             String hoTen,
             String email,
+            String soDienThoai,
             User.Role vaiTro
     ) {}
 }

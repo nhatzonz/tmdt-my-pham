@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> {
     List<OrderDetail> findByDonHangId(Long donHangId);
+    List<OrderDetail> findByDonHangIdIn(java.util.Collection<Long> donHangIds);
 }

@@ -5,6 +5,7 @@ export type StoredUser = {
   id: number;
   hoTen: string;
   email: string;
+  soDienThoai?: string;
   vaiTro: "CUSTOMER" | "ADMIN";
 };
 

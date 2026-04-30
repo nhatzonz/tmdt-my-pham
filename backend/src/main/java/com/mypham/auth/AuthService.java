@@ -66,6 +66,7 @@ public class AuthService {
     }
 
     private AuthResponse.UserInfo toUserInfo(User u) {
-        return new AuthResponse.UserInfo(u.getId(), u.getHoTen(), u.getEmail(), u.getVaiTro());
+        return new AuthResponse.UserInfo(
+                u.getId(), u.getHoTen(), u.getEmail(), u.getSoDienThoai(), u.getVaiTro());
     }
 }

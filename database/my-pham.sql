@@ -35,7 +35,8 @@ CREATE TABLE san_pham (
     ma_san_pham   VARCHAR(50) UNIQUE,
     ten_san_pham  VARCHAR(255) NOT NULL,
     gia           NUMERIC(12,2) NOT NULL CHECK (gia >= 0),
-    loai_da       VARCHAR(50)  NOT NULL,   -- OILY | DRY | COMBINATION | SENSITIVE | NORMAL | ALL
+    loai_da       VARCHAR(50)  NOT NULL
+                  CHECK (loai_da IN ('OILY','DRY','COMBINATION','SENSITIVE','NORMAL','ALL')),
     danh_muc_id   BIGINT       NOT NULL REFERENCES danh_muc(id),
     mo_ta         TEXT,
     thuong_hieu   VARCHAR(100),
@@ -99,7 +100,7 @@ CREATE TABLE don_hang (
                    CHECK (trang_thai IN ('PENDING', 'SHIPPING', 'COMPLETED', 'CANCELLED')),
     dia_chi_giao   TEXT NOT NULL,
     phuong_thuc_tt VARCHAR(20) DEFAULT 'COD',
-    khuyen_mai_id  BIGINT REFERENCES khuyen_mai(id),
+    khuyen_mai_id  BIGINT REFERENCES khuyen_mai(id) ON DELETE SET NULL,
     created_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_don_hang_nguoi_dung ON don_hang(nguoi_dung_id, created_at DESC);
