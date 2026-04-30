@@ -32,4 +32,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             GROUP BY p.danhMucId
             """)
     List<Object[]> countActiveGroupByDanhMucId();
+
+    /** Đếm tất cả sản phẩm (kể cả HIDDEN) trong danh mục — quyết định soft/hard delete category. */
+    long countByDanhMucId(Long danhMucId);
 }

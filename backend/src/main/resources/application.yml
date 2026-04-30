@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate        # schema do SQL migration quản lý, JPA chỉ validate
+      ddl-auto: update          # dev: auto add column khi entity thay đổi. Production nên đổi lại 'validate'.
     open-in-view: false
     properties:
       hibernate:

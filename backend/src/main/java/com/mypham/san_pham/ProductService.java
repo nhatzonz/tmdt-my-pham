@@ -4,6 +4,7 @@ import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
 import com.mypham.danh_muc.CategoryRepository;
+import com.mypham.don_hang.OrderDetailRepository;
 import com.mypham.ton_kho.Inventory;
 import com.mypham.ton_kho.InventoryRepository;
 import com.mypham.ton_kho.InventoryService;
@@ -29,6 +30,7 @@ public class ProductService {
     private final UploadService uploadService;
     private final InventoryService inventoryService;
     private final InventoryRepository inventoryRepository;
+    private final OrderDetailRepository orderDetailRepository;
 
     // ---------- Admin ----------
     @Transactional
@@ -95,23 +97,41 @@ public class ProductService {
         return ProductResponse.from(saved, newUrls);
     }
 
+    /**
+     * Xoá sản phẩm:
+     *  - Nếu đã có lịch sử đơn hàng → soft-delete (set HIDDEN) để giữ tính toàn vẹn
+     *    của lịch sử đặt hàng, FE customer sẽ không còn thấy nhưng đơn cũ vẫn nguyên vẹn.
+     *  - Nếu chưa có đơn nào → hard-delete + xoá file ảnh vật lý.
+     */
     @Transactional
     public void delete(Long id) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("sản phẩm", id));
 
-        // Xoá file vật lý trước khi xoá DB row
+        if (orderDetailRepository.existsBySanPhamId(id)) {
+            // Soft delete — giữ ảnh để đơn cũ còn hiển thị thumbnail.
+            // Blank maSanPham để mã có thể tái sử dụng cho sản phẩm mới (UNIQUE constraint trên DB
+            // bỏ qua NULL nên không vướng).
+            p.setMaSanPham(null);
+            p.setTrangThai(Product.TrangThai.HIDDEN);
+            productRepository.save(p);
+            return;
+        }
+
+        // Hard delete — xoá file ảnh vật lý trước khi xoá DB row
         List<ProductImage> images = imageRepository.findBySanPhamIdOrderByThuTuAsc(id);
         for (ProductImage img : images) {
             uploadService.deleteByUrl(img.getUrl());
         }
-        // CASCADE sẽ xoá san_pham_anh khi delete san_pham
+        // CASCADE sẽ xoá san_pham_anh + ton_kho khi delete san_pham
         productRepository.delete(p);
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> list() {
-        return buildListResponses(productRepository.findAll());
+        // Admin list cũng ẩn HIDDEN — đã xoá là biến mất hẳn khỏi UI.
+        return buildListResponses(
+                productRepository.findByTrangThaiOrderByIdDesc(Product.TrangThai.ACTIVE));
     }
 
     // ---------- Public ----------
@@ -132,7 +152,16 @@ public class ProductService {
                     .map(String::toLowerCase)
                     .collect(java.util.stream.Collectors.toSet());
 
+        // Sp thuộc danh mục đã xoá mềm cũng phải ẩn khỏi storefront — chỉ liệt kê
+        // các sp có danh mục ACTIVE.
+        Set<Long> activeCategoryIds = categoryRepository
+                .findByTrangThaiOrderByThuTuAscIdAsc(com.mypham.danh_muc.Category.TrangThai.ACTIVE)
+                .stream()
+                .map(com.mypham.danh_muc.Category::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
         var stream = productRepository.findByTrangThaiOrderByIdDesc(Product.TrangThai.ACTIVE).stream()
+                .filter(p -> activeCategoryIds.contains(p.getDanhMucId()))
                 .filter(p -> isEmpty(danhMucIds) || danhMucIds.contains(p.getDanhMucId()))
                 .filter(p -> isEmpty(loaiDas) || loaiDas.contains(p.getLoaiDa()))
                 .filter(p -> brands.isEmpty()
@@ -157,6 +186,11 @@ public class ProductService {
         if (p.getTrangThai() != Product.TrangThai.ACTIVE) {
             throw new ResourceNotFoundException("sản phẩm", id);
         }
+        // Cũng ẩn nếu danh mục đã bị xoá mềm
+        com.mypham.danh_muc.Category cat = categoryRepository.findById(p.getDanhMucId()).orElse(null);
+        if (cat == null || cat.getTrangThai() != com.mypham.danh_muc.Category.TrangThai.ACTIVE) {
+            throw new ResourceNotFoundException("sản phẩm", id);
+        }
         Integer ton = inventoryRepository.findBySanPhamId(id)
                 .map(Inventory::getSoLuongTon)
                 .orElse(0);
@@ -166,7 +200,15 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> search(String q) {
         String keyword = q == null ? "" : q.trim();
-        return buildListResponses(productRepository.searchActive(keyword));
+        Set<Long> activeCategoryIds = categoryRepository
+                .findByTrangThaiOrderByThuTuAscIdAsc(com.mypham.danh_muc.Category.TrangThai.ACTIVE)
+                .stream()
+                .map(com.mypham.danh_muc.Category::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        List<Product> filtered = productRepository.searchActive(keyword).stream()
+                .filter(p -> activeCategoryIds.contains(p.getDanhMucId()))
+                .toList();
+        return buildListResponses(filtered);
     }
 
     /** Batch fetch images + inventory cho danh sách sản phẩm — tránh N+1. */

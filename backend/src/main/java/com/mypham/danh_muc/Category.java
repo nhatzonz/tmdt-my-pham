@@ -26,4 +26,14 @@ public class Category {
 
     @Column(name = "thu_tu", nullable = false)
     private Integer thuTu = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "trang_thai", nullable = false, length = 20,
+            columnDefinition = "varchar(20) NOT NULL DEFAULT 'ACTIVE'")
+    private TrangThai trangThai = TrangThai.ACTIVE;
+
+    public enum TrangThai {
+        ACTIVE,
+        HIDDEN
+    }
 }

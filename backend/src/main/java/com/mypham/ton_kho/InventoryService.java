@@ -30,6 +30,10 @@ public class InventoryService {
     /** Plan §2.3 sequence 2.5.3: chỉ check tồn kho, không lưu giỏ. */
     @Transactional(readOnly = true)
     public CartCheckResponse checkStock(Long sanPhamId, int soLuong) {
+        Product p = productRepository.findById(sanPhamId).orElse(null);
+        if (p == null || p.getTrangThai() != Product.TrangThai.ACTIVE) {
+            return CartCheckResponse.outOfStock(0, "Sản phẩm không còn bán");
+        }
         Inventory inv = inventoryRepository.findBySanPhamId(sanPhamId).orElse(null);
         if (inv == null) return CartCheckResponse.outOfStock(0, "Sản phẩm chưa có tồn kho");
         if (inv.getSoLuongTon() < soLuong) {
@@ -53,7 +57,8 @@ public class InventoryService {
 
     @Transactional(readOnly = true)
     public List<InventoryAdminResponse> listAdmin() {
-        List<Product> products = productRepository.findAll();
+        // Chỉ trả sp ACTIVE — sp đã xoá mềm không quản lý kho nữa.
+        List<Product> products = productRepository.findByTrangThaiOrderByIdDesc(Product.TrangThai.ACTIVE);
         Map<Long, Inventory> invMap = new HashMap<>();
         for (Inventory i : inventoryRepository.findAll()) {
             invMap.put(i.getSanPhamId(), i);

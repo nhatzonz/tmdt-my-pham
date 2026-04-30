@@ -26,7 +26,9 @@ CREATE TABLE danh_muc (
     ten_danh_muc  VARCHAR(100) NOT NULL,
     parent_id     BIGINT REFERENCES danh_muc(id) ON DELETE SET NULL,
     hinh_anh      TEXT,
-    thu_tu        INT NOT NULL DEFAULT 0
+    thu_tu        INT NOT NULL DEFAULT 0,
+    trang_thai    VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+                  CHECK (trang_thai IN ('ACTIVE', 'HIDDEN'))
 );
 
 

@@ -21,11 +21,14 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse create(CategoryRequest req) {
-        if (categoryRepository.existsByTenDanhMuc(req.tenDanhMuc())) {
+        // Chỉ check trùng tên trong danh mục ACTIVE — đã xoá thì có thể tạo lại với tên cũ.
+        if (categoryRepository.existsByTenDanhMucAndTrangThai(
+                req.tenDanhMuc(), Category.TrangThai.ACTIVE)) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục đã tồn tại");
         }
         Category c = new Category();
         applyFields(c, req);
+        c.setTrangThai(Category.TrangThai.ACTIVE);
         return toResponse(categoryRepository.save(c));
     }
 
@@ -33,21 +36,37 @@ public class CategoryService {
     public CategoryResponse update(Long id, CategoryRequest req) {
         Category c = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("danh mục", id));
+        // Đổi tên → check trùng trong ACTIVE (loại trừ chính nó).
+        if (!c.getTenDanhMuc().equalsIgnoreCase(req.tenDanhMuc())
+                && categoryRepository.existsByTenDanhMucAndTrangThai(
+                        req.tenDanhMuc(), Category.TrangThai.ACTIVE)) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục đã tồn tại");
+        }
         applyFields(c, req);
         return toResponse(categoryRepository.save(c));
     }
 
+    /**
+     * Xoá danh mục:
+     *  - Nếu còn sản phẩm tham chiếu (kể cả HIDDEN) → soft-delete (set HIDDEN)
+     *  - Nếu không có sản phẩm nào → hard delete
+     */
     @Transactional
     public void delete(Long id) {
-        if (!categoryRepository.existsById(id)) {
-            throw new ResourceNotFoundException("danh mục", id);
+        Category c = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("danh mục", id));
+        if (productRepository.countByDanhMucId(id) > 0) {
+            c.setTrangThai(Category.TrangThai.HIDDEN);
+            categoryRepository.save(c);
+            return;
         }
-        categoryRepository.deleteById(id);
+        categoryRepository.delete(c);
     }
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> list() {
-        List<Category> categories = categoryRepository.findAllByOrderByThuTuAscIdAsc();
+        List<Category> categories = categoryRepository
+                .findByTrangThaiOrderByThuTuAscIdAsc(Category.TrangThai.ACTIVE);
         Map<Long, Long> countMap = new HashMap<>();
         for (Object[] row : productRepository.countActiveGroupByDanhMucId()) {
             countMap.put((Long) row[0], (Long) row[1]);
