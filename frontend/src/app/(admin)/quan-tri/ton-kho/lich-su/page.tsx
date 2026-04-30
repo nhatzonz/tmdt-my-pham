@@ -209,17 +209,26 @@ function ActionBadge({ action }: { action: InventoryLogAction }) {
 
 function NguonChip({ nguon }: { nguon?: string }) {
   if (!nguon) return <span className="text-xs text-[color:var(--color-muted)]">—</span>;
-  if (nguon.startsWith("don_hang_")) {
-    const id = nguon.replace("don_hang_", "");
+
+  // Admin context — link tới /quan-tri/don-hang/{id}, không phải route khách hàng.
+  const orderRef =
+    nguon.startsWith("don_hang_")
+      ? { id: nguon.slice("don_hang_".length), label: "Đơn" }
+      : nguon.startsWith("huy_don_")
+        ? { id: nguon.slice("huy_don_".length), label: "Huỷ đơn" }
+        : null;
+
+  if (orderRef) {
     return (
       <Link
-        href={`/don-hang/${id}`}
+        href={`/quan-tri/don-hang/${orderRef.id}`}
         className="inline-flex items-center rounded-md bg-[color:var(--color-pastel-blush)]/40 px-2 py-1 text-xs text-[color:var(--color-ink-soft)] hover:underline"
       >
-        Đơn #{id}
+        {orderRef.label} #{orderRef.id}
       </Link>
     );
   }
+
   return (
     <span className="inline-flex items-center rounded-md bg-[color:var(--color-ivory-2)] px-2 py-1 text-xs text-[color:var(--color-ink-soft)]">
       {nguon}

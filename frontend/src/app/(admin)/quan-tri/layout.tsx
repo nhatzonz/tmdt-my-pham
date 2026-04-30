@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Boxes, LayoutDashboard, LogOut, Package, Receipt, Tag, Ticket } from "lucide-react";
+import { Boxes, History, LayoutDashboard, LogOut, Package, Receipt, Tag, Ticket } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { cn } from "@/lib/cn";
 
@@ -13,6 +13,7 @@ const NAV = [
   { label: "Danh mục", href: "/quan-tri/danh-muc", icon: Tag },
   { label: "Sản phẩm", href: "/quan-tri/san-pham", icon: Package },
   { label: "Tồn kho", href: "/quan-tri/ton-kho", icon: Boxes },
+  { label: "Lịch sử kho", href: "/quan-tri/ton-kho/lich-su", icon: History },
   { label: "Khuyến mãi", href: "/quan-tri/khuyen-mai", icon: Ticket },
   { label: "Đơn hàng", href: "/quan-tri/don-hang", icon: Receipt },
 ];
