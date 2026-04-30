@@ -15,6 +15,8 @@ export type Product = {
   thuongHieu?: string;
   hinhAnh: string[];
   trangThai: TrangThai;
+  soLuongTon: number;
+  hetHang: boolean;
 };
 
 export type CreateProductRequest = {

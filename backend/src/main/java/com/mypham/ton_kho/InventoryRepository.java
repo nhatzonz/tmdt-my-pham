@@ -6,10 +6,13 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     Optional<Inventory> findBySanPhamId(Long sanPhamId);
+    List<Inventory> findBySanPhamIdIn(Collection<Long> sanPhamIds);
 
     /** Khoá row cho transaction checkout — chống race oversell. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

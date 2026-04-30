@@ -13,9 +13,16 @@ public record ProductResponse(
         String moTa,
         String thuongHieu,
         List<String> hinhAnh,
-        Product.TrangThai trangThai
+        Product.TrangThai trangThai,
+        Integer soLuongTon,
+        boolean hetHang
 ) {
     public static ProductResponse from(Product p, List<String> images) {
+        return from(p, images, null);
+    }
+
+    public static ProductResponse from(Product p, List<String> images, Integer soLuongTon) {
+        int ton = soLuongTon == null ? 0 : soLuongTon;
         return new ProductResponse(
                 p.getId(),
                 p.getMaSanPham(),
@@ -26,7 +33,9 @@ public record ProductResponse(
                 p.getMoTa(),
                 p.getThuongHieu(),
                 images == null ? List.of() : images,
-                p.getTrangThai()
+                p.getTrangThai(),
+                ton,
+                ton <= 0
         );
     }
 }

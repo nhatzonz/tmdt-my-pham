@@ -4,6 +4,8 @@ import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
 import com.mypham.danh_muc.CategoryRepository;
+import com.mypham.ton_kho.Inventory;
+import com.mypham.ton_kho.InventoryRepository;
 import com.mypham.ton_kho.InventoryService;
 import com.mypham.upload.UploadService;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -24,6 +28,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final UploadService uploadService;
     private final InventoryService inventoryService;
+    private final InventoryRepository inventoryRepository;
 
     // ---------- Admin ----------
     @Transactional
@@ -106,9 +111,7 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<ProductResponse> list() {
-        return productRepository.findAll().stream()
-                .map(p -> ProductResponse.from(p, getImageUrls(p.getId())))
-                .toList();
+        return buildListResponses(productRepository.findAll());
     }
 
     // ---------- Public ----------
@@ -144,9 +147,7 @@ public class ProductService {
             stream = stream.sorted(java.util.Comparator.comparing(Product::getGia).reversed());
         }
 
-        return stream
-                .map(p -> ProductResponse.from(p, getImageUrls(p.getId())))
-                .toList();
+        return buildListResponses(stream.toList());
     }
 
     @Transactional(readOnly = true)
@@ -156,14 +157,43 @@ public class ProductService {
         if (p.getTrangThai() != Product.TrangThai.ACTIVE) {
             throw new ResourceNotFoundException("sản phẩm", id);
         }
-        return ProductResponse.from(p, getImageUrls(id));
+        Integer ton = inventoryRepository.findBySanPhamId(id)
+                .map(Inventory::getSoLuongTon)
+                .orElse(0);
+        return ProductResponse.from(p, getImageUrls(id), ton);
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> search(String q) {
         String keyword = q == null ? "" : q.trim();
-        return productRepository.searchActive(keyword).stream()
-                .map(p -> ProductResponse.from(p, getImageUrls(p.getId())))
+        return buildListResponses(productRepository.searchActive(keyword));
+    }
+
+    /** Batch fetch images + inventory cho danh sách sản phẩm — tránh N+1. */
+    private List<ProductResponse> buildListResponses(List<Product> products) {
+        if (products.isEmpty()) return List.of();
+
+        Set<Long> ids = new HashSet<>();
+        for (Product p : products) ids.add(p.getId());
+
+        Map<Long, List<String>> imagesByProductId = new HashMap<>();
+        for (ProductImage img : imageRepository
+                .findBySanPhamIdInOrderBySanPhamIdAscThuTuAsc(ids)) {
+            imagesByProductId
+                    .computeIfAbsent(img.getSanPhamId(), k -> new java.util.ArrayList<>())
+                    .add(img.getUrl());
+        }
+
+        Map<Long, Integer> tonByProductId = new HashMap<>();
+        for (Inventory inv : inventoryRepository.findBySanPhamIdIn(ids)) {
+            tonByProductId.put(inv.getSanPhamId(), inv.getSoLuongTon());
+        }
+
+        return products.stream()
+                .map(p -> ProductResponse.from(
+                        p,
+                        imagesByProductId.getOrDefault(p.getId(), List.of()),
+                        tonByProductId.getOrDefault(p.getId(), 0)))
                 .toList();
     }
 

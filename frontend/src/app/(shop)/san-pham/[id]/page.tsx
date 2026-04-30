@@ -102,15 +102,23 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
             {product.thuongHieu && (
               <Badge>Thương hiệu: {product.thuongHieu}</Badge>
             )}
-            <Badge tone="ok">Còn hàng</Badge>
+            {product.hetHang ? (
+              <Badge tone="error">Hết hàng</Badge>
+            ) : (
+              <Badge tone="ok">Còn hàng</Badge>
+            )}
           </div>
 
           <div className="flex items-baseline gap-4">
             <span className="font-serif text-4xl">{formatCurrency(product.gia)}</span>
-            <span className="text-xs text-[color:var(--color-muted)]">đã bao gồm VAT</span>
           </div>
 
-          <AddToCartBlock productId={product.id} price={Number(product.gia)} />
+          <AddToCartBlock
+            productId={product.id}
+            price={Number(product.gia)}
+            hetHang={product.hetHang}
+            soLuongTon={product.soLuongTon}
+          />
 
           <div className="grid grid-cols-3 gap-2">
             <InfoTile icon={<Truck className="size-4" />} label="Free ship từ 500K" />
@@ -178,15 +186,17 @@ function Badge({
   tone = "default",
 }: {
   children: React.ReactNode;
-  tone?: "default" | "ok";
+  tone?: "default" | "ok" | "error";
 }) {
   return (
     <span
       className={cn(
         "rounded-full px-3 py-1 text-xs",
-        tone === "ok"
-          ? "bg-[color:var(--color-pastel-mint)] text-[color:var(--color-ink-soft)]"
-          : "bg-[color:var(--color-ivory-2)] text-[color:var(--color-ink-soft)]",
+        tone === "ok" &&
+          "bg-[color:var(--color-pastel-mint)] text-[color:var(--color-ink-soft)]",
+        tone === "error" && "bg-rose-100 text-rose-700",
+        tone === "default" &&
+          "bg-[color:var(--color-ivory-2)] text-[color:var(--color-ink-soft)]",
       )}
     >
       {children}

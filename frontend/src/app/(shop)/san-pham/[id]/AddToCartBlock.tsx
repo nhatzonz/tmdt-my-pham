@@ -13,9 +13,11 @@ import { formatCurrency } from "@/lib/format";
 type Props = {
   productId: number;
   price: number;
+  hetHang?: boolean;
+  soLuongTon?: number;
 };
 
-export function AddToCartBlock({ productId, price }: Props) {
+export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props) {
   const router = useRouter();
   const { upsert } = useCart();
   const [qty, setQty] = useState(1);
@@ -55,6 +57,19 @@ export function AddToCartBlock({ productId, price }: Props) {
     if (ok) router.push("/thanh-toan");
   }
 
+  if (hetHang) {
+    return (
+      <div className="flex flex-col gap-2">
+        <Button size="lg" disabled className="w-full">
+          Hết hàng
+        </Button>
+        <p className="text-xs text-[color:var(--color-muted)]">
+          Sản phẩm tạm hết hàng — vui lòng quay lại sau.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-3">
@@ -81,6 +96,9 @@ export function AddToCartBlock({ productId, price }: Props) {
           Mua ngay
         </Button>
       </div>
+      {soLuongTon !== undefined && soLuongTon > 0 && soLuongTon <= 5 && (
+        <p className="text-xs text-amber-700">Chỉ còn {soLuongTon} sản phẩm</p>
+      )}
       {error && (
         <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
       )}

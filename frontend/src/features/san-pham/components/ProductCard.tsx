@@ -16,12 +16,20 @@ export function ProductCard({ product }: { product: Product }) {
           <img
             src={img}
             alt={product.tenSanPham}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={cn(
+              "h-full w-full object-cover transition-transform duration-300 group-hover:scale-105",
+              product.hetHang && "opacity-60 grayscale",
+            )}
           />
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="h-2/3 w-1/3 rounded-md bg-white/70 shadow-sm transition-transform group-hover:-translate-y-1" />
           </div>
+        )}
+        {product.hetHang && (
+          <span className="absolute left-3 top-3 rounded-full bg-rose-600/95 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-white shadow-sm">
+            Hết hàng
+          </span>
         )}
       </div>
 
