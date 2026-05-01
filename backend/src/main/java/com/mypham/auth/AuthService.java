@@ -83,12 +83,57 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse.UserInfo getCurrentUser(String email) {
+        return toUserInfo(loadActiveUser(email));
+    }
+
+    /** Customer cập nhật hoTen + soDienThoai. Không cho đổi email/vai trò qua đây. */
+    @Transactional
+    public AuthResponse.UserInfo updateMe(String email, UpdateMeRequest req) {
+        User user = loadActiveUser(email);
+        String newSdt = req.soDienThoai() == null || req.soDienThoai().isBlank()
+                ? null
+                : req.soDienThoai().trim();
+
+        if (newSdt != null) {
+            userRepository.findBySoDienThoaiAndTrangThai(newSdt, User.TrangThai.ACTIVE)
+                    .filter(other -> !other.getId().equals(user.getId()))
+                    .ifPresent(other -> {
+                        throw new BusinessException(
+                                ErrorCode.VALIDATION_FAILED,
+                                "Số điện thoại đã được sử dụng");
+                    });
+        }
+
+        user.setHoTen(req.hoTen().trim());
+        user.setSoDienThoai(newSdt);
+        return toUserInfo(userRepository.save(user));
+    }
+
+    /** Customer đổi mật khẩu — phải nhập đúng mật khẩu hiện tại. */
+    @Transactional
+    public void changePassword(String email, ChangePasswordRequest req) {
+        User user = loadActiveUser(email);
+        if (!passwordEncoder.matches(req.matKhauCu(), user.getMatKhau())) {
+            throw new BusinessException(
+                    ErrorCode.VALIDATION_FAILED,
+                    "Mật khẩu hiện tại không đúng");
+        }
+        if (passwordEncoder.matches(req.matKhauMoi(), user.getMatKhau())) {
+            throw new BusinessException(
+                    ErrorCode.VALIDATION_FAILED,
+                    "Mật khẩu mới phải khác mật khẩu hiện tại");
+        }
+        user.setMatKhau(passwordEncoder.encode(req.matKhauMoi()));
+        userRepository.save(user);
+    }
+
+    private User loadActiveUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
         if (user.getTrangThai() == User.TrangThai.HIDDEN) {
             throw new ResourceNotFoundException("Không tìm thấy người dùng");
         }
-        return toUserInfo(user);
+        return user;
     }
 
     private AuthResponse issueToken(User user) {

@@ -27,6 +27,12 @@ export function useAuth() {
     setUser(nextUser);
   }
 
+  /** Cập nhật user trong storage + state sau khi sửa hồ sơ. */
+  function updateUser(nextUser: StoredUser) {
+    authStorage.setUser(nextUser);
+    setUser(nextUser);
+  }
+
   function logout() {
     authStorage.clear();
     cartStorage.clear();
@@ -36,5 +42,5 @@ export function useAuth() {
     setUser(null);
   }
 
-  return { user, loaded, login, logout };
+  return { user, loaded, login, logout, updateUser };
 }

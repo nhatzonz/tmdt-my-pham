@@ -38,4 +38,23 @@ public class AuthController {
         AuthResponse.UserInfo info = authService.getCurrentUser(authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(info));
     }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> updateMe(
+            Authentication auth,
+            @Valid @RequestBody UpdateMeRequest req
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Đã cập nhật thông tin",
+                authService.updateMe(auth.getName(), req)));
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            Authentication auth,
+            @Valid @RequestBody ChangePasswordRequest req
+    ) {
+        authService.changePassword(auth.getName(), req);
+        return ResponseEntity.ok(ApiResponse.success("Đã đổi mật khẩu", null));
+    }
 }

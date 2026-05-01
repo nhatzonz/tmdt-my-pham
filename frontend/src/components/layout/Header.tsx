@@ -90,12 +90,14 @@ export function Header({ categories = [] }: { categories?: Category[] }) {
               >
                 <Package className="size-5" />
               </Link>
-              <span
-                className="flex size-8 items-center justify-center rounded-full bg-[color:var(--color-pastel-blush)] text-xs font-medium text-[color:var(--color-ink)]"
-                title={user.hoTen}
+              <Link
+                href="/tai-khoan"
+                aria-label="Tài khoản"
+                title={`${user.hoTen} — Quản lý tài khoản`}
+                className="flex size-8 items-center justify-center rounded-full bg-[color:var(--color-pastel-blush)] text-xs font-medium text-[color:var(--color-ink)] transition hover:opacity-80"
               >
                 {getInitials(user.hoTen)}
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
