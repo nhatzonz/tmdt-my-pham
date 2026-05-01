@@ -18,9 +18,11 @@ export type VietnamAddress = {
 type Props = {
   value?: VietnamAddress;
   onChange: (addr: VietnamAddress) => void;
+  /** Đánh dấu * đỏ + chặn submit nếu chưa chọn. Default true (cho checkout). */
+  required?: boolean;
 };
 
-export function VietnamAddressPicker({ value, onChange }: Props) {
+export function VietnamAddressPicker({ value, onChange, required = true }: Props) {
   const [provinces, setProvinces] = useState<Unit[]>([]);
   const [districts, setDistricts] = useState<Unit[]>([]);
   const [wards, setWards] = useState<Unit[]>([]);
@@ -137,7 +139,7 @@ export function VietnamAddressPicker({ value, onChange }: Props) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <Select
         label="Tỉnh / Thành"
-        required
+        required={required}
         loading={loadingProv}
         value={provinceCode === "" ? "" : String(provinceCode)}
         onChange={handleProvince}
@@ -146,7 +148,7 @@ export function VietnamAddressPicker({ value, onChange }: Props) {
       />
       <Select
         label="Quận / Huyện"
-        required
+        required={required}
         loading={loadingDist}
         value={districtCode === "" ? "" : String(districtCode)}
         onChange={handleDistrict}
@@ -158,7 +160,7 @@ export function VietnamAddressPicker({ value, onChange }: Props) {
       />
       <Select
         label="Phường / Xã"
-        required
+        required={required}
         loading={loadingWard}
         value={wardCode === "" ? "" : String(wardCode)}
         onChange={handleWard}

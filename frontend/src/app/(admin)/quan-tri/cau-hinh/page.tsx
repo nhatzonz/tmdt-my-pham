@@ -17,6 +17,10 @@ import {
   type StoreConfigRequest,
   storeConfigApi,
 } from "@/features/cau-hinh/api";
+import {
+  VietnamAddressPicker,
+  type VietnamAddress,
+} from "@/features/dia-chi/VietnamAddressPicker";
 import { imageUrl, productApi } from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
@@ -200,27 +204,25 @@ export default function AdminCauHinhPage() {
           <MapPin className="size-5 text-[color:var(--color-muted)]" />
           <h2 className="font-medium">Địa chỉ</h2>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Input
-            name="diaChiTinh"
-            label="Tỉnh / Thành"
-            value={form.diaChiTinh ?? ""}
-            onChange={(e) => setForm({ ...form, diaChiTinh: e.target.value })}
-            maxLength={100}
-          />
-          <Input
-            name="diaChiQuan"
-            label="Quận / Huyện"
-            value={form.diaChiQuan ?? ""}
-            onChange={(e) => setForm({ ...form, diaChiQuan: e.target.value })}
-            maxLength={100}
-          />
-          <Input
-            name="diaChiPhuong"
-            label="Phường / Xã"
-            value={form.diaChiPhuong ?? ""}
-            onChange={(e) => setForm({ ...form, diaChiPhuong: e.target.value })}
-            maxLength={100}
+        <div className="mt-4">
+          <VietnamAddressPicker
+            required={false}
+            value={
+              {
+                tinh: form.diaChiTinh ?? "",
+                quan: form.diaChiQuan ?? "",
+                phuong: form.diaChiPhuong ?? "",
+                fullText: "",
+              } satisfies VietnamAddress
+            }
+            onChange={(addr) =>
+              setForm({
+                ...form,
+                diaChiTinh: addr.tinh,
+                diaChiQuan: addr.quan,
+                diaChiPhuong: addr.phuong,
+              })
+            }
           />
         </div>
         <div className="mt-4">

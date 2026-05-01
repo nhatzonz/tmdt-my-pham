@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Boxes, History, LayoutDashboard, LogOut, Package, Receipt, Settings, Tag, Ticket, Users } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { storeConfigApi, type StoreConfig } from "@/features/cau-hinh/api";
+import { imageUrl } from "@/features/san-pham/api";
 import { cn } from "@/lib/cn";
 
 const NAV = [
@@ -24,6 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const { user, loaded, logout } = useAuth();
+  const [storeConfig, setStoreConfig] = useState<StoreConfig | null>(null);
 
   useEffect(() => {
     if (!loaded) return;
@@ -35,6 +38,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace("/");
     }
   }, [loaded, user, router]);
+
+  useEffect(() => {
+    storeConfigApi.get().then(setStoreConfig).catch(() => setStoreConfig(null));
+  }, []);
+
+  const tenCuaHang = storeConfig?.tenCuaHang || "Ngọc Lan Beauty";
+  const logoSrc = (storeConfig?.logoUrl && imageUrl(storeConfig.logoUrl)) || "/logo.png";
 
   function handleLogout() {
     logout();
@@ -57,14 +67,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="flex w-64 flex-col border-r border-[color:var(--color-border)] bg-white p-6">
         <Link href="/quan-tri" className="flex items-center gap-2">
           <Image
-            src="/logo.png"
-            alt="Ngọc Lan Beauty"
+            src={logoSrc}
+            alt={tenCuaHang}
             width={40}
             height={40}
+            unoptimized
             className="size-10 object-contain"
             priority
           />
-          <span className="font-serif text-xl italic leading-none">Ngọc Lan Beauty</span>
+          <span className="font-serif text-xl italic leading-none">{tenCuaHang}</span>
           <span className="text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
             Admin
           </span>

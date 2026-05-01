@@ -5,15 +5,25 @@ import Link from "next/link";
 import { LogOut, Package, Search, ShoppingBag, User } from "lucide-react";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import type { StoreConfig } from "@/features/cau-hinh/api";
 import type { Category } from "@/features/danh-muc/api";
 import { useCart } from "@/features/gio-hang/hooks/use-cart";
+import { imageUrl } from "@/features/san-pham/api";
 
 const STATIC_NAV = [{ label: "Sản phẩm", href: "/san-pham" }];
 
-export function Header({ categories = [] }: { categories?: Category[] }) {
+export function Header({
+  categories = [],
+  storeConfig,
+}: {
+  categories?: Category[];
+  storeConfig?: StoreConfig | null;
+}) {
   const { user, loaded, logout } = useAuth();
   const { totalCount } = useCart();
   const topCategories = categories.slice(0, 3);
+  const tenCuaHang = storeConfig?.tenCuaHang || "Ngọc Lan Beauty";
+  const logoSrc = (storeConfig?.logoUrl && imageUrl(storeConfig.logoUrl)) || "/logo.png";
 
   function handleLogout() {
     logout();
@@ -25,14 +35,15 @@ export function Header({ categories = [] }: { categories?: Category[] }) {
       <div className="mx-auto flex max-w-7xl items-center gap-10 px-6 py-4">
         <Link href={routes.home} className="flex items-center gap-2">
           <Image
-            src="/logo.png"
-            alt="Ngọc Lan Beauty"
+            src={logoSrc}
+            alt={tenCuaHang}
             width={48}
             height={48}
+            unoptimized
             className="size-12 object-contain"
             priority
           />
-          <span className="font-serif text-2xl italic leading-none">Ngọc Lan Beauty</span>
+          <span className="font-serif text-2xl italic leading-none">{tenCuaHang}</span>
         </Link>
 
         <nav className="flex flex-1 items-center gap-7 text-sm">
