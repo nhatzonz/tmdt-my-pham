@@ -36,11 +36,21 @@ public class User {
     @Column(name = "so_dien_thoai", length = 20)
     private String soDienThoai;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "trang_thai", nullable = false, length = 20,
+            columnDefinition = "varchar(20) NOT NULL DEFAULT 'ACTIVE'")
+    private TrangThai trangThai = TrangThai.ACTIVE;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
     public enum Role {
         CUSTOMER,
         ADMIN
+    }
+
+    public enum TrangThai {
+        ACTIVE,
+        HIDDEN  // soft-delete
     }
 }

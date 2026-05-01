@@ -35,4 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     /** Đếm tất cả sản phẩm (kể cả HIDDEN) trong danh mục — quyết định soft/hard delete category. */
     long countByDanhMucId(Long danhMucId);
+
+    /** Tìm sản phẩm dùng mã maSanPham — phục vụ check unique app-level (loại HIDDEN). */
+    java.util.Optional<Product> findByMaSanPhamAndTrangThai(String maSanPham, Product.TrangThai trangThai);
 }

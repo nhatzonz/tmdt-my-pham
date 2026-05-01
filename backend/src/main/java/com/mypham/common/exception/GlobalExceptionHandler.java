@@ -52,11 +52,16 @@ public class GlobalExceptionHandler {
                         (a, b) -> a,
                         LinkedHashMap::new));
         log.warn("[Validation] {}", fieldErrors);
+        // 1 field lỗi → đưa message cụ thể lên top-level cho FE hiển thị trực tiếp;
+        // nhiều field → giữ message tổng quát + chi tiết trong data.fields.
+        String topMessage = fieldErrors.size() == 1
+                ? fieldErrors.values().iterator().next()
+                : ErrorCode.VALIDATION_FAILED.getDefaultMessage();
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
                         400,
-                        ErrorCode.VALIDATION_FAILED.getDefaultMessage(),
+                        topMessage,
                         Map.of("errorCode", ErrorCode.VALIDATION_FAILED.getCode(),
                                "fields", fieldErrors),
                         Instant.now()));

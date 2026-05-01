@@ -136,8 +136,16 @@ public class CouponService {
         String newCode = req.maCode().trim().toUpperCase();
         if (!c.getMaCode().equalsIgnoreCase(newCode)) {
             Optional<Coupon> dup = couponRepository.findByMaCode(newCode);
-            if (dup.isPresent() && dup.get().getStatus() != Coupon.Status.HIDDEN) {
+            if (dup.isPresent() && dup.get().getStatus() != Coupon.Status.HIDDEN
+                    && !dup.get().getId().equals(c.getId())) {
                 throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
+            }
+            // Trùng với mã HIDDEN → rename old để giải phóng UNIQUE
+            if (dup.isPresent() && dup.get().getStatus() == Coupon.Status.HIDDEN
+                    && !dup.get().getId().equals(c.getId())) {
+                Coupon old = dup.get();
+                old.setMaCode("__deleted_" + old.getId() + "_" + old.getMaCode());
+                couponRepository.saveAndFlush(old);
             }
         }
         // Không cho giảm soLuong dưới mức đã sử dụng

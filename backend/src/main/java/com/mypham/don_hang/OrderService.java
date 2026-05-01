@@ -55,6 +55,19 @@ public class OrderService {
      *  COMPLETED → (đóng — không đổi nữa)
      *  CANCELLED → (đóng — không đổi nữa)
      */
+    /**
+     * Load user theo email từ JWT. Reject HIDDEN user — tránh kẻ tấn công có
+     * token còn live trước khi admin xoá vẫn dùng API như bình thường.
+     */
+    private User loadActiveUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        if (user.getTrangThai() == User.TrangThai.HIDDEN) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng");
+        }
+        return user;
+    }
+
     private static final Map<Order.TrangThai, Set<Order.TrangThai>> ALLOWED_TRANSITIONS = Map.of(
             Order.TrangThai.PENDING,   EnumSet.of(Order.TrangThai.SHIPPING, Order.TrangThai.CANCELLED),
             Order.TrangThai.SHIPPING,  EnumSet.of(Order.TrangThai.COMPLETED, Order.TrangThai.CANCELLED),
@@ -64,8 +77,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(String email, CheckoutRequest req) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        User user = loadActiveUser(email);
 
         // 0. Dedup items theo sanPhamId — phòng trường hợp client gửi 2 dòng cùng sản phẩm
         Map<Long, Integer> mergedQuantities = new java.util.LinkedHashMap<>();
@@ -165,8 +177,7 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getMine(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        User user = loadActiveUser(email);
         List<Order> orders = orderRepository.findByNguoiDungIdOrderByIdDesc(user.getId());
         return buildOrderResponses(orders);
     }
@@ -177,8 +188,7 @@ public class OrderService {
      */
     @Transactional
     public OrderResponse cancelMine(Long id, String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        User user = loadActiveUser(email);
         Order order = orderRepository.findByIdAndNguoiDungId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("đơn hàng", id));
         if (order.getTrangThai() != Order.TrangThai.PENDING) {
@@ -194,8 +204,7 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderResponse getById(Long id, String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        User user = loadActiveUser(email);
         Order order = orderRepository.findByIdAndNguoiDungId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("đơn hàng", id));
         return toResponse(order);
@@ -400,11 +409,18 @@ public class OrderService {
             int soLuongMon = base.items().stream()
                     .mapToInt(it -> it.soLuong() == null ? 0 : it.soLuong())
                     .sum();
+            // Strip prefix __deleted_<id>_ — đặt khi admin tạo user mới trùng
+            // email của user HIDDEN. Admin xem đơn cũ vẫn nên thấy email gốc.
+            String email = u == null ? null : u.getEmail();
+            if (u != null && email != null) {
+                String prefix = "__deleted_" + u.getId() + "_";
+                if (email.startsWith(prefix)) email = email.substring(prefix.length());
+            }
             return new AdminOrderResponse(
                     o.getId(),
                     o.getNguoiDungId(),
                     u == null ? "(đã xoá)" : u.getHoTen(),
-                    u == null ? null : u.getEmail(),
+                    email,
                     u == null ? null : u.getSoDienThoai(),
                     o.getTongTien(),
                     o.getTrangThai(),

@@ -20,6 +20,7 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "AU002", "Không có quyền truy cập"),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AU003", "Email hoặc mật khẩu không đúng"),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "AU004", "Email đã tồn tại"),
+    ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "AU005", "Tài khoản đã bị vô hiệu hoá"),
 
     // Resource
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RS001", "Không tìm thấy tài nguyên"),

@@ -19,6 +19,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
             className="text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]"
           >
             {label}
+            {rest.required && <span className="ml-1 text-rose-600">*</span>}
           </label>
         )}
         <div className="relative">

@@ -224,7 +224,7 @@ export default function AdminCouponPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">
-              Trạng thái
+              Trạng thái <span className="text-rose-600">*</span>
             </label>
             <select
               value={form.status}
@@ -379,7 +379,7 @@ function DateTimeField({
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">
-        {label}
+        {label} <span className="text-rose-600">*</span>
       </label>
       <input
         type="datetime-local"

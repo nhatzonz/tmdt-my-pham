@@ -36,6 +36,7 @@ public class ProductService {
     @Transactional
     public ProductResponse create(ProductRequest req) {
         validateCategory(req.danhMucId());
+        validateMaSanPhamUnique(req.maSanPham(), null);
         Product p = new Product();
         applyFields(p, req);
         p.setTrangThai(Product.TrangThai.ACTIVE);
@@ -52,6 +53,7 @@ public class ProductService {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("sản phẩm", id));
         validateCategory(req.danhMucId());
+        validateMaSanPhamUnique(req.maSanPham(), id);
         applyFields(p, req);
         Product saved = productRepository.save(p);
 
@@ -248,6 +250,22 @@ public class ProductService {
         if (!categoryRepository.existsById(danhMucId)) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục không tồn tại");
         }
+    }
+
+    /**
+     * Check mã sản phẩm trùng — chỉ với sản phẩm ACTIVE khác (HIDDEN đã set
+     * ma_san_pham=NULL nên không xung đột UNIQUE). Loại trừ chính sp đang sửa.
+     */
+    private void validateMaSanPhamUnique(String maSanPham, Long excludeId) {
+        String code = blankToNull(maSanPham);
+        if (code == null) return;
+        productRepository.findByMaSanPhamAndTrangThai(code, Product.TrangThai.ACTIVE)
+                .filter(other -> excludeId == null || !other.getId().equals(excludeId))
+                .ifPresent(other -> {
+                    throw new BusinessException(
+                            ErrorCode.VALIDATION_FAILED,
+                            "Mã sản phẩm \"" + code + "\" đã được sử dụng");
+                });
     }
 
     private void applyFields(Product p, ProductRequest req) {

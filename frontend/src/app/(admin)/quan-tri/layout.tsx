@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Boxes, History, LayoutDashboard, LogOut, Package, Receipt, Tag, Ticket } from "lucide-react";
+import { Boxes, History, LayoutDashboard, LogOut, Package, Receipt, Tag, Ticket, Users } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { cn } from "@/lib/cn";
 
@@ -16,6 +16,7 @@ const NAV = [
   { label: "Lịch sử kho", href: "/quan-tri/ton-kho/lich-su", icon: History },
   { label: "Khuyến mãi", href: "/quan-tri/khuyen-mai", icon: Ticket },
   { label: "Đơn hàng", href: "/quan-tri/don-hang", icon: Receipt },
+  { label: "Người dùng", href: "/quan-tri/nguoi-dung", icon: Users },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -26,15 +26,40 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
-        if (userRepository.existsByEmail(req.email())) {
+        String email = req.email().trim().toLowerCase();
+        String hoTen = req.hoTen().trim();
+        String sdt = req.soDienThoai() == null || req.soDienThoai().isBlank()
+                ? null
+                : req.soDienThoai().trim();
+
+        // Check email: chỉ với user ACTIVE; user HIDDEN dùng email cũ → tự rename
+        // để giải phóng UNIQUE constraint cho user mới.
+        var existing = userRepository.findByEmail(email);
+        if (existing.isPresent() && existing.get().getTrangThai() == User.TrangThai.ACTIVE) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
+        if (existing.isPresent() && existing.get().getTrangThai() == User.TrangThai.HIDDEN) {
+            User old = existing.get();
+            old.setEmail("__deleted_" + old.getId() + "_" + old.getEmail());
+            userRepository.saveAndFlush(old);
+        }
+        // Check SDT: chỉ với user ACTIVE (HIDDEN giải phóng SDT).
+        if (sdt != null) {
+            userRepository.findBySoDienThoaiAndTrangThai(sdt, User.TrangThai.ACTIVE)
+                    .ifPresent(u -> {
+                        throw new BusinessException(
+                                ErrorCode.VALIDATION_FAILED,
+                                "Số điện thoại đã được sử dụng");
+                    });
+        }
+
         User user = new User();
-        user.setHoTen(req.hoTen());
-        user.setEmail(req.email());
+        user.setHoTen(hoTen);
+        user.setEmail(email);
         user.setMatKhau(passwordEncoder.encode(req.matKhau()));
-        user.setSoDienThoai(req.soDienThoai());
+        user.setSoDienThoai(sdt);
         user.setVaiTro(User.Role.CUSTOMER);
+        user.setTrangThai(User.TrangThai.ACTIVE);
 
         User saved = userRepository.save(user);
         return issueToken(saved);
@@ -44,8 +69,14 @@ public class AuthService {
     public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmail(req.email())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+        // Check mật khẩu TRƯỚC — sai mật khẩu luôn trả thông điệp generic để
+        // tránh email enumeration. Mật khẩu đúng + tài khoản HIDDEN → mới báo
+        // rõ "đã bị vô hiệu hoá" cho user nhận diện.
         if (!passwordEncoder.matches(req.matKhau(), user.getMatKhau())) {
             throw new BadCredentialsException("Invalid credentials");
+        }
+        if (user.getTrangThai() == User.TrangThai.HIDDEN) {
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
         return issueToken(user);
     }
@@ -54,6 +85,9 @@ public class AuthService {
     public AuthResponse.UserInfo getCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        if (user.getTrangThai() == User.TrangThai.HIDDEN) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng");
+        }
         return toUserInfo(user);
     }
 
