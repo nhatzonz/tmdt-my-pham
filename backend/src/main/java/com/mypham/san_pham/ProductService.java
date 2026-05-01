@@ -213,15 +213,24 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> search(String q) {
         String keyword = q == null ? "" : q.trim();
+        String keywordNorm = stripDiacritics(keyword);
         Set<Long> activeCategoryIds = categoryRepository
                 .findByTrangThaiOrderByThuTuAscIdAsc(com.mypham.danh_muc.Category.TrangThai.ACTIVE)
                 .stream()
                 .map(com.mypham.danh_muc.Category::getId)
                 .collect(java.util.stream.Collectors.toSet());
-        List<Product> filtered = productRepository.searchActive(keyword).stream()
+        List<Product> filtered = productRepository.searchActive(keyword, keywordNorm).stream()
                 .filter(p -> activeCategoryIds.contains(p.getDanhMucId()))
                 .toList();
         return buildListResponses(filtered);
+    }
+
+    /** NFD decompose + remove combining marks + map đ→d. Khớp với SQL phía DB. */
+    private static String stripDiacritics(String s) {
+        if (s == null || s.isEmpty()) return "";
+        String n = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        return n.replace('đ', 'd').replace('Đ', 'D');
     }
 
     /** Batch fetch images + inventory cho danh sách sản phẩm — tránh N+1. */

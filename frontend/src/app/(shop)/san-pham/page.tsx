@@ -35,6 +35,7 @@ const LOAI_DA_LABEL: Record<LoaiDa, string> = {
 };
 
 type RawParams = {
+  q?: string | string[];
   danhMucId?: string | string[];
   loaiDa?: string | string[];
   thuongHieu?: string | string[];
@@ -80,6 +81,8 @@ function countByBrand(products: Product[]): { label: string; count: number }[] {
 
 export default async function SanPhamPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const qRaw = (Array.isArray(params.q) ? params.q[0] : params.q) ?? "";
+  const q = qRaw.trim();
   const danhMucIds = asArray(params.danhMucId).map(Number).filter(Number.isFinite);
   const loaiDas = asArray(params.loaiDa) as LoaiDa[];
   const brands = asArray(params.thuongHieu);
@@ -93,17 +96,40 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
   const sort: SortKey | undefined =
     sortRaw === "price_asc" || sortRaw === "price_desc" ? sortRaw : undefined;
 
-  const [filteredProducts, allProducts, categories] = await Promise.all([
-    productApi
-      .list({
-        danhMucId: danhMucIds.length ? danhMucIds : undefined,
-        loaiDa: loaiDas.length ? loaiDas : undefined,
-        thuongHieu: brands.length ? brands : undefined,
-        priceMin,
-        priceMax,
-        sort,
+  // Có query keyword → /api/products/search (BE đã match tên + mã + thương hiệu),
+  // sau đó áp filter còn lại ở client để giữ logic single-source.
+  const baseProducts = q
+    ? await productApi.search(q).catch(() => [])
+    : await productApi
+        .list({
+          danhMucId: danhMucIds.length ? danhMucIds : undefined,
+          loaiDa: loaiDas.length ? loaiDas : undefined,
+          thuongHieu: brands.length ? brands : undefined,
+          priceMin,
+          priceMax,
+          sort,
+        })
+        .catch(() => []);
+
+  const filteredProducts = q
+    ? baseProducts.filter((p) => {
+        if (danhMucIds.length && !danhMucIds.includes(p.danhMucId)) return false;
+        if (loaiDas.length && !loaiDas.includes(p.loaiDa)) return false;
+        if (
+          brands.length &&
+          (!p.thuongHieu ||
+            !brands.some(
+              (b) => b.toLowerCase() === p.thuongHieu!.toLowerCase(),
+            ))
+        )
+          return false;
+        if (priceMin !== undefined && p.gia < priceMin) return false;
+        if (priceMax !== undefined && p.gia > priceMax) return false;
+        return true;
       })
-      .catch(() => []),
+    : baseProducts;
+
+  const [allProducts, categories] = await Promise.all([
     productApi.list().catch(() => []),
     categoryApi.list().catch(() => []),
   ]);
@@ -115,6 +141,7 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
 
   function baseParams(overrides?: { sort?: string | null }): URLSearchParams {
     const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
     for (const v of asArray(params.danhMucId)) sp.append("danhMucId", v);
     for (const v of asArray(params.loaiDa)) sp.append("loaiDa", v);
     for (const v of asArray(params.thuongHieu)) sp.append("thuongHieu", v);
@@ -148,6 +175,7 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
       if (priceMin !== undefined) sp.set("priceMin", String(priceMin));
       if (priceMax !== undefined) sp.set("priceMax", String(priceMax));
     }
+    if (q) sp.set("q", q);
     if (sort) sp.set("sort", sort);
     const qs = sp.toString();
     return qs ? `/san-pham?${qs}` : "/san-pham";
@@ -191,10 +219,13 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-serif text-4xl md:text-5xl">
-            {titleCategory?.tenDanhMuc ?? "Tất cả sản phẩm"}
+            {q
+              ? `Kết quả cho "${q}"`
+              : (titleCategory?.tenDanhMuc ?? "Tất cả sản phẩm")}
           </h1>
           <p className="mt-3 text-sm text-[color:var(--color-muted)]">
-            {filteredProducts.length} sản phẩm · Thành phần minh bạch — công thức dịu nhẹ
+            {filteredProducts.length} sản phẩm
+            {q ? "" : " · Thành phần minh bạch — công thức dịu nhẹ"}
           </p>
         </div>
         <div className="flex items-center gap-3">

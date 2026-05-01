@@ -10,13 +10,47 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByTrangThaiOrderByIdDesc(Product.TrangThai trangThai);
 
-    @Query("""
-            SELECT p FROM Product p
-            WHERE p.trangThai = com.mypham.san_pham.Product.TrangThai.ACTIVE
-              AND LOWER(p.tenSanPham) LIKE LOWER(CONCAT('%', :q, '%'))
-            ORDER BY p.id DESC
-            """)
-    List<Product> searchActive(@Param("q") String q);
+    /**
+     * Tìm sản phẩm ACTIVE theo từ khoá — match cả tên, mã thật, mã fallback "NL-00x", thương hiệu.
+     * Service layer truyền vào HAI tham số:
+     *   q       = từ khoá gốc người dùng gõ (giữ nguyên dấu)
+     *   qNorm   = từ khoá đã LOWER + STRIP DẤU ở Java (Normalizer.NFD + remove combining marks)
+     * Cột so sánh tương tự: cũng strip dấu bằng JS-level helper trước, nhưng vì SQL
+     * không gọi Java được, ta dùng `regexp_replace + normalize NFD` của Postgres
+     * (không cần extension `unaccent`) — hoạt động trên Postgres 13+.
+     *
+     * Match logic:
+     *   - Plain LIKE trên text gốc (cho user gõ có dấu khớp đúng)
+     *   - LIKE trên text đã strip dấu (cho user gõ "kem chong nang" khớp "Kem chống nắng")
+     *   - Mã thật + mã fallback "NL-00x"
+     *
+     * Order: match exact mã > prefix tên > còn lại.
+     */
+    @Query(value = """
+            SELECT * FROM san_pham p
+            WHERE p.trang_thai = 'ACTIVE'
+              AND (
+                  LOWER(p.ten_san_pham) LIKE LOWER('%' || :q || '%')
+               OR LOWER(translate(regexp_replace(normalize(p.ten_san_pham, NFD), '[\\u0300-\\u036f]', '', 'g'), 'đĐ', 'dD'))
+                    LIKE LOWER('%' || :qNorm || '%')
+               OR LOWER(COALESCE(p.ma_san_pham, '')) LIKE LOWER('%' || :q || '%')
+               OR LOWER(COALESCE(p.thuong_hieu, '')) LIKE LOWER('%' || :q || '%')
+               OR LOWER(translate(regexp_replace(normalize(COALESCE(p.thuong_hieu, ''), NFD), '[\\u0300-\\u036f]', '', 'g'), 'đĐ', 'dD'))
+                    LIKE LOWER('%' || :qNorm || '%')
+               OR LOWER('NL-' || LPAD(p.id::text, 3, '0')) LIKE LOWER('%' || :q || '%')
+              )
+            ORDER BY
+                CASE
+                    WHEN LOWER(COALESCE(p.ma_san_pham, '')) = LOWER(:q) THEN 0
+                    WHEN LOWER('NL-' || LPAD(p.id::text, 3, '0')) = LOWER(:q) THEN 0
+                    WHEN LOWER(p.ten_san_pham) LIKE LOWER(:q || '%') THEN 1
+                    WHEN LOWER(translate(regexp_replace(normalize(p.ten_san_pham, NFD), '[\\u0300-\\u036f]', '', 'g'), 'đĐ', 'dD'))
+                            LIKE LOWER(:qNorm || '%') THEN 2
+                    ELSE 3
+                END,
+                p.id DESC
+            """, nativeQuery = true)
+    List<Product> searchActive(@Param("q") String q, @Param("qNorm") String qNorm);
 
     @Query("""
             SELECT COUNT(p) FROM Product p

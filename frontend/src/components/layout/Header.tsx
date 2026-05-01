@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LogOut, Package, Search, ShoppingCart, User } from "lucide-react";
+import { LogOut, Package, ShoppingCart, User } from "lucide-react";
+import { SearchBox } from "@/components/layout/SearchBox";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import type { StoreConfig } from "@/features/cau-hinh/api";
@@ -94,13 +95,8 @@ export function Header({
           ))}
         </nav>
 
-        <div className="relative hidden w-72 md:block">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[color:var(--color-muted)]" />
-          <input
-            type="search"
-            placeholder="Tìm serum, son, kem chống nắng..."
-            className="w-full rounded-full border border-[color:var(--color-border)] bg-white/60 py-2 pl-10 pr-4 text-sm placeholder:text-[color:var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ink-soft)]/20"
-          />
+        <div className="hidden md:block">
+          <SearchBox />
         </div>
 
         <div className="flex items-center gap-4">
