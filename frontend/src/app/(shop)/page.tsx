@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { RecommendedForYou } from "@/features/ai/components/RecommendedForYou";
 import { categoryApi } from "@/features/danh-muc/api";
 import { CategoryCard } from "@/features/danh-muc/components/CategoryCard";
 import { productApi } from "@/features/san-pham/api";
@@ -28,14 +27,14 @@ export default async function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section className="relative">
-        <div className="mx-auto grid w-4/5 grid-cols-1 items-center gap-12 px-6 pt-5 lg:grid-cols-2">
+      <section className="relative overflow-hidden">
+        <div className="mx-auto grid w-full grid-cols-1 items-center gap-6 px-4 pt-5 md:w-4/5 md:gap-12 md:px-6 lg:grid-cols-2">
           <div className="flex flex-col gap-6">
             <span className="inline-flex w-fit items-center rounded-full bg-[color:var(--color-pastel-cream)] px-3 py-1 text-[11px] uppercase tracking-widest text-[color:var(--color-ink-soft)]">
               ✦ Ngọc Lan Beauty · Mùa xuân 2026
             </span>
 
-            <h1 className="font-serif text-5xl leading-[1.05] md:text-6xl lg:text-7xl">
+            <h1 className="font-serif text-3xl leading-[1.05] sm:text-4xl md:text-6xl lg:text-7xl">
               Routine làm đẹp
               <br />
               <span className="italic">dành riêng</span> cho làn da
@@ -71,12 +70,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* AI PERSONALIZED — chỉ render khi user logged-in (component tự check) */}
-      <RecommendedForYou />
-
       {/* CATEGORIES */}
       {categories.length > 0 && (
-        <section className="mx-auto w-4/5 px-6 py-16">
+        <section className="mx-auto w-full px-4 py-12 md:w-4/5 md:px-6 md:py-16">
           <div className="mb-10 flex items-end justify-between">
             <h2 className="font-serif text-3xl md:text-4xl">Khám phá theo danh mục</h2>
             <Link
@@ -100,7 +96,7 @@ export default async function HomePage() {
 
       {/* FEATURED PRODUCTS */}
       {featured.length > 0 && (
-        <section className="mx-auto w-4/5 px-6 pb-20">
+        <section className="mx-auto w-full px-4 pb-16 md:w-4/5 md:px-6 md:pb-20">
           <div className="mb-10 flex items-end justify-between">
             <div>
               <p className="mb-2 text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">

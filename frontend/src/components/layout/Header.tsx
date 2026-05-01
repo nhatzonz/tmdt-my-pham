@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LogOut, Package, ShoppingCart, User } from "lucide-react";
+import { MobileMenu } from "@/components/layout/MobileMenu";
 import { SearchBox } from "@/components/layout/SearchBox";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -60,7 +61,10 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--color-border)] bg-white/80 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center gap-10 px-6 py-4">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:gap-10 md:px-6 md:py-4">
+        {/* Hamburger — chỉ mobile */}
+        <MobileMenu categories={topCategories} />
+
         <Link href={routes.home} className="flex items-center gap-2">
           <Image
             src={logoSrc}
@@ -68,13 +72,16 @@ export function Header({
             width={48}
             height={48}
             unoptimized
-            className="size-12 object-contain"
+            className="size-9 object-contain md:size-12"
             priority
           />
-          <span className="font-serif text-2xl italic leading-none">{tenCuaHang}</span>
+          <span className="hidden font-serif text-2xl italic leading-none sm:inline">
+            {tenCuaHang}
+          </span>
         </Link>
 
-        <nav className="flex flex-1 items-center gap-7 text-sm">
+        {/* Nav — chỉ desktop */}
+        <nav className="hidden flex-1 items-center gap-7 text-sm md:flex">
           {STATIC_NAV.map((item) => (
             <Link
               key={item.href}
@@ -95,11 +102,14 @@ export function Header({
           ))}
         </nav>
 
+        {/* Spacer giữ cart cluster phía phải trên mobile */}
+        <div className="flex-1 md:hidden" />
+
         <div className="hidden md:block">
           <SearchBox />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <Link
             href="/gio-hang"
             aria-label="Giỏ hàng"
@@ -116,11 +126,12 @@ export function Header({
             <div className="size-5" aria-hidden />
           ) : user ? (
             <>
+              {/* Order + Logout chỉ desktop — mobile vào drawer */}
               <Link
                 href="/don-hang"
                 aria-label="Đơn hàng của tôi"
                 title={`Đơn hàng của tôi${orderCount > 0 ? ` — ${orderCount} đơn đang xử lý` : ""}`}
-                className="relative text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
+                className="relative hidden text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)] md:inline-block"
               >
                 <Package className="size-5" />
                 {orderCount > 0 && (
@@ -141,7 +152,7 @@ export function Header({
                 type="button"
                 onClick={handleLogout}
                 aria-label="Đăng xuất"
-                className="text-[color:var(--color-muted)] transition hover:text-[color:var(--color-ink)]"
+                className="hidden text-[color:var(--color-muted)] transition hover:text-[color:var(--color-ink)] md:inline-block"
               >
                 <LogOut className="size-5" />
               </button>
@@ -152,6 +163,11 @@ export function Header({
             </Link>
           )}
         </div>
+      </div>
+
+      {/* Search row riêng cho mobile — desktop có SearchBox trong row trên */}
+      <div className="border-t border-[color:var(--color-border)] px-4 pb-3 pt-2 md:hidden">
+        <SearchBox />
       </div>
     </header>
   );

@@ -114,7 +114,7 @@ export function ChatWidget() {
         aria-label="Mở chat AI"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-105",
+          "fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-105 md:bottom-6 md:right-6 md:h-14 md:w-14",
           "bg-[color:var(--color-primary)]",
         )}
       >
@@ -122,7 +122,7 @@ export function ChatWidget() {
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-[560px] w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl">
+        <div className="fixed inset-x-2 bottom-20 z-50 flex h-[min(70vh,560px)] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl md:inset-auto md:bottom-24 md:right-6 md:h-[560px] md:w-[380px]">
           {/* Header */}
           <div className="flex items-center gap-2 border-b border-black/5 bg-[color:var(--color-pastel-cream)] px-4 py-3">
             <Sparkles className="size-5 text-[color:var(--color-primary)]" />

@@ -47,9 +47,24 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 
       {/* Right — form */}
       <section className="flex w-full flex-col lg:w-1/2">
-        <div className="flex items-center justify-between px-8 py-6 lg:justify-end">
+        <div className="flex items-center justify-between px-4 py-5 sm:px-8 sm:py-6 lg:justify-end">
+          {/* Logo nhỏ trên mobile (ẩn vì panel trái không hiện) */}
+          <Link href="/" className="flex items-center gap-2 lg:hidden">
+            <Image
+              src={logoSrc}
+              alt={tenCuaHang}
+              width={36}
+              height={36}
+              unoptimized
+              className="size-9 object-contain"
+              priority
+            />
+            <span className="font-serif text-xl italic leading-none">
+              {tenCuaHang}
+            </span>
+          </Link>
         </div>
-        <div className="flex flex-1 items-center justify-center px-8 pb-12">
+        <div className="flex flex-1 items-center justify-center px-4 pb-12 sm:px-8">
           <div className="w-full max-w-md">{children}</div>
         </div>
       </section>

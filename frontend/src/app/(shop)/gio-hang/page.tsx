@@ -43,7 +43,7 @@ export default function GioHangPage() {
 
   if (!cartLoaded || loadingProducts) {
     return (
-      <div className="mx-auto w-4/5 px-6 py-20 text-center text-sm text-[color:var(--color-muted)]">
+      <div className="mx-auto w-full px-4 py-12 text-center text-sm text-[color:var(--color-muted)] md:w-4/5 md:px-6 md:py-20">
         Đang tải giỏ hàng...
       </div>
     );
@@ -83,14 +83,14 @@ export default function GioHangPage() {
   );
 
   return (
-    <div className="mx-auto w-4/5 px-6 py-10">
+    <div className="mx-auto w-full px-4 py-6 md:w-4/5 md:px-6 md:py-10">
       <h1 className="font-serif text-4xl md:text-5xl">Giỏ hàng của bạn</h1>
       <p className="mt-3 text-sm text-[color:var(--color-muted)]">
         {rows.length} sản phẩm · Miễn phí vận chuyển cho đơn từ{" "}
         {formatCurrency(FREE_SHIP_THRESHOLD)}
       </p>
 
-      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_400px]">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_400px] lg:gap-10">
         <div>
           <div className="rounded-xl bg-[color:var(--color-pastel-cream)]/40 p-4 ring-1 ring-[color:var(--color-border)]">
             <div className="mb-2 flex items-center justify-between text-xs">

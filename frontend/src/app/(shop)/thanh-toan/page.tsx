@@ -135,7 +135,7 @@ export default function ThanhToanPage() {
 
   if (!cartLoaded || !buyNowLoaded || loadingProducts) {
     return (
-      <div className="mx-auto w-4/5 px-6 py-20 text-center text-sm text-[color:var(--color-muted)]">
+      <div className="mx-auto w-full px-4 py-12 text-center text-sm text-[color:var(--color-muted)] md:w-4/5 md:px-6 md:py-20">
         Đang tải...
       </div>
     );
@@ -214,14 +214,14 @@ export default function ThanhToanPage() {
   }
 
   return (
-    <div className="mx-auto w-4/5 px-6 py-10">
+    <div className="mx-auto w-full px-4 py-6 md:w-4/5 md:px-6 md:py-10">
       <h1 className="font-serif text-4xl md:text-5xl">Thanh toán</h1>
 
       <form
         onSubmit={handleSubmit}
-        className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_400px]"
+        className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_400px] lg:gap-10"
       >
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-6 md:gap-10">
           <section>
             <h2 className="mb-5 font-serif text-2xl">Địa chỉ giao hàng</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

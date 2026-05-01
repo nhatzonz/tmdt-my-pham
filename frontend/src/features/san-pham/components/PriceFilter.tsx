@@ -95,7 +95,7 @@ export function PriceFilter({ activePriceMin, activePriceMax }: Props) {
       {open && (
         <form
           onSubmit={applyPrice}
-          className="absolute right-0 z-20 mt-2 w-72 rounded-xl bg-white p-4 shadow-lg ring-1 ring-[color:var(--color-border)]"
+          className="absolute right-0 z-20 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl bg-white p-4 shadow-lg ring-1 ring-[color:var(--color-border)]"
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">

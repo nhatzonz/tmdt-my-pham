@@ -93,7 +93,7 @@ export default function TaiKhoanPage() {
   }
 
   return (
-    <div className="mx-auto w-4/5 max-w-2xl px-6 py-10">
+    <div className="mx-auto w-full max-w-2xl px-4 py-6 md:w-4/5 md:px-6 md:py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl md:text-4xl">Tài khoản của tôi</h1>

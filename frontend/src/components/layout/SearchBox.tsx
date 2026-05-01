@@ -170,7 +170,7 @@ export function SearchBox() {
   const showResults = open && query.trim().length > 0;
 
   return (
-    <div ref={wrapperRef} className="relative w-72">
+    <div ref={wrapperRef} className="relative w-full md:w-72">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[color:var(--color-muted)]" />
       <input
         ref={inputRef}

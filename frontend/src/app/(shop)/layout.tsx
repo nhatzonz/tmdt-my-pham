@@ -27,7 +27,7 @@ export default async function ShopLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[color:var(--color-ivory)]">
+    <div className="flex min-h-[100dvh] flex-col bg-[color:var(--color-ivory)]">
       <TopBar />
       <Header categories={categories} storeConfig={storeConfig} />
       <main className="flex-1">

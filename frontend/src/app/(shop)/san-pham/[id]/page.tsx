@@ -51,7 +51,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
   const productCode = product.maSanPham ?? `NL-${String(product.id).padStart(3, "0")}`;
 
   return (
-    <div className="mx-auto w-4/5 px-6 py-8">
+    <div className="mx-auto w-full px-4 py-6 md:w-4/5 md:px-6 md:py-8">
       <InventoryRealtimeRefresher productId={product.id} />
       <Breadcrumb
         items={[
@@ -69,7 +69,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
         ]}
       />
 
-      <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
         {/* GALLERY */}
         <ProductGallery
           images={product.hinhAnh}
@@ -92,7 +92,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          <h1 className="font-serif text-4xl leading-tight md:text-5xl">
+          <h1 className="font-serif text-2xl leading-tight sm:text-3xl md:text-5xl">
             {product.tenSanPham}
           </h1>
 
@@ -123,7 +123,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
             soLuongTon={product.soLuongTon}
           />
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <InfoTile icon={<Truck className="size-4" />} label="Free ship từ 500K" />
             <InfoTile icon={<RotateCcw className="size-4" />} label="Đổi trả 15 ngày" />
             <InfoTile

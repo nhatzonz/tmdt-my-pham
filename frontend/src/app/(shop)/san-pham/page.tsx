@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { X } from "lucide-react";
+import { MobileFilterDrawer } from "@/components/layout/MobileFilterDrawer";
 import { InventoryRealtimeRefresher } from "@/components/realtime/InventoryRealtimeRefresher";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { categoryApi } from "@/features/danh-muc/api";
@@ -205,7 +206,7 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
     priceMax !== undefined;
 
   return (
-    <div className="mx-auto w-4/5 px-6 py-10">
+    <div className="mx-auto w-full px-4 py-6 md:w-4/5 md:px-6 md:py-10">
       <InventoryRealtimeRefresher />
       <Breadcrumb
         items={[
@@ -218,17 +219,17 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
 
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-serif text-4xl md:text-5xl">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-5xl">
             {q
               ? `Kết quả cho "${q}"`
               : (titleCategory?.tenDanhMuc ?? "Tất cả sản phẩm")}
           </h1>
-          <p className="mt-3 text-sm text-[color:var(--color-muted)]">
+          <p className="mt-2 text-sm text-[color:var(--color-muted)] md:mt-3">
             {filteredProducts.length} sản phẩm
             {q ? "" : " · Thành phần minh bạch — công thức dịu nhẹ"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <PriceFilter activePriceMin={priceMin} activePriceMax={priceMax} />
           <span className="text-xs text-[color:var(--color-muted)]">Sắp xếp theo</span>
           <SortDropdown
@@ -241,18 +242,38 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-[240px_1fr]">
-        <ProductFilters
-          categories={categories}
-          brandCounts={brandCounts}
-          skinTypeCounts={skinTypeCounts}
-          activeDanhMucIds={danhMucIds}
-          activeLoaiDas={loaiDas}
-          activeBrands={brands}
-          activePriceMin={priceMin}
-          activePriceMax={priceMax}
-          currentSort={sort}
-        />
+      {/* Mobile filter trigger — chỉ <md */}
+      <div className="mt-6 md:hidden">
+        <MobileFilterDrawer>
+          <ProductFilters
+            categories={categories}
+            brandCounts={brandCounts}
+            skinTypeCounts={skinTypeCounts}
+            activeDanhMucIds={danhMucIds}
+            activeLoaiDas={loaiDas}
+            activeBrands={brands}
+            activePriceMin={priceMin}
+            activePriceMax={priceMax}
+            currentSort={sort}
+          />
+        </MobileFilterDrawer>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 md:mt-10 md:grid-cols-[220px_1fr] md:gap-8 lg:grid-cols-[240px_1fr] lg:gap-10">
+        {/* Desktop sidebar — md+ */}
+        <div className="hidden md:block">
+          <ProductFilters
+            categories={categories}
+            brandCounts={brandCounts}
+            skinTypeCounts={skinTypeCounts}
+            activeDanhMucIds={danhMucIds}
+            activeLoaiDas={loaiDas}
+            activeBrands={brands}
+            activePriceMin={priceMin}
+            activePriceMax={priceMax}
+            currentSort={sort}
+          />
+        </div>
 
         <div>
           {hasAnyFilter && (

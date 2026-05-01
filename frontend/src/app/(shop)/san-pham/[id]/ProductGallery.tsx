@@ -73,7 +73,7 @@ export function ProductGallery({
       </button>
 
       {hasMany && (
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
           {images.map((url, i) => {
             const u = imageUrl(url);
             return (

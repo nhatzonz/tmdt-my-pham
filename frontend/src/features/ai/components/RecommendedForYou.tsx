@@ -37,7 +37,7 @@ export function RecommendedForYou() {
   if (items.length === 0) return null;
 
   return (
-    <section className="mx-auto w-4/5 px-6 pb-20">
+    <section className="mx-auto w-full px-4 pb-16 md:w-4/5 md:px-6 md:pb-20">
       <div className="mb-10 flex items-end justify-between">
         <div>
           <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-[color:var(--color-primary)]">

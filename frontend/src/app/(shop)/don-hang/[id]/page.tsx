@@ -63,7 +63,7 @@ export default function OrderDetailPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="mx-auto w-4/5 px-6 py-20 text-center text-sm text-[color:var(--color-muted)]">
+      <div className="mx-auto w-full px-4 py-12 text-center text-sm text-[color:var(--color-muted)] md:w-4/5 md:px-6 md:py-20">
         Đang tải đơn hàng...
       </div>
     );
@@ -88,7 +88,7 @@ export default function OrderDetailPage({ params }: PageProps) {
       : 0;
 
   return (
-    <div className="mx-auto w-4/5 px-6 py-10">
+    <div className="mx-auto w-full px-4 py-6 md:w-4/5 md:px-6 md:py-10">
       <Breadcrumb
         items={[
           { label: "Trang chủ", href: "/" },

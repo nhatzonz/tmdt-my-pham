@@ -26,7 +26,7 @@ export async function Footer() {
 
   return (
     <footer className="mt-20 bg-[color:var(--color-footer-bg)] text-white/80">
-      <div className="mx-auto grid w-4/5 grid-cols-1 gap-12 px-6 py-14 md:grid-cols-3">
+      <div className="mx-auto grid w-full grid-cols-1 gap-8 px-4 py-10 md:w-4/5 md:grid-cols-3 md:gap-12 md:px-6 md:py-14">
         {/* Brand */}
         <div className="md:col-span-1">
           <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export async function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex w-4/5 flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-white/50 md:flex-row">
+        <div className="mx-auto flex w-full flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-white/50 md:w-4/5 md:flex-row md:px-6">
           <p className="italic">Vẻ đẹp tự nhiên — chăm da mỗi ngày.</p>
           <p>{tenCuaHang} luôn âm thầm chăm sóc da của bạn</p>
         </div>
