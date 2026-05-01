@@ -78,9 +78,11 @@ async def recommend_for_user(user_id: int, limit: int = 6) -> dict:
                       WHERE san_pham_id = sp.id ORDER BY thu_tu LIMIT 1) AS hinh_anh,
                     COALESCE(SUM(ct.so_luong), 0) AS so_luong_ban
                 FROM san_pham sp
+                JOIN danh_muc dm ON dm.id = sp.danh_muc_id
                 LEFT JOIN chi_tiet_don_hang ct ON ct.san_pham_id = sp.id
                 LEFT JOIN don_hang dh ON ct.don_hang_id = dh.id AND dh.trang_thai = 'COMPLETED'
                 WHERE sp.trang_thai = 'ACTIVE'
+                  AND dm.trang_thai = 'ACTIVE'
                 GROUP BY sp.id
                 ORDER BY so_luong_ban DESC, sp.id DESC
                 LIMIT $1

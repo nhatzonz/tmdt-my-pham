@@ -62,6 +62,7 @@ public class CategoryService {
         if (productRepository.countByDanhMucId(id) > 0) {
             c.setTrangThai(Category.TrangThai.HIDDEN);
             categoryRepository.save(c);
+            cascadeHideProducts(id);
             return;
         }
 
@@ -69,6 +70,16 @@ public class CategoryService {
             uploadService.deleteByUrl(c.getHinhAnh());
         }
         categoryRepository.delete(c);
+    }
+
+    private void cascadeHideProducts(Long danhMucId) {
+        var products = productRepository.findByDanhMucIdAndTrangThai(
+                danhMucId, com.mypham.san_pham.Product.TrangThai.ACTIVE);
+        for (var p : products) {
+            p.setMaSanPham(null);
+            p.setTrangThai(com.mypham.san_pham.Product.TrangThai.HIDDEN);
+        }
+        if (!products.isEmpty()) productRepository.saveAll(products);
     }
 
     @Transactional(readOnly = true)

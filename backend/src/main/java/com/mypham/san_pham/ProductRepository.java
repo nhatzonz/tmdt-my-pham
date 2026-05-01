@@ -10,6 +10,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByTrangThaiOrderByIdDesc(Product.TrangThai trangThai);
 
+    List<Product> findByDanhMucIdAndTrangThai(Long danhMucId, Product.TrangThai trangThai);
+
     @Query(value = """
             SELECT * FROM san_pham p
             WHERE p.trang_thai = 'ACTIVE'

@@ -35,7 +35,9 @@ async def retrieve_similar(
             1 - (pe.embedding <=> $1::vector) AS score
         FROM product_embeddings pe
         JOIN san_pham sp ON sp.id = pe.san_pham_id
+        JOIN danh_muc dm ON dm.id = sp.danh_muc_id
         WHERE sp.trang_thai = 'ACTIVE'
+          AND dm.trang_thai = 'ACTIVE'
           AND ($2::bigint[] IS NULL OR sp.id <> ALL($2::bigint[]))
         ORDER BY pe.embedding <=> $1::vector
         LIMIT $3
