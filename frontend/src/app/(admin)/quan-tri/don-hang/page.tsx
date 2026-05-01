@@ -12,6 +12,7 @@ import { ORDER_STATUS_LABEL, type OrderStatus } from "@/features/don-hang/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 type Filter = OrderStatus | "ALL";
 
@@ -24,9 +25,9 @@ const FILTER_OPTIONS: { value: Filter; label: string }[] = [
 ];
 
 export default function AdminOrdersPage() {
+  const toast = useToast();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("ALL");
 
   useEffect(() => {
@@ -34,8 +35,14 @@ export default function AdminOrdersPage() {
     adminOrderApi
       .list()
       .then(setOrders)
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Lỗi tải đơn hàng"))
+      .catch((e) =>
+        toast.error(
+          "Lỗi tải đơn hàng",
+          e instanceof ApiError ? e.message : "Lỗi không xác định",
+        ),
+      )
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const counts = useMemo(() => {
@@ -76,12 +83,6 @@ export default function AdminOrdersPage() {
           ))}
         </div>
       </div>
-
-      {error && (
-        <p className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
-          {error}
-        </p>
-      )}
 
       <div className="mt-8 overflow-hidden rounded-2xl bg-white ring-1 ring-[color:var(--color-border)]">
         <table className="w-full text-sm">

@@ -16,6 +16,7 @@ import { imageUrl, pastelBg } from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -23,16 +24,17 @@ type PageProps = {
 
 export default function OrderDetailPage({ params }: PageProps) {
   const { id } = use(params);
+  const toast = useToast();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     orderApi
       .getById(id)
       .then(setOrder)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Lỗi tải đơn"))
+      .catch((err) => setLoadError(err instanceof ApiError ? err.message : "Lỗi tải đơn"))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -42,12 +44,18 @@ export default function OrderDetailPage({ params }: PageProps) {
       return;
     }
     setCancelling(true);
-    setError(null);
     try {
       const updated = await orderApi.cancel(order.id);
       setOrder(updated);
+      toast.success(
+        "Đã huỷ đơn",
+        `Đơn LM-${String(updated.id).padStart(6, "0")} đã chuyển sang trạng thái Đã huỷ`,
+      );
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Không thể huỷ đơn");
+      toast.error(
+        "Không thể huỷ đơn",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setCancelling(false);
     }
@@ -61,11 +69,11 @@ export default function OrderDetailPage({ params }: PageProps) {
     );
   }
 
-  if (error || !order) {
+  if (loadError || !order) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-20 text-center">
         <h1 className="font-serif text-3xl">Không tìm thấy đơn hàng</h1>
-        <p className="mt-3 text-sm text-rose-700">{error ?? "Không có dữ liệu"}</p>
+        <p className="mt-3 text-sm text-rose-700">{loadError ?? "Không có dữ liệu"}</p>
         <Link href="/don-hang" className="mt-6 inline-block">
           <Button variant="outline">Quay lại danh sách</Button>
         </Link>
@@ -117,12 +125,6 @@ export default function OrderDetailPage({ params }: PageProps) {
           </Link>
         </div>
       </div>
-
-      {error && (
-        <div className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
-          {error}
-        </div>
-      )}
 
       <div className="mt-8 rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         {order.trangThai === "CANCELLED" ? (

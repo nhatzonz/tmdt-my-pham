@@ -14,14 +14,15 @@ import {
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { subscribeInventory } from "@/lib/inventory-socket";
+import { useToast } from "@/lib/toast";
 
 type FilterTab = "ALL" | "WARN" | "OUT";
 
 export default function AdminTonKhoPage() {
+  const toast = useToast();
   const [rows, setRows] = useState<InventoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>("ALL");
-  const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [thresholdEditing, setThresholdEditing] = useState<number | null>(null);
   const [thresholdInput, setThresholdInput] = useState<string>("");
@@ -31,11 +32,13 @@ export default function AdminTonKhoPage() {
 
   async function load() {
     try {
-      setError(null);
       const data = await inventoryApi.listAdmin();
       setRows(data);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi tải tồn kho");
+      toast.error(
+        "Lỗi tải tồn kho",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setLoading(false);
     }
@@ -75,11 +78,10 @@ export default function AdminTonKhoPage() {
     const raw = qtyMap[row.sanPhamId] ?? "";
     const qty = Number(raw);
     if (!Number.isFinite(qty) || qty < 0 || (action !== "SET" && qty <= 0)) {
-      setError("Số lượng không hợp lệ");
+      toast.error("Số lượng không hợp lệ");
       return;
     }
     setBusyId(row.sanPhamId);
-    setError(null);
     try {
       await inventoryApi.update({
         sanPhamId: row.sanPhamId,
@@ -88,8 +90,13 @@ export default function AdminTonKhoPage() {
       });
       setQtyMap((m) => ({ ...m, [row.sanPhamId]: "" }));
       await load();
+      const labels = { IMPORT: "Nhập kho", EXPORT: "Xuất kho", SET: "Đặt cứng tồn kho" } as const;
+      toast.success(`${labels[action]} thành công`, `${row.tenSanPham} · ${qty}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi cập nhật");
+      toast.error(
+        "Lỗi cập nhật tồn kho",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setBusyId(null);
     }
@@ -98,11 +105,10 @@ export default function AdminTonKhoPage() {
   async function handleSaveThreshold(row: InventoryRow) {
     const v = Number(thresholdInput);
     if (!Number.isFinite(v) || v < 0) {
-      setError("Ngưỡng không hợp lệ");
+      toast.error("Ngưỡng không hợp lệ");
       return;
     }
     setBusyId(row.sanPhamId);
-    setError(null);
     try {
       await inventoryApi.updateThreshold({
         sanPhamId: row.sanPhamId,
@@ -111,8 +117,12 @@ export default function AdminTonKhoPage() {
       setThresholdEditing(null);
       setThresholdInput("");
       await load();
+      toast.success("Đã cập nhật ngưỡng cảnh báo", `${row.tenSanPham} · ${v}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi cập nhật ngưỡng");
+      toast.error(
+        "Lỗi cập nhật ngưỡng",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setBusyId(null);
     }
@@ -145,12 +155,6 @@ export default function AdminTonKhoPage() {
           Hết hàng ({counts.out})
         </FilterPill>
       </div>
-
-      {error && (
-        <p className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
-          {error}
-        </p>
-      )}
 
       {loading ? (
         <p className="mt-8 text-sm text-[color:var(--color-muted)]">Đang tải...</p>

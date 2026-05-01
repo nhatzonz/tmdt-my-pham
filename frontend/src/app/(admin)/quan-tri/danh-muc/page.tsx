@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { categoryApi, type Category } from "@/features/danh-muc/api";
 import { imageUrl, productApi } from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
+import { useToast } from "@/lib/toast";
 
 type FormState = {
   tenDanhMuc: string;
@@ -17,39 +18,44 @@ type FormState = {
 const INITIAL_FORM: FormState = { tenDanhMuc: "", hinhAnh: "", thuTu: "" };
 
 export default function AdminDanhMucPage() {
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [reordering, setReordering] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   async function loadList() {
     try {
-      setError(null);
       const data = await categoryApi.listAdmin();
       setCategories(data);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi không xác định");
+      toast.error(
+        "Lỗi tải danh mục",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     }
   }
 
   useEffect(() => {
     loadList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    setError(null);
     try {
       const result = await productApi.uploadImage(file);
       setForm((f) => ({ ...f, hinhAnh: result.url }));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Upload thất bại");
+      toast.error(
+        "Upload thất bại",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -63,20 +69,17 @@ export default function AdminDanhMucPage() {
       hinhAnh: c.hinhAnh ?? "",
       thuTu: String(c.thuTu),
     });
-    setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelEdit() {
     setEditingId(null);
     setForm(INITIAL_FORM);
-    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    setError(null);
     try {
       const reqBody = {
         tenDanhMuc: form.tenDanhMuc,
@@ -85,14 +88,19 @@ export default function AdminDanhMucPage() {
       };
       if (editingId !== null) {
         await categoryApi.updateAdmin(editingId, reqBody);
+        toast.success("Đã cập nhật danh mục", form.tenDanhMuc);
       } else {
         await categoryApi.createAdmin(reqBody);
+        toast.success("Đã thêm danh mục", form.tenDanhMuc);
       }
       setForm(INITIAL_FORM);
       setEditingId(null);
       await loadList();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi không xác định");
+      toast.error(
+        "Không lưu được",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -105,8 +113,12 @@ export default function AdminDanhMucPage() {
       await categoryApi.deleteAdmin(id);
       if (editingId === id) cancelEdit();
       await loadList();
+      toast.success("Đã xoá danh mục");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi xoá");
+      toast.error(
+        "Không thể xoá",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     }
   }
 
@@ -116,7 +128,6 @@ export default function AdminDanhMucPage() {
     const a = categories[index]!;
     const b = categories[target]!;
     setReordering(true);
-    setError(null);
     try {
       await categoryApi.updateAdmin(a.id, {
         tenDanhMuc: a.tenDanhMuc,
@@ -130,7 +141,10 @@ export default function AdminDanhMucPage() {
       });
       await loadList();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi sắp xếp");
+      toast.error(
+        "Lỗi sắp xếp",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setReordering(false);
     }
@@ -222,10 +236,6 @@ export default function AdminDanhMucPage() {
               className="hidden"
             />
           </div>
-
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
-          )}
 
           <Button type="submit" disabled={submitting || uploading}>
             {submitting

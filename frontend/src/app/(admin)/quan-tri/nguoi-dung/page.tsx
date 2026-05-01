@@ -14,6 +14,7 @@ import {
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 type Filter = "ALL" | "CUSTOMER" | "ADMIN";
 
@@ -34,10 +35,9 @@ const INITIAL_FORM: FormState = {
 };
 
 export default function AdminNguoiDungPage() {
+  const toast = useToast();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("ALL");
   const [search, setSearch] = useState("");
 
@@ -52,10 +52,12 @@ export default function AdminNguoiDungPage() {
   async function load() {
     try {
       setLoading(true);
-      setError(null);
       setUsers(await userAdminApi.list());
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Lỗi tải người dùng");
+      toast.error(
+        "Lỗi tải người dùng",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,6 @@ export default function AdminNguoiDungPage() {
     setEditingId(null);
     setForm(INITIAL_FORM);
     setShowForm(true);
-    setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -102,7 +103,6 @@ export default function AdminNguoiDungPage() {
       matKhau: "",
     });
     setShowForm(true);
-    setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -110,14 +110,11 @@ export default function AdminNguoiDungPage() {
     setEditingId(null);
     setForm(INITIAL_FORM);
     setShowForm(false);
-    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    setError(null);
-    setActionMsg(null);
     try {
       const body: UserAdminRequest = {
         hoTen: form.hoTen.trim(),
@@ -127,22 +124,24 @@ export default function AdminNguoiDungPage() {
         matKhau: form.matKhau || undefined,
       };
       if (editingId == null && (!body.matKhau || body.matKhau.length < 6)) {
-        setError("Mật khẩu khi tạo mới phải ≥ 6 ký tự");
+        toast.error("Mật khẩu quá ngắn", "Mật khẩu khi tạo mới phải ≥ 6 ký tự");
         setSubmitting(false);
         return;
       }
       if (editingId != null) {
         await userAdminApi.update(editingId, body);
-        setActionMsg("Đã cập nhật người dùng");
+        toast.success("Đã cập nhật người dùng", body.email);
       } else {
         await userAdminApi.create(body);
-        setActionMsg("Đã tạo người dùng");
+        toast.success("Đã tạo người dùng", body.email);
       }
       cancelForm();
       await load();
-      setTimeout(() => setActionMsg(null), 2500);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Lỗi lưu");
+      toast.error(
+        "Không lưu được",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -156,11 +155,13 @@ export default function AdminNguoiDungPage() {
     if (!confirm(msg)) return;
     try {
       await userAdminApi.delete(u.id);
-      setActionMsg("Đã xoá người dùng");
       await load();
-      setTimeout(() => setActionMsg(null), 2500);
+      toast.success("Đã xoá người dùng", u.email);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Không thể xoá");
+      toast.error(
+        "Không thể xoá",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     }
   }
 
@@ -168,17 +169,19 @@ export default function AdminNguoiDungPage() {
     e.preventDefault();
     if (resetPwId == null) return;
     if (resetPwInput.length < 6) {
-      setError("Mật khẩu mới phải ≥ 6 ký tự");
+      toast.error("Mật khẩu quá ngắn", "Mật khẩu mới phải ≥ 6 ký tự");
       return;
     }
     try {
       await userAdminApi.resetPassword(resetPwId, { matKhauMoi: resetPwInput });
-      setActionMsg("Đã đặt lại mật khẩu");
       setResetPwId(null);
       setResetPwInput("");
-      setTimeout(() => setActionMsg(null), 2500);
+      toast.success("Đã đặt lại mật khẩu");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Không thể đặt lại mật khẩu");
+      toast.error(
+        "Không thể đặt lại mật khẩu",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     }
   }
 
@@ -197,16 +200,6 @@ export default function AdminNguoiDungPage() {
         </Button>
       </div>
 
-      {(error || actionMsg) && (
-        <div
-          className={cn(
-            "mt-4 rounded-md px-3 py-2 text-xs",
-            error ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700",
-          )}
-        >
-          {error ?? actionMsg}
-        </div>
-      )}
 
       {showForm && (
         <form
@@ -377,7 +370,6 @@ export default function AdminNguoiDungPage() {
                       onClick={() => {
                         setResetPwId(u.id);
                         setResetPwInput("");
-                        setError(null);
                       }}
                       className="rounded-md p-1.5 text-[color:var(--color-muted)] transition hover:bg-[color:var(--color-ivory-2)] hover:text-[color:var(--color-ink)]"
                     >

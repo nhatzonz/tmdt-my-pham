@@ -13,6 +13,7 @@ import {
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 const ACTION_LABEL: Record<InventoryLogAction, string> = {
   IMPORT: "Nhập",
@@ -32,17 +33,23 @@ const FILTER_OPTIONS: { value: Filter; label: string }[] = [
 ];
 
 export default function InventoryHistoryPage() {
+  const toast = useToast();
   const [rows, setRows] = useState<InventoryHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("ALL");
 
   useEffect(() => {
     inventoryApi
       .listHistory()
       .then(setRows)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Lỗi tải lịch sử"))
+      .catch((err) =>
+        toast.error(
+          "Lỗi tải lịch sử",
+          err instanceof ApiError ? err.message : "Lỗi không xác định",
+        ),
+      )
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const counts = useMemo(() => {
@@ -86,12 +93,6 @@ export default function InventoryHistoryPage() {
           </FilterPill>
         ))}
       </div>
-
-      {error && (
-        <p className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
-          {error}
-        </p>
-      )}
 
       {loading ? (
         <p className="mt-8 text-sm text-[color:var(--color-muted)]">Đang tải...</p>

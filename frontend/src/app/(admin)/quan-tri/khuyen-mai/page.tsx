@@ -14,6 +14,7 @@ import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { subscribeCoupons } from "@/lib/coupon-socket";
 import { formatDateTime } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 type FormState = {
   maCode: string;
@@ -36,19 +37,21 @@ const INITIAL_FORM: FormState = {
 type Filter = "ALL" | "LIVE" | "INACTIVE" | "EXPIRED";
 
 export default function AdminCouponPage() {
+  const toast = useToast();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("ALL");
 
   async function load() {
     try {
-      setError(null);
       setCoupons(await couponApi.listAdmin());
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi tải mã");
+      toast.error(
+        "Lỗi tải mã giảm giá",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     }
   }
 
@@ -72,24 +75,21 @@ export default function AdminCouponPage() {
       status: c.status,
       soLuong: c.soLuong != null ? String(c.soLuong) : "",
     });
-    setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelEdit() {
     setEditingId(null);
     setForm(INITIAL_FORM);
-    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.startAt || !form.endAt) {
-      setError("Vui lòng chọn ngày bắt đầu / kết thúc");
+      toast.error("Thiếu ngày", "Vui lòng chọn ngày bắt đầu / kết thúc");
       return;
     }
     setSubmitting(true);
-    setError(null);
     try {
       const body = {
         maCode: form.maCode.trim().toUpperCase(),
@@ -100,19 +100,24 @@ export default function AdminCouponPage() {
         soLuong: form.soLuong.trim() === "" ? null : Number(form.soLuong),
       };
       if (body.soLuong !== null && (!Number.isInteger(body.soLuong) || body.soLuong < 1)) {
-        setError("Số lượng phải là số nguyên ≥ 1");
+        toast.error("Số lượng không hợp lệ", "Số lượng phải là số nguyên ≥ 1");
         setSubmitting(false);
         return;
       }
       if (editingId !== null) {
         await couponApi.updateAdmin(editingId, body);
+        toast.success("Đã cập nhật mã", body.maCode);
       } else {
         await couponApi.createAdmin(body);
+        toast.success("Đã thêm mã", body.maCode);
       }
       cancelEdit();
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi lưu");
+      toast.error(
+        "Không lưu được",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -124,8 +129,12 @@ export default function AdminCouponPage() {
       await couponApi.deleteAdmin(id);
       if (editingId === id) cancelEdit();
       await load();
+      toast.success("Đã xoá mã giảm giá");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi xoá");
+      toast.error(
+        "Không thể xoá",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     }
   }
 
@@ -237,10 +246,6 @@ export default function AdminCouponPage() {
               <option value="INACTIVE">INACTIVE — tạm dừng</option>
             </select>
           </div>
-
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
-          )}
 
           <Button type="submit" disabled={submitting}>
             {submitting

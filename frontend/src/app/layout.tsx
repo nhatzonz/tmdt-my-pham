@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, Geist } from "next/font/google";
 import { storeConfigApi } from "@/features/cau-hinh/api";
+import { ToastProvider } from "@/lib/toast";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -39,7 +40,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${dmSerif.variable} ${geist.variable}`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

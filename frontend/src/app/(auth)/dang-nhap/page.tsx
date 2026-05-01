@@ -11,10 +11,12 @@ import { authApi } from "@/features/auth/api";
 import { AuthTabs } from "@/features/auth/components/AuthTabs";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
+import { useToast } from "@/lib/toast";
 
 export default function DangNhapPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const toast = useToast();
   const [email, setEmail] = useState("thuha@email.com");
   const [matKhau, setMatKhau] = useState("thuha12345");
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,7 @@ export default function DangNhapPage() {
     try {
       const result = await authApi.login({ email, matKhau });
       login(result.token, result.user);
+      toast.success("Đăng nhập thành công", `Chào mừng ${result.user.hoTen}`);
       // Nếu bị redirect tới đăng nhập do session expired (?next=...), quay lại trang gốc.
       // Chỉ accept relative path để chống open-redirect.
       let target: string;

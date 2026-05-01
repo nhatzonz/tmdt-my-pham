@@ -12,6 +12,7 @@ import { imageUrl, pastelBg } from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -26,17 +27,17 @@ const NEXT_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 export default function AdminOrderDetailPage({ params }: PageProps) {
   const { id } = use(params);
+  const toast = useToast();
   const [order, setOrder] = useState<AdminOrder | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<OrderStatus | null>(null);
 
   useEffect(() => {
     adminOrderApi
       .getById(id)
       .then(setOrder)
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Lỗi tải đơn"))
+      .catch((e) => setLoadError(e instanceof ApiError ? e.message : "Lỗi tải đơn"))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -49,14 +50,18 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
       if (!ok) return;
     }
     setUpdating(next);
-    setError(null);
-    setActionMsg(null);
     try {
       const updated = await adminOrderApi.updateStatus(order.id, next);
       setOrder(updated);
-      setActionMsg(`Đã cập nhật → ${ORDER_STATUS_LABEL[next]}`);
+      toast.success(
+        `Đã chuyển → ${ORDER_STATUS_LABEL[next]}`,
+        `Đơn LM-${String(updated.id).padStart(6, "0")}`,
+      );
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Không thể cập nhật");
+      toast.error(
+        "Không thể cập nhật",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setUpdating(null);
     }
@@ -74,7 +79,7 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
     return (
       <div className="py-20 text-center">
         <h1 className="font-serif text-2xl">Không tìm thấy đơn</h1>
-        <p className="mt-3 text-sm text-rose-700">{error}</p>
+        <p className="mt-3 text-sm text-rose-700">{loadError}</p>
         <Link href="/quan-tri/don-hang" className="mt-6 inline-block">
           <Button variant="outline">← Quay lại</Button>
         </Link>
@@ -108,19 +113,6 @@ export default function AdminOrderDetailPage({ params }: PageProps) {
         </div>
         <StatusBadge status={order.trangThai} />
       </div>
-
-      {(error || actionMsg) && (
-        <div
-          className={cn(
-            "mt-4 rounded-md px-3 py-2 text-xs",
-            error
-              ? "bg-rose-50 text-rose-700"
-              : "bg-emerald-50 text-emerald-700",
-          )}
-        >
-          {error ?? actionMsg}
-        </div>
-      )}
 
       {transitions.length > 0 && (
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-white p-5 ring-1 ring-[color:var(--color-border)]">

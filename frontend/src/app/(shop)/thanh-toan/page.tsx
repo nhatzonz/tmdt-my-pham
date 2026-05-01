@@ -26,10 +26,12 @@ import { cn } from "@/lib/cn";
 import { subscribeCoupons } from "@/lib/coupon-socket";
 import { formatCurrency } from "@/lib/format";
 import { shippingStorage } from "@/lib/shipping-storage";
+import { useToast } from "@/lib/toast";
 
 export default function ThanhToanPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
   const { items: cartItems, loaded: cartLoaded, clear: clearCart } = useCart();
   const [buyNow, setBuyNow] = useState<BuyNowItem | null>(null);
   const [buyNowLoaded, setBuyNowLoaded] = useState(false);
@@ -49,8 +51,6 @@ export default function ThanhToanPage() {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [hasSavedShipping, setHasSavedShipping] = useState(false);
 
   useEffect(() => {
@@ -123,13 +123,14 @@ export default function ThanhToanPage() {
 
   function handleSaveShipping() {
     if (!hoTen.trim() || !soDienThoai.trim() || !vnAddress.fullText) {
-      setSavedMsg("Vui lòng nhập đủ Tên, SĐT và Tỉnh/Quận/Phường trước khi lưu.");
-      setTimeout(() => setSavedMsg(null), 3000);
+      toast.error(
+        "Chưa đủ thông tin",
+        "Vui lòng nhập đủ Tên, SĐT và Tỉnh/Quận/Phường trước khi lưu",
+      );
       return;
     }
     persistShipping();
-    setSavedMsg("Đã lưu thông tin giao hàng cho lần sau.");
-    setTimeout(() => setSavedMsg(null), 2500);
+    toast.success("Đã lưu thông tin giao hàng", "Lần sau sẽ tự điền lại");
   }
 
   if (!cartLoaded || !buyNowLoaded || loadingProducts) {
@@ -173,11 +174,10 @@ export default function ThanhToanPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!vnAddress.fullText) {
-      setError("Vui lòng chọn đầy đủ Tỉnh / Quận / Phường.");
+      toast.error("Thiếu địa chỉ", "Vui lòng chọn đầy đủ Tỉnh / Quận / Phường");
       return;
     }
     setSubmitting(true);
-    setError(null);
     try {
       const fullAddress = [diaChi, vnAddress.fullText].filter(Boolean).join(", ");
       const order = await orderApi.checkout({
@@ -198,9 +198,16 @@ export default function ThanhToanPage() {
       } else {
         clearCart();
       }
+      toast.success(
+        "Đặt hàng thành công",
+        `Đơn LM-${String(order.id).padStart(6, "0")} đang được xử lý`,
+      );
       router.push(`/don-hang/${order.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Đặt hàng thất bại");
+      toast.error(
+        "Đặt hàng thất bại",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -255,18 +262,6 @@ export default function ThanhToanPage() {
               {hasSavedShipping && (
                 <span className="text-xs text-[color:var(--color-muted)]">
                   Đã lưu — lần sau sẽ tự điền lại
-                </span>
-              )}
-              {savedMsg && (
-                <span
-                  className={cn(
-                    "text-xs",
-                    savedMsg.startsWith("Đã lưu")
-                      ? "text-emerald-700"
-                      : "text-rose-700",
-                  )}
-                >
-                  {savedMsg}
                 </span>
               )}
             </div>
@@ -372,12 +367,6 @@ export default function ThanhToanPage() {
           <p className="text-[11px] text-[color:var(--color-muted)]">
             Mã giảm giá sẽ được áp dụng ở bước cuối khi đặt hàng.
           </p>
-
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
-              {error}
-            </p>
-          )}
 
           <Button size="lg" type="submit" className="w-full" disabled={submitting}>
             {submitting ? "Đang đặt..." : `Đặt hàng · ${formatCurrency(total)}`}

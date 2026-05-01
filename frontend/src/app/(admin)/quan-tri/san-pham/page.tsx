@@ -14,6 +14,7 @@ import {
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 const LOAI_DA_OPTIONS: { value: LoaiDa; label: string }[] = [
   { value: "OILY", label: "Da dầu" },
@@ -47,18 +48,17 @@ const INITIAL_FORM: FormState = {
 };
 
 export default function AdminSanPhamPage() {
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   async function loadAll() {
     try {
-      setError(null);
       const [cats, prods] = await Promise.all([
         categoryApi.listAdmin(),
         productApi.listAdmin(),
@@ -66,7 +66,10 @@ export default function AdminSanPhamPage() {
       setCategories(cats);
       setProducts(prods);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi không xác định");
+      toast.error(
+        "Lỗi tải dữ liệu",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     }
   }
 
@@ -83,7 +86,6 @@ export default function AdminSanPhamPage() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
-    setError(null);
     try {
       const newUrls: string[] = [];
       for (const file of Array.from(files)) {
@@ -91,8 +93,12 @@ export default function AdminSanPhamPage() {
         newUrls.push(result.url);
       }
       setForm((f) => ({ ...f, hinhAnh: [...f.hinhAnh, ...newUrls] }));
+      toast.success(`Đã tải ${newUrls.length} ảnh lên`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Upload thất bại");
+      toast.error(
+        "Upload thất bại",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -115,21 +121,18 @@ export default function AdminSanPhamPage() {
       thuongHieu: p.thuongHieu ?? "",
       hinhAnh: p.hinhAnh ?? [],
     });
-    setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelEdit() {
     setEditingId(null);
     setForm(INITIAL_FORM);
-    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.loaiDa || !form.danhMucId) return;
     setSubmitting(true);
-    setError(null);
     try {
       const reqBody = {
         maSanPham: form.maSanPham || undefined,
@@ -143,14 +146,19 @@ export default function AdminSanPhamPage() {
       };
       if (editingId !== null) {
         await productApi.updateAdmin(editingId, reqBody);
+        toast.success("Đã cập nhật sản phẩm", form.tenSanPham);
       } else {
         await productApi.createAdmin(reqBody);
+        toast.success("Đã thêm sản phẩm", form.tenSanPham);
       }
       setForm(INITIAL_FORM);
       setEditingId(null);
       await loadAll();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi không xác định");
+      toast.error(
+        "Không lưu được",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -162,8 +170,12 @@ export default function AdminSanPhamPage() {
       await productApi.deleteAdmin(id);
       if (editingId === id) cancelEdit();
       await loadAll();
+      toast.success("Đã xoá sản phẩm");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi xoá");
+      toast.error(
+        "Không thể xoá",
+        err instanceof ApiError ? err.message : "Lỗi không xác định",
+      );
     }
   }
 
@@ -334,10 +346,6 @@ export default function AdminSanPhamPage() {
               className="hidden"
             />
           </div>
-
-          {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
-          )}
 
           <Button type="submit" disabled={submitting || uploading}>
             {submitting

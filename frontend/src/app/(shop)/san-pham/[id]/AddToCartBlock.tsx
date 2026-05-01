@@ -10,6 +10,7 @@ import { useCart } from "@/features/gio-hang/hooks/use-cart";
 import { ApiError } from "@/lib/api-client";
 import { buyNowStorage } from "@/lib/buy-now-storage";
 import { formatCurrency } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 type Props = {
   productId: number;
@@ -20,24 +21,26 @@ type Props = {
 
 export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props) {
   const router = useRouter();
+  const toast = useToast();
   const { upsert } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function checkStock(): Promise<boolean> {
     setBusy(true);
-    setError(null);
     try {
       const res = await orderApi.checkStock({ sanPhamId: productId, soLuong: qty });
       if (!res.ok) {
-        setError(res.error ?? "Hết hàng");
+        toast.error("Không thể thêm vào giỏ", res.error ?? "Sản phẩm hết hàng");
         return false;
       }
       return true;
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Lỗi kiểm tồn kho");
+      toast.error(
+        "Lỗi kiểm tồn kho",
+        err instanceof ApiError ? err.message : "Không xác định",
+      );
       return false;
     } finally {
       setBusy(false);
@@ -49,6 +52,10 @@ export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props)
     if (!ok) return;
     upsert({ sanPhamId: productId, soLuong: qty });
     setAdded(true);
+    toast.success(
+      "Đã thêm vào giỏ",
+      `${qty} sản phẩm — ${formatCurrency(price * qty)}`,
+    );
     setTimeout(() => setAdded(false), 1800);
   }
 
@@ -102,9 +109,6 @@ export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props)
       </div>
       {soLuongTon !== undefined && soLuongTon > 0 && soLuongTon <= 5 && (
         <p className="text-xs text-amber-700">Chỉ còn {soLuongTon} sản phẩm</p>
-      )}
-      {error && (
-        <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
       )}
     </div>
   );

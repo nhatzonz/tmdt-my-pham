@@ -16,24 +16,29 @@ import { ApiError } from "@/lib/api-client";
 import { buyNowStorage } from "@/lib/buy-now-storage";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
+import { useToast } from "@/lib/toast";
 
 const FREE_SHIP_THRESHOLD = 500_000;
 const VAT_RATE = 0.08;
 
 export default function GioHangPage() {
+  const toast = useToast();
   const { items, loaded: cartLoaded, setQuantity, remove } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     productApi
       .list()
       .then(setProducts)
       .catch((err) =>
-        setError(err instanceof ApiError ? err.message : "Lỗi tải sản phẩm"),
+        toast.error(
+          "Lỗi tải sản phẩm",
+          err instanceof ApiError ? err.message : "Lỗi không xác định",
+        ),
       )
       .finally(() => setLoadingProducts(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!cartLoaded || loadingProducts) {
@@ -84,12 +89,6 @@ export default function GioHangPage() {
         {rows.length} sản phẩm · Miễn phí vận chuyển cho đơn từ{" "}
         {formatCurrency(FREE_SHIP_THRESHOLD)}
       </p>
-
-      {error && (
-        <p className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
-          {error}
-        </p>
-      )}
 
       <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_400px]">
         <div>

@@ -8,24 +8,23 @@ import { Input } from "@/components/ui/Input";
 import { authApi } from "@/features/auth/api";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
-import { cn } from "@/lib/cn";
+import { useToast } from "@/lib/toast";
 
 export default function TaiKhoanPage() {
   const router = useRouter();
   const { user, loaded, updateUser } = useAuth();
+  const toast = useToast();
 
   // Profile form
   const [hoTen, setHoTen] = useState("");
   const [soDienThoai, setSoDienThoai] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
-  const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   // Password form
   const [matKhauCu, setMatKhauCu] = useState("");
   const [matKhauMoi, setMatKhauMoi] = useState("");
   const [matKhauMoi2, setMatKhauMoi2] = useState("");
   const [savingPw, setSavingPw] = useState(false);
-  const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   useEffect(() => {
     if (loaded && !user) router.replace("/dang-nhap?next=/tai-khoan");
@@ -49,20 +48,18 @@ export default function TaiKhoanPage() {
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     setSavingProfile(true);
-    setProfileMsg(null);
     try {
       const updated = await authApi.updateMe({
         hoTen: hoTen.trim(),
         soDienThoai: soDienThoai.trim() || undefined,
       });
       updateUser(updated);
-      setProfileMsg({ type: "ok", text: "Đã lưu thông tin cá nhân." });
-      setTimeout(() => setProfileMsg(null), 2500);
+      toast.success("Đã lưu thông tin cá nhân");
     } catch (e) {
-      setProfileMsg({
-        type: "err",
-        text: e instanceof ApiError ? e.message : "Không thể lưu",
-      });
+      toast.error(
+        "Không thể lưu",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setSavingProfile(false);
     }
@@ -70,13 +67,12 @@ export default function TaiKhoanPage() {
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
-    setPwMsg(null);
     if (matKhauMoi !== matKhauMoi2) {
-      setPwMsg({ type: "err", text: "Hai lần nhập mật khẩu mới chưa khớp" });
+      toast.error("Mật khẩu chưa khớp", "Hai lần nhập mật khẩu mới phải giống nhau");
       return;
     }
     if (matKhauMoi.length < 6) {
-      setPwMsg({ type: "err", text: "Mật khẩu mới phải ≥ 6 ký tự" });
+      toast.error("Mật khẩu quá ngắn", "Mật khẩu mới phải ≥ 6 ký tự");
       return;
     }
     setSavingPw(true);
@@ -85,13 +81,12 @@ export default function TaiKhoanPage() {
       setMatKhauCu("");
       setMatKhauMoi("");
       setMatKhauMoi2("");
-      setPwMsg({ type: "ok", text: "Đã đổi mật khẩu thành công." });
-      setTimeout(() => setPwMsg(null), 2500);
+      toast.success("Đã đổi mật khẩu", "Lần đăng nhập kế tiếp dùng mật khẩu mới");
     } catch (e) {
-      setPwMsg({
-        type: "err",
-        text: e instanceof ApiError ? e.message : "Không thể đổi mật khẩu",
-      });
+      toast.error(
+        "Không thể đổi mật khẩu",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setSavingPw(false);
     }
@@ -150,19 +145,6 @@ export default function TaiKhoanPage() {
               hint="Có thể bỏ trống. Nếu nhập, phải đúng định dạng VN."
             />
 
-            {profileMsg && (
-              <div
-                className={cn(
-                  "rounded-md px-3 py-2 text-xs",
-                  profileMsg.type === "ok"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-rose-50 text-rose-700",
-                )}
-              >
-                {profileMsg.text}
-              </div>
-            )}
-
             <div className="flex justify-end">
               <Button type="submit" disabled={savingProfile}>
                 <Save className="size-4" />
@@ -211,19 +193,6 @@ export default function TaiKhoanPage() {
               maxLength={100}
               autoComplete="new-password"
             />
-
-            {pwMsg && (
-              <div
-                className={cn(
-                  "rounded-md px-3 py-2 text-xs",
-                  pwMsg.type === "ok"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-rose-50 text-rose-700",
-                )}
-              >
-                {pwMsg.text}
-              </div>
-            )}
 
             <div className="flex justify-end">
               <Button type="submit" variant="outline" disabled={savingPw}>

@@ -24,6 +24,7 @@ import {
 import { imageUrl, productApi } from "@/features/san-pham/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
+import { useToast } from "@/lib/toast";
 
 type Form = StoreConfigRequest;
 
@@ -43,20 +44,25 @@ const EMPTY: Form = {
 };
 
 export default function AdminCauHinhPage() {
+  const toast = useToast();
   const [form, setForm] = useState<Form>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     storeConfigApi
       .get()
       .then((c) => setForm(merge(c)))
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Lỗi tải cấu hình"))
+      .catch((e) =>
+        toast.error(
+          "Lỗi tải cấu hình",
+          e instanceof ApiError ? e.message : "Lỗi không xác định",
+        ),
+      )
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function merge(c: StoreConfig): Form {
@@ -79,15 +85,15 @@ export default function AdminCauHinhPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError(null);
-    setActionMsg(null);
     try {
       const updated = await storeConfigApi.update(form);
       setForm(merge(updated));
-      setActionMsg("Đã lưu cấu hình cửa hàng");
-      setTimeout(() => setActionMsg(null), 2500);
+      toast.success("Đã lưu cấu hình cửa hàng");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Lỗi lưu");
+      toast.error(
+        "Không lưu được",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setSaving(false);
     }
@@ -95,14 +101,15 @@ export default function AdminCauHinhPage() {
 
   async function handleUploadLogo(file: File) {
     setUploading(true);
-    setError(null);
     try {
       const res = await productApi.uploadImage(file);
       setForm({ ...form, logoUrl: res.url });
-      setActionMsg("Đã tải logo lên — nhớ bấm Lưu để áp dụng");
-      setTimeout(() => setActionMsg(null), 2500);
+      toast.success("Đã tải logo lên", "Nhớ bấm Lưu để áp dụng");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Không upload được logo");
+      toast.error(
+        "Không upload được logo",
+        e instanceof ApiError ? e.message : "Lỗi không xác định",
+      );
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -125,17 +132,6 @@ export default function AdminCauHinhPage() {
           Tên, logo, địa chỉ, liên hệ và link mạng xã hội — sẽ hiển thị trên Footer + trang Liên hệ.
         </p>
       </div>
-
-      {(error || actionMsg) && (
-        <div
-          className={cn(
-            "rounded-md px-3 py-2 text-xs",
-            error ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700",
-          )}
-        >
-          {error ?? actionMsg}
-        </div>
-      )}
 
       {/* Tên + logo */}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">

@@ -11,10 +11,12 @@ import { authApi } from "@/features/auth/api";
 import { AuthTabs } from "@/features/auth/components/AuthTabs";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
+import { useToast } from "@/lib/toast";
 
 export default function DangKyPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const toast = useToast();
   const [hoTen, setHoTen] = useState("");
   const [email, setEmail] = useState("");
   const [soDienThoai, setSoDienThoai] = useState("");
@@ -39,6 +41,7 @@ export default function DangKyPage() {
         soDienThoai: soDienThoai || undefined,
       });
       login(result.token, result.user);
+      toast.success("Tạo tài khoản thành công", `Chào mừng ${result.user.hoTen}!`);
       router.push("/");
       router.refresh();
     } catch (err) {
