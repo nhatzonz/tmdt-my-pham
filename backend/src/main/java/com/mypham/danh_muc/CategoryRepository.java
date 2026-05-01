@@ -9,4 +9,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     boolean existsByTenDanhMucAndTrangThai(String tenDanhMuc, Category.TrangThai trangThai);
 
     List<Category> findByTrangThaiOrderByThuTuAscIdAsc(Category.TrangThai trangThai);
+
+    long countByTrangThai(Category.TrangThai trangThai);
 }

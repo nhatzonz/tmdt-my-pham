@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** Tìm SDT đã được dùng bởi user ACTIVE khác — phục vụ check unique. */
     Optional<User> findBySoDienThoaiAndTrangThai(String soDienThoai, User.TrangThai trangThai);
+
+    long countByTrangThai(User.TrangThai trangThai);
 }

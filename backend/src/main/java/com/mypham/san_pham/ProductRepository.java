@@ -38,4 +38,27 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     /** Tìm sản phẩm dùng mã maSanPham — phục vụ check unique app-level (loại HIDDEN). */
     java.util.Optional<Product> findByMaSanPhamAndTrangThai(String maSanPham, Product.TrangThai trangThai);
+
+    long countByTrangThai(Product.TrangThai trangThai);
+
+    /** Đếm sp ACTIVE đang hết hàng (so_luong_ton = 0) — JOIN qua ton_kho. */
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM san_pham sp
+            JOIN ton_kho tk ON tk.san_pham_id = sp.id
+            WHERE sp.trang_thai = 'ACTIVE'
+              AND tk.so_luong_ton = 0
+            """, nativeQuery = true)
+    long countOutOfStock();
+
+    /** Đếm sp ACTIVE đang dưới ngưỡng cảnh báo (nhưng > 0). */
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM san_pham sp
+            JOIN ton_kho tk ON tk.san_pham_id = sp.id
+            WHERE sp.trang_thai = 'ACTIVE'
+              AND tk.so_luong_ton > 0
+              AND tk.so_luong_ton < tk.nguong_canh_bao
+            """, nativeQuery = true)
+    long countLowStock();
 }
