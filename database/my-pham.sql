@@ -89,8 +89,11 @@ CREATE TABLE khuyen_mai (
     phan_tram_giam  NUMERIC(5,2) NOT NULL CHECK (phan_tram_giam > 0 AND phan_tram_giam <= 100),
     start_at        TIMESTAMPTZ NOT NULL,
     end_at          TIMESTAMPTZ NOT NULL,
-    status          VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')),
-    CHECK (end_at > start_at)
+    status          VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE', 'HIDDEN')),
+    so_luong        INTEGER,                                  -- NULL = không giới hạn
+    da_su_dung      INTEGER NOT NULL DEFAULT 0,
+    CHECK (end_at > start_at),
+    CHECK (so_luong IS NULL OR so_luong >= da_su_dung)
 );
 
 

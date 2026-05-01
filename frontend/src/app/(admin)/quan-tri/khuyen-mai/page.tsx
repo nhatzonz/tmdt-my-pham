@@ -20,6 +20,7 @@ type FormState = {
   startAt: string; // datetime-local
   endAt: string;
   status: CouponStatus;
+  soLuong: string;
 };
 
 const INITIAL_FORM: FormState = {
@@ -28,6 +29,7 @@ const INITIAL_FORM: FormState = {
   startAt: "",
   endAt: "",
   status: "ACTIVE",
+  soLuong: "",
 };
 
 type Filter = "ALL" | "LIVE" | "INACTIVE" | "EXPIRED";
@@ -61,6 +63,7 @@ export default function AdminCouponPage() {
       startAt: isoToLocal(c.startAt),
       endAt: isoToLocal(c.endAt),
       status: c.status,
+      soLuong: c.soLuong != null ? String(c.soLuong) : "",
     });
     setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -87,7 +90,13 @@ export default function AdminCouponPage() {
         startAt: localToIso(form.startAt),
         endAt: localToIso(form.endAt),
         status: form.status,
+        soLuong: form.soLuong.trim() === "" ? null : Number(form.soLuong),
       };
+      if (body.soLuong !== null && (!Number.isInteger(body.soLuong) || body.soLuong < 1)) {
+        setError("Số lượng phải là số nguyên ≥ 1");
+        setSubmitting(false);
+        return;
+      }
       if (editingId !== null) {
         await couponApi.updateAdmin(editingId, body);
       } else {
@@ -169,17 +178,29 @@ export default function AdminCouponPage() {
             maxLength={50}
           />
 
-          <Input
-            name="phanTramGiam"
-            type="number"
-            step="0.01"
-            min="0.01"
-            max="100"
-            label="Phần trăm giảm (%)"
-            value={form.phanTramGiam}
-            onChange={(e) => setForm({ ...form, phanTramGiam: e.target.value })}
-            required
-          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              name="phanTramGiam"
+              type="number"
+              step="0.01"
+              min="0.01"
+              max="100"
+              label="Phần trăm giảm (%)"
+              value={form.phanTramGiam}
+              onChange={(e) => setForm({ ...form, phanTramGiam: e.target.value })}
+              required
+            />
+            <Input
+              name="soLuong"
+              type="number"
+              step="1"
+              min="1"
+              label="Số lượng (bỏ trống = không giới hạn)"
+              placeholder="VD: 100"
+              value={form.soLuong}
+              onChange={(e) => setForm({ ...form, soLuong: e.target.value })}
+            />
+          </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <DateTimeField
@@ -254,6 +275,7 @@ export default function AdminCouponPage() {
                   <th className="p-4">Mã</th>
                   <th className="p-4">Giảm</th>
                   <th className="p-4">Hiệu lực</th>
+                  <th className="p-4">Số lượng</th>
                   <th className="p-4">Trạng thái</th>
                   <th className="p-4 text-right">Thao tác</th>
                 </tr>
@@ -281,6 +303,18 @@ export default function AdminCouponPage() {
                       <p className="text-[color:var(--color-muted)]">
                         → {formatDateTime(c.endAt)}
                       </p>
+                    </td>
+                    <td className="p-4 text-xs">
+                      {c.soLuong == null ? (
+                        <span className="text-[color:var(--color-muted)]">∞</span>
+                      ) : (
+                        <span>
+                          {c.daSuDung}/{c.soLuong}
+                          <span className="ml-1 text-[color:var(--color-muted)]">
+                            (còn {Math.max(0, c.soLuong - c.daSuDung)})
+                          </span>
+                        </span>
+                      )}
                     </td>
                     <td className="p-4">
                       <StatusBadge coupon={c} now={now} />
@@ -310,7 +344,7 @@ export default function AdminCouponPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="p-12 text-center text-sm text-[color:var(--color-muted)]"
                     >
                       Không có mã ở nhóm này.

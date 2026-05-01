@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Truck } from "lucide-react";
+import { Tag, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { couponApi, type Coupon } from "@/features/khuyen-mai/api";
 import {
   VietnamAddressPicker,
   type VietnamAddress,
@@ -44,6 +45,8 @@ export default function ThanhToanPage() {
     fullText: "",
   });
   const [maCoupon, setMaCoupon] = useState("");
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
@@ -52,6 +55,10 @@ export default function ThanhToanPage() {
   useEffect(() => {
     setBuyNow(buyNowStorage.get());
     setBuyNowLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    couponApi.listPublic().then(setCoupons).catch(() => setCoupons([]));
   }, []);
 
   useEffect(() => {
@@ -313,12 +320,24 @@ export default function ThanhToanPage() {
           </div>
 
           <div className="flex flex-col gap-2 border-t border-[color:var(--color-border)] pt-4">
-            <Input
-              name="ma_giam_gia"
-              placeholder="Mã giảm giá (vd: SALE20)"
-              value={maCoupon}
-              onChange={(e) => setMaCoupon(e.target.value)}
-            />
+            <div className="flex gap-2">
+              <Input
+                name="ma_giam_gia"
+                placeholder="Nhập mã hoặc chọn từ danh sách"
+                value={maCoupon}
+                onChange={(e) => setMaCoupon(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCouponModal(true)}
+                className="shrink-0"
+              >
+                <Tag className="size-3.5" />
+                Chọn mã
+              </Button>
+            </div>
             <p className="text-[11px] text-[color:var(--color-muted)]">
               Server sẽ kiểm tra & tính giảm khi đặt hàng.
             </p>
@@ -351,7 +370,166 @@ export default function ThanhToanPage() {
           </p>
         </aside>
       </form>
+
+      {showCouponModal && (
+        <CouponPickerModal
+          coupons={coupons}
+          selected={maCoupon}
+          onSelect={(code) => {
+            setMaCoupon(code);
+            setShowCouponModal(false);
+          }}
+          onClose={() => setShowCouponModal(false)}
+        />
+      )}
     </div>
+  );
+}
+
+function CouponPickerModal({
+  coupons,
+  selected,
+  onSelect,
+  onClose,
+}: {
+  coupons: Coupon[];
+  selected: string;
+  onSelect: (code: string) => void;
+  onClose: () => void;
+}) {
+  const now = Date.now();
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-16 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-[color:var(--color-border)] px-6 py-4">
+          <h2 className="font-serif text-xl">Chọn mã giảm giá</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            className="rounded-full p-1 text-[color:var(--color-muted)] hover:bg-[color:var(--color-ivory-2)] hover:text-[color:var(--color-ink)]"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto p-4">
+          {coupons.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[color:var(--color-muted)]">
+              Chưa có mã giảm giá nào.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {coupons.map((c) => (
+                <CouponItem
+                  key={c.id}
+                  coupon={c}
+                  now={now}
+                  isSelected={
+                    selected.trim().toUpperCase() === c.maCode.toUpperCase()
+                  }
+                  onSelect={() => onSelect(c.maCode)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CouponItem({
+  coupon,
+  now,
+  isSelected,
+  onSelect,
+}: {
+  coupon: Coupon;
+  now: number;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const startMs = new Date(coupon.startAt).getTime();
+  const endMs = new Date(coupon.endAt).getTime();
+  const expired = endMs < now;
+  const notYet = startMs > now;
+  const inactive = coupon.status !== "ACTIVE";
+  const outOfQuota =
+    coupon.soLuong != null && (coupon.conLai ?? 0) <= 0;
+  const disabled = inactive || expired || notYet || outOfQuota;
+
+  let reason: string | null = null;
+  if (inactive) reason = "Đang tạm dừng";
+  else if (notYet) reason = "Chưa bắt đầu";
+  else if (expired) reason = "Đã hết hạn";
+  else if (outOfQuota) reason = "Đã hết lượt dùng";
+
+  return (
+    <li>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onSelect}
+        className={cn(
+          "w-full rounded-xl border-2 border-dashed p-4 text-left transition",
+          disabled
+            ? "cursor-not-allowed border-[color:var(--color-border)] bg-[color:var(--color-ivory-2)]/40 opacity-60"
+            : isSelected
+              ? "border-[color:var(--color-ink)] bg-[color:var(--color-ink)]/5"
+              : "border-[color:var(--color-border)] bg-white hover:border-[color:var(--color-ink)] hover:bg-[color:var(--color-ivory-2)]/30",
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "rounded-md bg-[color:var(--color-pastel-cream)]/60 px-2 py-1 font-mono text-xs font-semibold",
+                  disabled && "line-through",
+                )}
+              >
+                {coupon.maCode}
+              </span>
+              <span
+                className={cn(
+                  "font-serif text-lg",
+                  disabled && "line-through text-[color:var(--color-muted)]",
+                )}
+              >
+                −{Number(coupon.phanTramGiam)}%
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-[color:var(--color-muted)]">
+              Hiệu lực: {new Date(coupon.startAt).toLocaleDateString("vi-VN")}
+              {" → "}
+              {new Date(coupon.endAt).toLocaleDateString("vi-VN")}
+            </p>
+            <p className="text-xs text-[color:var(--color-muted)]">
+              {coupon.soLuong == null
+                ? "Không giới hạn lượt"
+                : `Còn ${Math.max(0, (coupon.conLai ?? 0))}/${coupon.soLuong} lượt`}
+            </p>
+          </div>
+          {reason && (
+            <span className="shrink-0 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-rose-700">
+              {reason}
+            </span>
+          )}
+          {!disabled && isSelected && (
+            <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-emerald-700">
+              Đã chọn
+            </span>
+          )}
+        </div>
+      </button>
+    </li>
   );
 }
 

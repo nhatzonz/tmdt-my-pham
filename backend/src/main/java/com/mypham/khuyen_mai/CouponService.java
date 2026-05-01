@@ -3,6 +3,7 @@ package com.mypham.khuyen_mai;
 import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
+import com.mypham.don_hang.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.Optional;
 public class CouponService {
 
     private final CouponRepository couponRepository;
+    private final OrderRepository orderRepository;
 
     /**
      * Plan §2.3 sequence 2.5.8 — Class diagram method `isValid()`.
@@ -38,14 +40,51 @@ public class CouponService {
         if (c.getStartAt().isAfter(now) || c.getEndAt().isBefore(now)) {
             throw new BusinessException(ErrorCode.COUPON_INVALID, "Mã giảm giá hết hạn");
         }
+        if (c.getSoLuong() != null) {
+            int used = c.getDaSuDung() == null ? 0 : c.getDaSuDung();
+            if (used >= c.getSoLuong()) {
+                throw new BusinessException(ErrorCode.COUPON_INVALID, "Mã giảm giá đã hết lượt sử dụng");
+            }
+        }
         return c;
+    }
+
+    /** Khách checkout dùng coupon → +1 daSuDung. Gọi từ OrderService trong cùng transaction. */
+    @Transactional
+    public void incrementUsed(Long couponId) {
+        Coupon c = couponRepository.findById(couponId).orElse(null);
+        if (c == null) return;
+        c.setDaSuDung((c.getDaSuDung() == null ? 0 : c.getDaSuDung()) + 1);
+        couponRepository.save(c);
+    }
+
+    /** Huỷ đơn → hoàn lại 1 lượt cho coupon. */
+    @Transactional
+    public void decrementUsed(Long couponId) {
+        Coupon c = couponRepository.findById(couponId).orElse(null);
+        if (c == null) return;
+        int used = c.getDaSuDung() == null ? 0 : c.getDaSuDung();
+        c.setDaSuDung(Math.max(0, used - 1));
+        couponRepository.save(c);
+    }
+
+    /** Public list — chỉ trả mã chưa xoá (loại HIDDEN). FE format theo isLive. */
+    @Transactional(readOnly = true)
+    public List<CouponResponse> listPublic() {
+        return couponRepository.findAll().stream()
+                .filter(c -> c.getStatus() != Coupon.Status.HIDDEN)
+                .sorted((a, b) -> Long.compare(b.getId(), a.getId()))
+                .map(CouponResponse::from)
+                .toList();
     }
 
     // ---------- Admin CRUD ----------
 
     @Transactional(readOnly = true)
     public List<CouponResponse> listAdmin() {
+        // Admin cũng không thấy mã đã xoá mềm.
         return couponRepository.findAll().stream()
+                .filter(c -> c.getStatus() != Coupon.Status.HIDDEN)
                 .sorted((a, b) -> Long.compare(b.getId(), a.getId()))
                 .map(CouponResponse::from)
                 .toList();
@@ -55,7 +94,9 @@ public class CouponService {
     public CouponResponse create(CouponRequest req) {
         validatePeriod(req);
         String code = req.maCode().trim().toUpperCase();
-        if (couponRepository.findByMaCode(code).isPresent()) {
+        // Check trùng mã chỉ với mã chưa xoá — đã xoá thì có thể tái dùng.
+        Optional<Coupon> existing = couponRepository.findByMaCode(code);
+        if (existing.isPresent() && existing.get().getStatus() != Coupon.Status.HIDDEN) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
         }
         Coupon c = new Coupon();
@@ -64,6 +105,16 @@ public class CouponService {
         c.setStartAt(req.startAt());
         c.setEndAt(req.endAt());
         c.setStatus(normalizeStatus(req.status()));
+        c.setSoLuong(req.soLuong());
+        c.setDaSuDung(0);
+        // Mã trùng với HIDDEN → đổi tên cũ để giải phóng UNIQUE constraint.
+        // Phải saveAndFlush để Hibernate UPDATE trước khi INSERT mã mới
+        // (default flush order là INSERT → UPDATE).
+        if (existing.isPresent() && existing.get().getStatus() == Coupon.Status.HIDDEN) {
+            Coupon old = existing.get();
+            old.setMaCode("__deleted_" + old.getId() + "_" + old.getMaCode());
+            couponRepository.saveAndFlush(old);
+        }
         return CouponResponse.from(couponRepository.save(c));
     }
 
@@ -72,25 +123,48 @@ public class CouponService {
         validatePeriod(req);
         Coupon c = couponRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("mã giảm giá", id));
+        if (c.getStatus() == Coupon.Status.HIDDEN) {
+            throw new ResourceNotFoundException("mã giảm giá", id);
+        }
         String newCode = req.maCode().trim().toUpperCase();
-        if (!c.getMaCode().equalsIgnoreCase(newCode)
-                && couponRepository.findByMaCode(newCode).isPresent()) {
-            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
+        if (!c.getMaCode().equalsIgnoreCase(newCode)) {
+            Optional<Coupon> dup = couponRepository.findByMaCode(newCode);
+            if (dup.isPresent() && dup.get().getStatus() != Coupon.Status.HIDDEN) {
+                throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
+            }
+        }
+        // Không cho giảm soLuong dưới mức đã sử dụng
+        if (req.soLuong() != null && c.getDaSuDung() != null
+                && req.soLuong() < c.getDaSuDung()) {
+            throw new BusinessException(
+                    ErrorCode.VALIDATION_FAILED,
+                    "Số lượng mới không được nhỏ hơn số lượng đã dùng (" + c.getDaSuDung() + ")");
         }
         c.setMaCode(newCode);
         c.setPhanTramGiam(req.phanTramGiam());
         c.setStartAt(req.startAt());
         c.setEndAt(req.endAt());
         c.setStatus(normalizeStatus(req.status()));
+        c.setSoLuong(req.soLuong());
         return CouponResponse.from(couponRepository.save(c));
     }
 
+    /**
+     * Xoá mã giảm giá:
+     *  - Đã có đơn nào tham chiếu (kể cả đơn đã huỷ) → soft-delete (set HIDDEN)
+     *    để đơn cũ giữ nguyên maCode + phần trăm giảm.
+     *  - Chưa từng dùng → hard-delete để DB sạch, không cần đổi tên.
+     */
     @Transactional
     public void delete(Long id) {
-        if (!couponRepository.existsById(id)) {
-            throw new ResourceNotFoundException("mã giảm giá", id);
+        Coupon c = couponRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("mã giảm giá", id));
+        if (orderRepository.existsByKhuyenMaiId(id)) {
+            c.setStatus(Coupon.Status.HIDDEN);
+            couponRepository.save(c);
+            return;
         }
-        couponRepository.deleteById(id);
+        couponRepository.delete(c);
     }
 
     private void validatePeriod(CouponRequest req) {

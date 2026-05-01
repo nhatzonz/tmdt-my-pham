@@ -155,6 +155,11 @@ public class OrderService {
                     saved.getId());
         }
 
+        // 5. Tăng số lượng đã dùng của coupon (cùng transaction — rollback nếu lỗi)
+        if (coupon != null) {
+            couponService.incrementUsed(coupon.getId());
+        }
+
         return toResponse(saved);
     }
 
@@ -259,7 +264,14 @@ public class OrderService {
             if (o.getKhuyenMaiId() != null) {
                 Coupon c = couponMap.get(o.getKhuyenMaiId());
                 if (c != null) {
-                    maCoupon = c.getMaCode();
+                    // Strip prefix __deleted_<id>_ — đặt khi tái sử dụng mã đã soft-delete.
+                    // Đơn cũ vẫn nên hiển thị tên mã gốc để user nhận diện.
+                    String code = c.getMaCode();
+                    String prefix = "__deleted_" + c.getId() + "_";
+                    if (code != null && code.startsWith(prefix)) {
+                        code = code.substring(prefix.length());
+                    }
+                    maCoupon = code;
                     phanTramGiam = c.getPhanTramGiam();
                 }
             }
@@ -355,6 +367,11 @@ public class OrderService {
             h.setNguon("huy_don_" + order.getId());
             h.setGhiChu("Hoàn kho do huỷ đơn #" + order.getId());
             inventoryHistoryRepository.save(h);
+        }
+
+        // Hoàn 1 lượt cho coupon nếu đơn có dùng
+        if (order.getKhuyenMaiId() != null) {
+            couponService.decrementUsed(order.getKhuyenMaiId());
         }
     }
 

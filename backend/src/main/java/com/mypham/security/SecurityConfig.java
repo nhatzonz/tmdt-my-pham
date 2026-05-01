@@ -33,6 +33,7 @@ public class SecurityConfig {
             "/api/auth/login",
             "/api/products/**",
             "/api/categories/**",
+            "/api/coupons/**",
             "/api/cart/**",
             "/uploads/**",
             // Swagger UI

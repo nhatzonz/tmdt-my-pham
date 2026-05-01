@@ -10,13 +10,19 @@ public record CouponResponse(
         Instant startAt,
         Instant endAt,
         String status,
-        boolean isLive   // status==ACTIVE && now ∈ [startAt, endAt]
+        Integer soLuong,
+        Integer daSuDung,
+        Integer conLai,
+        boolean isLive   // status==ACTIVE && now ∈ [startAt, endAt] && còn lượt
 ) {
     public static CouponResponse from(Coupon c) {
         Instant now = Instant.now();
-        boolean live = c.getStatus() == Coupon.Status.ACTIVE
-                && !c.getStartAt().isAfter(now)
-                && !c.getEndAt().isBefore(now);
+        Integer total = c.getSoLuong();
+        Integer used = c.getDaSuDung() == null ? 0 : c.getDaSuDung();
+        Integer conLai = total == null ? null : Math.max(0, total - used);
+        boolean withinPeriod = !c.getStartAt().isAfter(now) && !c.getEndAt().isBefore(now);
+        boolean stillAvailable = total == null || conLai > 0;
+        boolean live = c.getStatus() == Coupon.Status.ACTIVE && withinPeriod && stillAvailable;
         return new CouponResponse(
                 c.getId(),
                 c.getMaCode(),
@@ -24,6 +30,9 @@ public record CouponResponse(
                 c.getStartAt(),
                 c.getEndAt(),
                 c.getStatus() == null ? null : c.getStatus().name(),
+                total,
+                used,
+                conLai,
                 live);
     }
 }

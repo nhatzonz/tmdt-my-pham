@@ -12,4 +12,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByOrderByIdDesc();
     List<Order> findByTrangThaiOrderByIdDesc(Order.TrangThai trangThai);
     long countByTrangThai(Order.TrangThai trangThai);
+    boolean existsByKhuyenMaiId(Long khuyenMaiId);
 }
