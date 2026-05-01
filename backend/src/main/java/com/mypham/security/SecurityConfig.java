@@ -36,6 +36,8 @@ public class SecurityConfig {
             "/api/coupons/**",
             "/api/cau-hinh",
             "/api/cart/**",
+            "/api/ai/chat",
+            "/api/ai/click",
             "/uploads/**",
             "/ws/**",
             // Swagger UI

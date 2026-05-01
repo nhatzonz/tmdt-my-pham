@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { RecommendedForYou } from "@/features/ai/components/RecommendedForYou";
 import { categoryApi } from "@/features/danh-muc/api";
 import { CategoryCard } from "@/features/danh-muc/components/CategoryCard";
 import { productApi } from "@/features/san-pham/api";
@@ -69,6 +70,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* AI PERSONALIZED — chỉ render khi user logged-in (component tự check) */}
+      <RecommendedForYou />
 
       {/* CATEGORIES */}
       {categories.length > 0 && (

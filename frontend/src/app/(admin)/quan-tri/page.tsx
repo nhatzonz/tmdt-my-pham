@@ -9,6 +9,7 @@ import {
   Package,
   PackageX,
   Receipt,
+  Sparkles,
   Truck,
   Users,
 } from "lucide-react";
@@ -28,6 +29,8 @@ import {
   YAxis,
 } from "recharts";
 import {
+  type CTRDay,
+  type CTROverview,
   type Overview,
   type OrderStatusBreakdown,
   type RevenueDay,
@@ -47,6 +50,8 @@ export default function AdminDashboardPage() {
   const [revenue, setRevenue] = useState<RevenueDay[]>([]);
   const [top, setTop] = useState<TopProduct[]>([]);
   const [breakdown, setBreakdown] = useState<OrderStatusBreakdown | null>(null);
+  const [ctrOverview, setCtrOverview] = useState<CTROverview | null>(null);
+  const [ctrByDay, setCtrByDay] = useState<CTRDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<7 | 14 | 30 | 90>(30);
 
@@ -58,13 +63,17 @@ export default function AdminDashboardPage() {
       reportApi.revenue(days),
       reportApi.topProducts(10),
       reportApi.orderStatus(),
+      reportApi.aiCtrOverview(days).catch(() => null),
+      reportApi.aiCtrByDay(days).catch(() => [] as CTRDay[]),
     ])
-      .then(([o, r, t, s]) => {
+      .then(([o, r, t, s, ctrOv, ctrDays]) => {
         if (cancelled) return;
         setOverview(o);
         setRevenue(r);
         setTop(t);
         setBreakdown(s);
+        setCtrOverview(ctrOv);
+        setCtrByDay(ctrDays ?? []);
       })
       .catch((e) => {
         if (cancelled) return;
@@ -344,6 +353,119 @@ export default function AdminDashboardPage() {
           </div>
         </section>
       </div>
+
+      {/* AI CTR — UC 2.5.9 revenue_ai */}
+      <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
+        <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-[color:var(--color-primary)]" />
+            <h2 className="font-medium">Hiệu quả gợi ý AI ({days} ngày)</h2>
+          </div>
+          {ctrOverview && (
+            <div className="flex flex-wrap gap-4 text-xs text-[color:var(--color-muted)]">
+              <span>
+                Impressions:{" "}
+                <strong className="text-[color:var(--color-ink)]">
+                  {ctrOverview.impressions.toLocaleString("vi-VN")}
+                </strong>
+              </span>
+              <span>
+                Clicks:{" "}
+                <strong className="text-[color:var(--color-ink)]">
+                  {ctrOverview.clicks.toLocaleString("vi-VN")}
+                </strong>
+              </span>
+              <span>
+                CTR:{" "}
+                <strong className="text-[color:var(--color-primary)]">
+                  {(ctrOverview.ctr * 100).toFixed(2)}%
+                </strong>
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="mt-4 h-64">
+          {loading ? (
+            <SkeletonBlock />
+          ) : ctrByDay.length === 0 ||
+            ctrByDay.every((d) => d.impressions === 0) ? (
+            <EmptyChart message="Chưa có dữ liệu impression nào (cần user xem sp hoặc chat)" />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={ctrByDay}
+                margin={{ top: 10, right: 16, left: -8, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="ngay"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v: string) => v.slice(5)}
+                />
+                <YAxis
+                  yAxisId="count"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v: number) => String(v)}
+                />
+                <YAxis
+                  yAxisId="ctr"
+                  orientation="right"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+                  domain={[0, 1]}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, fontSize: 12 }}
+                  labelFormatter={(v) =>
+                    new Date(String(v)).toLocaleDateString("vi-VN")
+                  }
+                  formatter={(value, name) => {
+                    if (name === "ctr") {
+                      return [`${(Number(value) * 100).toFixed(2)}%`, "CTR"];
+                    }
+                    return [String(value), name === "impressions" ? "Impressions" : "Clicks"];
+                  }}
+                />
+                <Legend
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: 11 }}
+                  formatter={(v: string) =>
+                    v === "impressions"
+                      ? "Impressions"
+                      : v === "clicks"
+                        ? "Clicks"
+                        : "CTR"
+                  }
+                />
+                <Line
+                  yAxisId="count"
+                  type="monotone"
+                  dataKey="impressions"
+                  stroke="#94a3b8"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  yAxisId="count"
+                  type="monotone"
+                  dataKey="clicks"
+                  stroke="#1a1a1a"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  yAxisId="ctr"
+                  type="monotone"
+                  dataKey="ctr"
+                  stroke="#e11d48"
+                  strokeWidth={2}
+                  dot={{ r: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </section>
 
       {/* Quick links */}
       <section>

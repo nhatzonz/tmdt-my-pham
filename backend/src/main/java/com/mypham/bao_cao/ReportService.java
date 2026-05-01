@@ -1,5 +1,6 @@
 package com.mypham.bao_cao;
 
+import com.mypham.ai.GoiYAIRepository;
 import com.mypham.auth.User;
 import com.mypham.auth.UserRepository;
 import com.mypham.danh_muc.Category;
@@ -38,6 +39,7 @@ public class ReportService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
+    private final GoiYAIRepository goiYAIRepository;
 
     @Transactional(readOnly = true)
     public OverviewResponse overview() {
@@ -136,5 +138,62 @@ public class ReportService {
             map.put(t, orderRepository.countByTrangThai(t));
         }
         return map;
+    }
+
+    /**
+     * UC 2.5.9 — báo cáo CTR AI (impressions vs clicks).
+     * Trả overview tổng N ngày: impressions, clicks, ctr (0.0-1.0).
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> aiCtrOverview(int days) {
+        if (days < 1) days = 30;
+        if (days > 365) days = 365;
+        java.time.Instant from = LocalDate.now(TZ).minusDays(days - 1).atStartOfDay(TZ).toInstant();
+
+        long impressions = goiYAIRepository.countImpressionsSince(from);
+        long clicks = goiYAIRepository.countClicksSince(from);
+        double ctr = impressions == 0 ? 0.0 : (double) clicks / impressions;
+
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("days", days);
+        map.put("impressions", impressions);
+        map.put("clicks", clicks);
+        map.put("ctr", ctr);
+        return map;
+    }
+
+    /**
+     * CTR AI theo ngày — N ngày gần nhất (mặc định 30).
+     * Fill ngày trống bằng 0/0/0 để FE vẽ chart liên tục.
+     */
+    @Transactional(readOnly = true)
+    public List<CTRDayResponse> aiCtrByDay(int days) {
+        if (days < 1) days = 30;
+        if (days > 365) days = 365;
+
+        LocalDate today = LocalDate.now(TZ);
+        LocalDate fromDate = today.minusDays(days - 1);
+        java.time.Instant from = fromDate.atStartOfDay(TZ).toInstant();
+
+        Map<String, CTRDayResponse> byDay = new HashMap<>();
+        for (Object[] row : goiYAIRepository.ctrByDay(from)) {
+            String ngay = (String) row[0];
+            long impressions = ((Number) row[1]).longValue();
+            long clicks = row[2] == null ? 0L : ((Number) row[2]).longValue();
+            double ctr = impressions == 0 ? 0.0 : (double) clicks / impressions;
+            byDay.put(ngay, new CTRDayResponse(ngay, impressions, clicks, ctr));
+        }
+
+        List<CTRDayResponse> result = new ArrayList<>(days);
+        for (int i = 0; i < days; i++) {
+            String ngay = fromDate.plusDays(i).toString();
+            CTRDayResponse data = byDay.get(ngay);
+            if (data == null) {
+                result.add(new CTRDayResponse(ngay, 0L, 0L, 0.0));
+            } else {
+                result.add(data);
+            }
+        }
+        return result;
     }
 }

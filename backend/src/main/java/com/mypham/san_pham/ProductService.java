@@ -1,8 +1,11 @@
 package com.mypham.san_pham;
 
+import com.mypham.ai.AIClient;
+import com.mypham.ai.AIProperties;
 import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
+import com.mypham.danh_muc.Category;
 import com.mypham.danh_muc.CategoryRepository;
 import com.mypham.don_hang.OrderDetailRepository;
 import com.mypham.ton_kho.Inventory;
@@ -10,6 +13,7 @@ import com.mypham.ton_kho.InventoryRepository;
 import com.mypham.ton_kho.InventoryService;
 import com.mypham.upload.UploadService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -31,6 +36,8 @@ public class ProductService {
     private final InventoryService inventoryService;
     private final InventoryRepository inventoryRepository;
     private final OrderDetailRepository orderDetailRepository;
+    private final AIClient aiClient;
+    private final AIProperties aiProperties;
 
     // ---------- Admin ----------
     @Transactional
@@ -45,6 +52,7 @@ public class ProductService {
         List<String> urls = saveImages(saved.getId(), req.hinhAnh());
         // Auto-tạo row ton_kho (so_luong_ton=0, ngưỡng=10)
         inventoryService.ensureRow(saved.getId());
+        triggerIngest(saved);
         return ProductResponse.from(saved, urls);
     }
 
@@ -96,6 +104,7 @@ public class ProductService {
             }
             order++;
         }
+        triggerIngest(saved);
         return ProductResponse.from(saved, newUrls);
     }
 
@@ -117,6 +126,7 @@ public class ProductService {
             p.setMaSanPham(null);
             p.setTrangThai(Product.TrangThai.HIDDEN);
             productRepository.save(p);
+            triggerDeleteEmbedding(id);
             return;
         }
 
@@ -127,6 +137,7 @@ public class ProductService {
         }
         // CASCADE sẽ xoá san_pham_anh + ton_kho khi delete san_pham
         productRepository.delete(p);
+        triggerDeleteEmbedding(id);
     }
 
     @Transactional(readOnly = true)
@@ -286,6 +297,44 @@ public class ProductService {
         return imageRepository.findBySanPhamIdOrderByThuTuAsc(sanPhamId).stream()
                 .map(ProductImage::getUrl)
                 .toList();
+    }
+
+    /**
+     * Fire-and-forget gọi AI service để re-embed sản phẩm sau create/update.
+     * Không block product save nếu AI service down — chỉ log warning.
+     */
+    private void triggerIngest(Product p) {
+        if (!aiProperties.isIngestOnProductChange()) return;
+        if (p.getTrangThai() != Product.TrangThai.ACTIVE) return;
+
+        String tenDanhMuc = categoryRepository.findById(p.getDanhMucId())
+                .map(Category::getTenDanhMuc)
+                .orElse(null);
+        String loaiDa = p.getLoaiDa() == null ? null : p.getLoaiDa().name();
+
+        var payload = aiClient.ingestPayload(
+                p.getId(),
+                p.getTenSanPham(),
+                p.getMoTa(),
+                loaiDa,
+                p.getThuongHieu(),
+                tenDanhMuc
+        );
+        try {
+            aiClient.postAsync("/ingest", payload);
+        } catch (Exception ex) {
+            log.warn("[AI ingest] product={} failed: {}", p.getId(), ex.getMessage());
+        }
+    }
+
+    /** Báo AI service xoá embedding tương ứng khi sp bị xoá / ẩn. */
+    private void triggerDeleteEmbedding(Long sanPhamId) {
+        if (!aiProperties.isIngestOnProductChange()) return;
+        try {
+            aiClient.postAsync("/ingest/delete", java.util.Map.of("sanPhamId", sanPhamId));
+        } catch (Exception ex) {
+            log.warn("[AI ingest delete] product={} failed: {}", sanPhamId, ex.getMessage());
+        }
     }
 
     /** Lưu các URL thành ProductImage rows (không trùng), giữ thứ tự. */

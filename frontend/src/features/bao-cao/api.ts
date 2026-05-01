@@ -33,6 +33,20 @@ export type TopProduct = {
 
 export type OrderStatusBreakdown = Record<OrderStatus, number>;
 
+export type CTRDay = {
+  ngay: string;
+  impressions: number;
+  clicks: number;
+  ctr: number; // 0..1
+};
+
+export type CTROverview = {
+  days: number;
+  impressions: number;
+  clicks: number;
+  ctr: number;
+};
+
 export const reportApi = {
   overview: () =>
     apiClient.get<Overview>("/api/admin/reports/overview", { cache: "no-store" }),
@@ -48,6 +62,16 @@ export const reportApi = {
     }),
   orderStatus: () =>
     apiClient.get<OrderStatusBreakdown>("/api/admin/reports/order-status", {
+      cache: "no-store",
+    }),
+  aiCtrOverview: (days = 30) =>
+    apiClient.get<CTROverview>("/api/admin/reports/ai-ctr", {
+      query: { days },
+      cache: "no-store",
+    }),
+  aiCtrByDay: (days = 30) =>
+    apiClient.get<CTRDay[]>("/api/admin/reports/ai-ctr-by-day", {
+      query: { days },
       cache: "no-store",
     }),
 };

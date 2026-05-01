@@ -49,4 +49,18 @@ public class ReportController {
     public ResponseEntity<ApiResponse<Map<Order.TrangThai, Long>>> orderStatus() {
         return ResponseEntity.ok(ApiResponse.success(service.orderStatusBreakdown()));
     }
+
+    @GetMapping("/ai-ctr")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> aiCtrOverview(
+            @RequestParam(defaultValue = "30") int days
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(service.aiCtrOverview(days)));
+    }
+
+    @GetMapping("/ai-ctr-by-day")
+    public ResponseEntity<ApiResponse<List<CTRDayResponse>>> aiCtrByDay(
+            @RequestParam(defaultValue = "30") int days
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(service.aiCtrByDay(days)));
+    }
 }
