@@ -23,6 +23,7 @@ import {
 import { ApiError } from "@/lib/api-client";
 import { buyNowStorage, type BuyNowItem } from "@/lib/buy-now-storage";
 import { cn } from "@/lib/cn";
+import { subscribeCoupons } from "@/lib/coupon-socket";
 import { formatCurrency } from "@/lib/format";
 import { shippingStorage } from "@/lib/shipping-storage";
 
@@ -59,6 +60,22 @@ export default function ThanhToanPage() {
 
   useEffect(() => {
     couponApi.listPublic().then(setCoupons).catch(() => setCoupons([]));
+
+    // Realtime: cập nhật danh sách khi coupon được tạo/sửa/xoá/dùng/hoàn.
+    // CREATED/UPDATED/USED/RESTORED → upsert; DELETED → bỏ khỏi list.
+    return subscribeCoupons((event) => {
+      setCoupons((prev) => {
+        if (event.type === "DELETED") {
+          return prev.filter((c) => c.id !== event.couponId);
+        }
+        if (!event.coupon) return prev;
+        const found = prev.some((c) => c.id === event.couponId);
+        if (found) {
+          return prev.map((c) => (c.id === event.couponId ? event.coupon! : c));
+        }
+        return [event.coupon, ...prev];
+      });
+    });
   }, []);
 
   useEffect(() => {

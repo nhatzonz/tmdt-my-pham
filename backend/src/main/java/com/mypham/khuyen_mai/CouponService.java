@@ -4,6 +4,8 @@ import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
 import com.mypham.don_hang.OrderRepository;
+import com.mypham.realtime.CouponEventPublisher;
+import com.mypham.realtime.CouponEventPublisher.EventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
     private final OrderRepository orderRepository;
+    private final CouponEventPublisher events;
 
     /**
      * Plan §2.3 sequence 2.5.8 — Class diagram method `isValid()`.
@@ -55,7 +58,8 @@ public class CouponService {
         Coupon c = couponRepository.findById(couponId).orElse(null);
         if (c == null) return;
         c.setDaSuDung((c.getDaSuDung() == null ? 0 : c.getDaSuDung()) + 1);
-        couponRepository.save(c);
+        Coupon saved = couponRepository.save(c);
+        events.publish(EventType.USED, saved);
     }
 
     /** Huỷ đơn → hoàn lại 1 lượt cho coupon. */
@@ -65,7 +69,8 @@ public class CouponService {
         if (c == null) return;
         int used = c.getDaSuDung() == null ? 0 : c.getDaSuDung();
         c.setDaSuDung(Math.max(0, used - 1));
-        couponRepository.save(c);
+        Coupon saved = couponRepository.save(c);
+        events.publish(EventType.RESTORED, saved);
     }
 
     /** Public list — chỉ trả mã chưa xoá (loại HIDDEN). FE format theo isLive. */
@@ -115,7 +120,9 @@ public class CouponService {
             old.setMaCode("__deleted_" + old.getId() + "_" + old.getMaCode());
             couponRepository.saveAndFlush(old);
         }
-        return CouponResponse.from(couponRepository.save(c));
+        Coupon saved = couponRepository.save(c);
+        events.publish(EventType.CREATED, saved);
+        return CouponResponse.from(saved);
     }
 
     @Transactional
@@ -146,7 +153,9 @@ public class CouponService {
         c.setEndAt(req.endAt());
         c.setStatus(normalizeStatus(req.status()));
         c.setSoLuong(req.soLuong());
-        return CouponResponse.from(couponRepository.save(c));
+        Coupon saved = couponRepository.save(c);
+        events.publish(EventType.UPDATED, saved);
+        return CouponResponse.from(saved);
     }
 
     /**
@@ -162,9 +171,11 @@ public class CouponService {
         if (orderRepository.existsByKhuyenMaiId(id)) {
             c.setStatus(Coupon.Status.HIDDEN);
             couponRepository.save(c);
+            events.publishDeleted(id);
             return;
         }
         couponRepository.delete(c);
+        events.publishDeleted(id);
     }
 
     private void validatePeriod(CouponRequest req) {

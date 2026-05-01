@@ -12,6 +12,7 @@ import {
 } from "@/features/khuyen-mai/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
+import { subscribeCoupons } from "@/lib/coupon-socket";
 import { formatDateTime } from "@/lib/format";
 
 type FormState = {
@@ -53,6 +54,12 @@ export default function AdminCouponPage() {
 
   useEffect(() => {
     load();
+    // Realtime: USED/RESTORED chỉ cần update inline (count thay đổi); CRUD sự kiện
+    // khác cũng có thể inline, nhưng để chắc state nhất quán giữa nhiều admin tab,
+    // re-fetch list mỗi lần có event.
+    return subscribeCoupons(() => {
+      load();
+    });
   }, []);
 
   function startEdit(c: Coupon) {
