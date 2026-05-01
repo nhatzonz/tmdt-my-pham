@@ -13,6 +13,7 @@ import {
 } from "@/features/ton-kho/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
+import { subscribeInventory } from "@/lib/inventory-socket";
 
 type FilterTab = "ALL" | "WARN" | "OUT";
 
@@ -42,6 +43,20 @@ export default function AdminTonKhoPage() {
 
   useEffect(() => {
     load();
+    // Realtime: cập nhật row khi admin tab khác sửa, khách checkout (ORDER),
+    // hoặc đơn bị huỷ (restock).
+    return subscribeInventory((event) => {
+      setRows((prev) => {
+        const idx = prev.findIndex((r) => r.sanPhamId === event.sanPhamId);
+        if (idx < 0) {
+          // Sản phẩm chưa có trong list (vd vừa được tạo) → prepend
+          return [event.row, ...prev];
+        }
+        const next = prev.slice();
+        next[idx] = event.row;
+        return next;
+      });
+    });
   }, []);
 
   const counts = useMemo(() => {

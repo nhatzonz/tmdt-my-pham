@@ -5,6 +5,8 @@ import com.mypham.auth.UserRepository;
 import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
+import com.mypham.realtime.InventoryEventPublisher;
+import com.mypham.realtime.InventoryEventPublisher.EventType;
 import com.mypham.san_pham.Product;
 import com.mypham.san_pham.ProductImage;
 import com.mypham.san_pham.ProductImageRepository;
@@ -26,6 +28,7 @@ public class InventoryService {
     private final ProductImageRepository imageRepository;
     private final InventoryHistoryRepository historyRepository;
     private final UserRepository userRepository;
+    private final InventoryEventPublisher events;
 
     /** Plan §2.3 sequence 2.5.3: chỉ check tồn kho, không lưu giỏ. */
     @Transactional(readOnly = true)
@@ -113,7 +116,9 @@ public class InventoryService {
         h.setNguon("admin_panel");
         historyRepository.save(h);
 
-        return toResponse(p, inv);
+        InventoryAdminResponse res = toResponse(p, inv);
+        events.publish(EventType.UPDATED, res);
+        return res;
     }
 
     @Transactional
@@ -123,7 +128,9 @@ public class InventoryService {
         Inventory inv = ensureRow(p.getId());
         inv.setNguongCanhBao(req.nguongCanhBao());
         inventoryRepository.save(inv);
-        return toResponse(p, inv);
+        InventoryAdminResponse res = toResponse(p, inv);
+        events.publish(EventType.THRESHOLD, res);
+        return res;
     }
 
     /** Gọi từ OrderService khi customer checkout — log mỗi line. */
@@ -145,6 +152,16 @@ public class InventoryService {
         h.setTonSau(sau);
         h.setNguon("don_hang_" + donHangId);
         historyRepository.save(h);
+        broadcastCurrent(sanPhamId);
+    }
+
+    /** Broadcast tồn kho hiện tại cho sản phẩm — gọi sau bất kỳ mutation nào kể cả từ ngoài. */
+    @Transactional(readOnly = true)
+    public void broadcastCurrent(Long sanPhamId) {
+        Product p = productRepository.findById(sanPhamId).orElse(null);
+        if (p == null) return;
+        Inventory inv = inventoryRepository.findBySanPhamId(sanPhamId).orElse(null);
+        events.publish(EventType.UPDATED, toResponse(p, inv));
     }
 
     @Transactional(readOnly = true)

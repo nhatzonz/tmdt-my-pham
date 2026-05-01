@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { X } from "lucide-react";
+import { InventoryRealtimeRefresher } from "@/components/realtime/InventoryRealtimeRefresher";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { categoryApi } from "@/features/danh-muc/api";
 import {
@@ -177,6 +178,7 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto w-4/5 px-6 py-10">
+      <InventoryRealtimeRefresher />
       <Breadcrumb
         items={[
           { label: "Trang chủ", href: "/" },

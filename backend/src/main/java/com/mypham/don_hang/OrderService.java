@@ -367,6 +367,8 @@ public class OrderService {
             h.setNguon("huy_don_" + order.getId());
             h.setGhiChu("Hoàn kho do huỷ đơn #" + order.getId());
             inventoryHistoryRepository.save(h);
+            // Broadcast tồn kho mới cho admin /quan-tri/ton-kho
+            inventoryService.broadcastCurrent(d.getSanPhamId());
         }
 
         // Hoàn 1 lượt cho coupon nếu đơn có dùng
