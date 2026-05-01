@@ -53,16 +53,24 @@ export async function Footer() {
             || config?.linkYoutube) && (
             <div className="mt-5 flex gap-3">
               {config?.linkFacebook && (
-                <SocialIcon href={config.linkFacebook} label="Facebook" badge="FB" />
+                <SocialIcon href={config.linkFacebook} label="Facebook">
+                  <FacebookIcon />
+                </SocialIcon>
               )}
               {config?.linkInstagram && (
-                <SocialIcon href={config.linkInstagram} label="Instagram" badge="IG" />
+                <SocialIcon href={config.linkInstagram} label="Instagram">
+                  <InstagramIcon />
+                </SocialIcon>
               )}
               {config?.linkTiktok && (
-                <SocialIcon href={config.linkTiktok} label="TikTok" badge="TT" />
+                <SocialIcon href={config.linkTiktok} label="TikTok">
+                  <TiktokIcon />
+                </SocialIcon>
               )}
               {config?.linkYoutube && (
-                <SocialIcon href={config.linkYoutube} label="YouTube" badge="YT" />
+                <SocialIcon href={config.linkYoutube} label="YouTube">
+                  <YoutubeIcon />
+                </SocialIcon>
               )}
             </div>
           )}
@@ -129,11 +137,11 @@ export async function Footer() {
 function SocialIcon({
   href,
   label,
-  badge,
+  children,
 }: {
   href: string;
   label: string;
-  badge: string;
+  children: React.ReactNode;
 }) {
   return (
     <a
@@ -142,9 +150,45 @@ function SocialIcon({
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="flex size-8 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold text-white transition hover:bg-white/20"
+      className="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
     >
-      {badge}
+      {children}
     </a>
+  );
+}
+
+/* Brand SVG icons — lucide v1 không export Facebook/Instagram/Youtube. */
+
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
+      <path d="M22 12.07C22 6.51 17.52 2 12 2S2 6.51 2 12.07c0 5.02 3.66 9.18 8.44 9.93v-7.02H7.9v-2.91h2.54V9.85c0-2.51 1.49-3.9 3.78-3.9 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.91h-2.34V22c4.78-.75 8.43-4.91 8.43-9.93z"/>
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function TiktokIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.86a8.16 8.16 0 0 0 4.77 1.52V6.93a4.85 4.85 0 0 1-1.84-.24z"/>
+    </svg>
+  );
+}
+
+function YoutubeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
+      <path d="M23.5 6.5a3 3 0 0 0-2.1-2.12C19.6 4 12 4 12 4s-7.6 0-9.4.38A3 3 0 0 0 .5 6.5C.12 8.3.12 12 .12 12s0 3.7.38 5.5a3 3 0 0 0 2.1 2.12C4.4 20 12 20 12 20s7.6 0 9.4-.38a3 3 0 0 0 2.1-2.12c.38-1.8.38-5.5.38-5.5s0-3.7-.38-5.5zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/>
+    </svg>
   );
 }

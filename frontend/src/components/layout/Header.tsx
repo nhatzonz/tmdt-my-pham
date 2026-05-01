@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut, Package, Search, ShoppingBag, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LogOut, Package, Search, ShoppingCart, User } from "lucide-react";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import type { StoreConfig } from "@/features/cau-hinh/api";
 import type { Category } from "@/features/danh-muc/api";
+import { orderApi } from "@/features/don-hang/api";
 import { useCart } from "@/features/gio-hang/hooks/use-cart";
 import { imageUrl } from "@/features/san-pham/api";
 
@@ -21,9 +23,34 @@ export function Header({
 }) {
   const { user, loaded, logout } = useAuth();
   const { totalCount } = useCart();
+  const [orderCount, setOrderCount] = useState(0);
   const topCategories = categories.slice(0, 3);
   const tenCuaHang = storeConfig?.tenCuaHang || "Ngọc Lan Beauty";
   const logoSrc = (storeConfig?.logoUrl && imageUrl(storeConfig.logoUrl)) || "/logo.png";
+
+  // Đếm đơn đang hoạt động (PENDING + SHIPPING) — không tính COMPLETED/CANCELLED.
+  useEffect(() => {
+    if (!loaded || !user) {
+      setOrderCount(0);
+      return;
+    }
+    let cancelled = false;
+    orderApi
+      .mine()
+      .then((orders) => {
+        if (cancelled) return;
+        const active = orders.filter(
+          (o) => o.trangThai === "PENDING" || o.trangThai === "SHIPPING",
+        );
+        setOrderCount(active.length);
+      })
+      .catch(() => {
+        if (!cancelled) setOrderCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loaded, user]);
 
   function handleLogout() {
     logout();
@@ -82,7 +109,7 @@ export function Header({
             aria-label="Giỏ hàng"
             className="relative text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
           >
-            <ShoppingBag className="size-5" />
+            <ShoppingCart className="size-5" />
             {totalCount > 0 && (
               <span className="absolute -right-2 -top-2 inline-flex size-4 items-center justify-center rounded-full bg-[color:var(--color-ink)] px-1 text-[10px] text-white">
                 {totalCount > 99 ? "99+" : totalCount}
@@ -96,10 +123,15 @@ export function Header({
               <Link
                 href="/don-hang"
                 aria-label="Đơn hàng của tôi"
-                title="Đơn hàng của tôi"
-                className="text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
+                title={`Đơn hàng của tôi${orderCount > 0 ? ` — ${orderCount} đơn đang xử lý` : ""}`}
+                className="relative text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
               >
                 <Package className="size-5" />
+                {orderCount > 0 && (
+                  <span className="absolute -right-2 -top-2 inline-flex size-4 items-center justify-center rounded-full bg-[color:var(--color-ink)] px-1 text-[10px] text-white">
+                    {orderCount > 99 ? "99+" : orderCount}
+                  </span>
+                )}
               </Link>
               <Link
                 href="/tai-khoan"

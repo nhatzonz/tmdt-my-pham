@@ -125,7 +125,7 @@ export default function AdminCauHinhPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-3xl">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div>
         <h1 className="font-serif text-3xl md:text-4xl">Cấu hình cửa hàng</h1>
         <p className="mt-2 text-sm text-[color:var(--color-muted)]">
@@ -133,6 +133,8 @@ export default function AdminCauHinhPage() {
         </p>
       </div>
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="flex flex-col gap-6">
       {/* Tên + logo */}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
@@ -194,6 +196,36 @@ export default function AdminCauHinhPage() {
         </div>
       </section>
 
+      {/* Liên hệ */}
+      <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
+        <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
+          <Phone className="size-5 text-[color:var(--color-muted)]" />
+          <h2 className="font-medium">Liên hệ</h2>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            name="soDienThoai"
+            label="Số điện thoại"
+            placeholder="0912345678"
+            value={form.soDienThoai ?? ""}
+            onChange={(e) => setForm({ ...form, soDienThoai: e.target.value })}
+            maxLength={20}
+          />
+          <Input
+            name="emailLienHe"
+            type="email"
+            label="Email liên hệ"
+            placeholder="hello@cuahang.vn"
+            value={form.emailLienHe ?? ""}
+            onChange={(e) => setForm({ ...form, emailLienHe: e.target.value })}
+            maxLength={100}
+            leftIcon={<Mail className="size-4" />}
+          />
+        </div>
+      </section>
+      </div>
+
+      <div className="flex flex-col gap-6">
       {/* Địa chỉ */}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
@@ -229,34 +261,6 @@ export default function AdminCauHinhPage() {
             value={form.diaChiChiTiet ?? ""}
             onChange={(e) => setForm({ ...form, diaChiChiTiet: e.target.value })}
             maxLength={255}
-          />
-        </div>
-      </section>
-
-      {/* Liên hệ */}
-      <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
-        <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
-          <Phone className="size-5 text-[color:var(--color-muted)]" />
-          <h2 className="font-medium">Liên hệ</h2>
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input
-            name="soDienThoai"
-            label="Số điện thoại"
-            placeholder="0912345678"
-            value={form.soDienThoai ?? ""}
-            onChange={(e) => setForm({ ...form, soDienThoai: e.target.value })}
-            maxLength={20}
-          />
-          <Input
-            name="emailLienHe"
-            type="email"
-            label="Email liên hệ"
-            placeholder="hello@cuahang.vn"
-            value={form.emailLienHe ?? ""}
-            onChange={(e) => setForm({ ...form, emailLienHe: e.target.value })}
-            maxLength={100}
-            leftIcon={<Mail className="size-4" />}
           />
         </div>
       </section>
@@ -302,6 +306,8 @@ export default function AdminCauHinhPage() {
           />
         </div>
       </section>
+      </div>
+      </div>
 
       <div className="flex justify-end">
         <Button type="submit" disabled={saving}>
