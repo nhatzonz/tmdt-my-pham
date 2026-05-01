@@ -18,7 +18,7 @@ let client: Client | null = null;
 const listeners = new Set<Listener>();
 
 function wsUrl(): string {
-  // env.apiBaseUrl = http(s)://host:port → ws(s)://host:port/ws
+
   const url = new URL(env.apiBaseUrl);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   url.pathname = (url.pathname.replace(/\/+$/, "") || "") + "/ws";
@@ -46,7 +46,6 @@ function ensureClient(): Client {
         console.log("[coupon-socket] event", event);
         listeners.forEach((l) => l(event));
       } catch {
-        /* ignore */
       }
     });
   };
@@ -66,16 +65,12 @@ function ensureClient(): Client {
   return client;
 }
 
-/**
- * Subscribe vào event mã giảm giá. Trả unsubscribe function.
- * Tự kết nối STOMP nếu chưa có; chia sẻ 1 connection toàn app.
- */
 export function subscribeCoupons(listener: Listener): () => void {
   ensureClient();
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
-    // Đóng connection khi không còn listener nào để tránh giữ socket vô ích.
+
     if (listeners.size === 0) {
       client?.deactivate();
       client = null;

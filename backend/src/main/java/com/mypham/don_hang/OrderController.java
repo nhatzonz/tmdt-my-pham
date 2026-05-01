@@ -10,12 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Plan §2.3 sequence 2.5.4:
- * - POST /api/orders/checkout
- * - GET  /api/orders/me
- * - GET  /api/orders/{id}
- */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor

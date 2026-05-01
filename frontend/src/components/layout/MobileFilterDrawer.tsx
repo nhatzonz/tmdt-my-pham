@@ -4,12 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { SlidersHorizontal, X } from "lucide-react";
 
-/**
- * Wrapper drawer cho filter — chỉ hiển thị < md.
- * Render `children` bên trong drawer khi mở. Server page có thể truyền
- * `<ProductFilters .../>` và component đó vẫn dùng URL search params
- * như bình thường, không cần custom callback.
- */
 export function MobileFilterDrawer({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -18,7 +12,6 @@ export function MobileFilterDrawer({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Lock body scroll khi drawer mở
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -28,7 +21,6 @@ export function MobileFilterDrawer({ children }: { children: ReactNode }) {
     }
   }, [open]);
 
-  // Đóng khi resize qua md
   useEffect(() => {
     function onResize() {
       if (window.innerWidth >= 768) setOpen(false);

@@ -32,7 +32,6 @@ export function ChatWidget() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Load sessionId từ localStorage 1 lần khi mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(SESSION_KEY);
@@ -42,7 +41,6 @@ export function ChatWidget() {
     }
   }, []);
 
-  // Auto-scroll xuống cuối khi có message mới
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -64,8 +62,7 @@ export function ChatWidget() {
         setSessionId(res.sessionId);
         window.localStorage.setItem(SESSION_KEY, String(res.sessionId));
       }
-      // Chỉ render sp mà LLM thực sự đề cập (sanPhamIds), không phải tất cả top-5 retrieve.
-      // Giúp khi user nói "gợi 1 sp" → chỉ thấy 1 card thay vì 5.
+
       const mentionedIds = new Set(res.sanPhamIds ?? []);
       const filtered = (res.products ?? []).filter((p) =>
         mentionedIds.has(p.sanPhamId),
@@ -108,7 +105,7 @@ export function ChatWidget() {
 
   return (
     <>
-      {/* Floating launcher */}
+      {}
       <button
         type="button"
         aria-label="Mở chat AI"
@@ -123,7 +120,7 @@ export function ChatWidget() {
 
       {open && (
         <div className="fixed inset-x-2 bottom-20 z-50 flex h-[min(70vh,560px)] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl md:inset-auto md:bottom-24 md:right-6 md:h-[560px] md:w-[380px]">
-          {/* Header */}
+          {}
           <div className="flex items-center gap-2 border-b border-black/5 bg-[color:var(--color-pastel-cream)] px-4 py-3">
             <Sparkles className="size-5 text-[color:var(--color-primary)]" />
             <div className="flex-1">
@@ -134,7 +131,7 @@ export function ChatWidget() {
             </div>
           </div>
 
-          {/* Messages */}
+          {}
           <div
             ref={scrollRef}
             className="flex-1 space-y-3 overflow-y-auto px-3 py-4"
@@ -202,7 +199,7 @@ export function ChatWidget() {
             )}
           </div>
 
-          {/* Input */}
+          {}
           <div className="border-t border-black/5 p-3">
             <div className="flex items-end gap-2">
               <textarea

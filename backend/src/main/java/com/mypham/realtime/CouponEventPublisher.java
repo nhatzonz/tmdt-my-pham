@@ -7,10 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-/**
- * Broadcast event mã giảm giá tới /topic/coupons.
- * FE subscribe để cập nhật UI realtime (modal /thanh-toan + admin list).
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -20,14 +16,14 @@ public class CouponEventPublisher {
         CREATED,
         UPDATED,
         DELETED,
-        USED,        // checkout +1 daSuDung
-        RESTORED     // huỷ đơn -1 daSuDung
+        USED,
+        RESTORED
     }
 
     public record CouponEvent(
             EventType type,
             Long couponId,
-            CouponResponse coupon  // null nếu DELETED hard
+            CouponResponse coupon
     ) {}
 
     private static final String TOPIC = "/topic/coupons";

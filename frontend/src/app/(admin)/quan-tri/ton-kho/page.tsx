@@ -27,7 +27,6 @@ export default function AdminTonKhoPage() {
   const [thresholdEditing, setThresholdEditing] = useState<number | null>(null);
   const [thresholdInput, setThresholdInput] = useState<string>("");
 
-  // Per-row qty input
   const [qtyMap, setQtyMap] = useState<Record<number, string>>({});
 
   async function load() {
@@ -46,13 +45,12 @@ export default function AdminTonKhoPage() {
 
   useEffect(() => {
     load();
-    // Realtime: cập nhật row khi admin tab khác sửa, khách checkout (ORDER),
-    // hoặc đơn bị huỷ (restock).
+
     return subscribeInventory((event) => {
       setRows((prev) => {
         const idx = prev.findIndex((r) => r.sanPhamId === event.sanPhamId);
         if (idx < 0) {
-          // Sản phẩm chưa có trong list (vd vừa được tạo) → prepend
+
           return [event.row, ...prev];
         }
         const next = prev.slice();

@@ -70,14 +70,14 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
       />
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
-        {/* GALLERY */}
+        {}
         <ProductGallery
           images={product.hinhAnh}
           alt={product.tenSanPham}
           fallbackBg={bg}
         />
 
-        {/* INFO */}
+        {}
         <div className="flex flex-col gap-5">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">
             {brand && <span>{brand}</span>}
@@ -132,7 +132,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
             />
           </div>
 
-          {/* Specs */}
+          {}
           <div className="mt-2 rounded-2xl bg-white p-5 ring-1 ring-[color:var(--color-border)]">
             <p className="mb-3 text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">
               Thông số
@@ -149,7 +149,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* DESCRIPTION FULL */}
+      {}
       {product.moTa && (
         <section className="mt-16">
           <h2 className="font-serif text-2xl md:text-3xl">Mô tả</h2>
@@ -159,7 +159,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* RELATED */}
+      {}
       {related.length > 0 && (
         <section className="mt-20">
           <div className="mb-8 flex items-end justify-between">
@@ -181,7 +181,7 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* AI SIMILAR — vector cosine, có thể trả sp khác category */}
+      {}
       <SimilarProducts productId={product.id} />
     </div>
   );

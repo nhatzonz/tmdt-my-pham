@@ -19,8 +19,6 @@ public record RegisterRequest(
         @Size(min = 6, max = 100, message = "Mật khẩu dài 6-100 ký tự")
         String matKhau,
 
-        // SDT optional — bỏ trống được khi đăng ký.
-        // Nếu có thì phải đúng format VN.
         @Pattern(
                 regexp = "^$|^(0|\\+84)\\d{9,10}$",
                 message = "Số điện thoại không hợp lệ — vd 0912345678 hoặc +84912345678"

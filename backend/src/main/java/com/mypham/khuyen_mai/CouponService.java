@@ -22,11 +22,6 @@ public class CouponService {
     private final OrderRepository orderRepository;
     private final CouponEventPublisher events;
 
-    /**
-     * Plan §2.3 sequence 2.5.8 — Class diagram method `isValid()`.
-     * Trả null nếu chuỗi rỗng (đơn không dùng coupon).
-     * Throw BusinessException nếu mã sai/hết hạn/inactive.
-     */
     @Transactional(readOnly = true)
     public Coupon findValid(String maCode) {
         if (maCode == null || maCode.isBlank()) return null;
@@ -52,7 +47,6 @@ public class CouponService {
         return c;
     }
 
-    /** Khách checkout dùng coupon → +1 daSuDung. Gọi từ OrderService trong cùng transaction. */
     @Transactional
     public void incrementUsed(Long couponId) {
         Coupon c = couponRepository.findById(couponId).orElse(null);
@@ -62,7 +56,6 @@ public class CouponService {
         events.publish(EventType.USED, saved);
     }
 
-    /** Huỷ đơn → hoàn lại 1 lượt cho coupon. */
     @Transactional
     public void decrementUsed(Long couponId) {
         Coupon c = couponRepository.findById(couponId).orElse(null);
@@ -73,7 +66,6 @@ public class CouponService {
         events.publish(EventType.RESTORED, saved);
     }
 
-    /** Public list — chỉ trả mã chưa xoá (loại HIDDEN). FE format theo isLive. */
     @Transactional(readOnly = true)
     public List<CouponResponse> listPublic() {
         return couponRepository.findAll().stream()
@@ -83,11 +75,9 @@ public class CouponService {
                 .toList();
     }
 
-    // ---------- Admin CRUD ----------
-
     @Transactional(readOnly = true)
     public List<CouponResponse> listAdmin() {
-        // Admin cũng không thấy mã đã xoá mềm.
+
         return couponRepository.findAll().stream()
                 .filter(c -> c.getStatus() != Coupon.Status.HIDDEN)
                 .sorted((a, b) -> Long.compare(b.getId(), a.getId()))
@@ -99,7 +89,7 @@ public class CouponService {
     public CouponResponse create(CouponRequest req) {
         validatePeriod(req);
         String code = req.maCode().trim().toUpperCase();
-        // Check trùng mã chỉ với mã chưa xoá — đã xoá thì có thể tái dùng.
+
         Optional<Coupon> existing = couponRepository.findByMaCode(code);
         if (existing.isPresent() && existing.get().getStatus() != Coupon.Status.HIDDEN) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
@@ -112,9 +102,7 @@ public class CouponService {
         c.setStatus(normalizeStatus(req.status()));
         c.setSoLuong(req.soLuong());
         c.setDaSuDung(0);
-        // Mã trùng với HIDDEN → đổi tên cũ để giải phóng UNIQUE constraint.
-        // Phải saveAndFlush để Hibernate UPDATE trước khi INSERT mã mới
-        // (default flush order là INSERT → UPDATE).
+
         if (existing.isPresent() && existing.get().getStatus() == Coupon.Status.HIDDEN) {
             Coupon old = existing.get();
             old.setMaCode("__deleted_" + old.getId() + "_" + old.getMaCode());
@@ -140,7 +128,7 @@ public class CouponService {
                     && !dup.get().getId().equals(c.getId())) {
                 throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Mã đã tồn tại");
             }
-            // Trùng với mã HIDDEN → rename old để giải phóng UNIQUE
+
             if (dup.isPresent() && dup.get().getStatus() == Coupon.Status.HIDDEN
                     && !dup.get().getId().equals(c.getId())) {
                 Coupon old = dup.get();
@@ -148,7 +136,7 @@ public class CouponService {
                 couponRepository.saveAndFlush(old);
             }
         }
-        // Không cho giảm soLuong dưới mức đã sử dụng
+
         if (req.soLuong() != null && c.getDaSuDung() != null
                 && req.soLuong() < c.getDaSuDung()) {
             throw new BusinessException(
@@ -166,12 +154,6 @@ public class CouponService {
         return CouponResponse.from(saved);
     }
 
-    /**
-     * Xoá mã giảm giá:
-     *  - Đã có đơn nào tham chiếu (kể cả đơn đã huỷ) → soft-delete (set HIDDEN)
-     *    để đơn cũ giữ nguyên maCode + phần trăm giảm.
-     *  - Chưa từng dùng → hard-delete để DB sạch, không cần đổi tên.
-     */
     @Transactional
     public void delete(Long id) {
         Coupon c = couponRepository.findById(id)

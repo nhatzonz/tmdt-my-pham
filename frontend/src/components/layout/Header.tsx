@@ -30,7 +30,6 @@ export function Header({
   const tenCuaHang = storeConfig?.tenCuaHang || "Ngọc Lan Beauty";
   const logoSrc = (storeConfig?.logoUrl && imageUrl(storeConfig.logoUrl)) || "/logo.png";
 
-  // Đếm đơn đang hoạt động (PENDING + SHIPPING) — không tính COMPLETED/CANCELLED.
   useEffect(() => {
     if (!loaded || !user) {
       setOrderCount(0);
@@ -62,7 +61,7 @@ export function Header({
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--color-border)] bg-white/80 shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:gap-10 md:px-6 md:py-4">
-        {/* Hamburger — chỉ mobile */}
+        {}
         <MobileMenu categories={topCategories} />
 
         <Link href={routes.home} className="flex items-center gap-2">
@@ -80,7 +79,7 @@ export function Header({
           </span>
         </Link>
 
-        {/* Nav — chỉ desktop */}
+        {}
         <nav className="hidden flex-1 items-center gap-7 text-sm md:flex">
           {STATIC_NAV.map((item) => (
             <Link
@@ -102,7 +101,7 @@ export function Header({
           ))}
         </nav>
 
-        {/* Spacer giữ cart cluster phía phải trên mobile */}
+        {}
         <div className="flex-1 md:hidden" />
 
         <div className="hidden md:block">
@@ -126,7 +125,7 @@ export function Header({
             <div className="size-5" aria-hidden />
           ) : user ? (
             <>
-              {/* Order + Logout chỉ desktop — mobile vào drawer */}
+              {}
               <Link
                 href="/don-hang"
                 aria-label="Đơn hàng của tôi"
@@ -165,7 +164,7 @@ export function Header({
         </div>
       </div>
 
-      {/* Search row riêng cho mobile — desktop có SearchBox trong row trên */}
+      {}
       <div className="border-t border-[color:var(--color-border)] px-4 pb-3 pt-2 md:hidden">
         <SearchBox />
       </div>

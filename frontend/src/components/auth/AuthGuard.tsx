@@ -4,10 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
-/**
- * Client-side guard. Chưa login → redirect /dang-nhap.
- * JWT lưu localStorage nên check phải ở client (middleware edge không đọc được).
- */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loaded } = useAuth();

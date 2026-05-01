@@ -38,7 +38,6 @@ function ensureClient(): Client {
         const event = JSON.parse(msg.body) as InventoryEvent;
         listeners.forEach((l) => l(event));
       } catch {
-        /* ignore */
       }
     });
   };

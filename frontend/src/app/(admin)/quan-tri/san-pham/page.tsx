@@ -183,7 +183,7 @@ export default function AdminSanPhamPage() {
     <div>
       <h1 className="font-serif text-3xl md:text-4xl">Sản phẩm</h1>
       <p className="mt-2 text-sm text-[color:var(--color-muted)]">
-        Tạo / sửa / xoá sản phẩm — loại da bắt buộc cho AI (UC 2.3.3). Hỗ trợ nhiều ảnh.
+        Tạo, sửa và xoá sản phẩm. Hỗ trợ nhiều ảnh.
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[420px_1fr]">
@@ -296,7 +296,7 @@ export default function AdminSanPhamPage() {
             />
           </div>
 
-          {/* Multi-image gallery */}
+          {}
           <div className="flex flex-col gap-2">
             <label className="text-[11px] uppercase tracking-widest text-[color:var(--color-muted)]">
               Hình ảnh ({form.hinhAnh.length})

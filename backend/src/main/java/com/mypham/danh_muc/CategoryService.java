@@ -24,7 +24,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse create(CategoryRequest req) {
-        // Chỉ check trùng tên trong danh mục ACTIVE — đã xoá thì có thể tạo lại với tên cũ.
+
         if (categoryRepository.existsByTenDanhMucAndTrangThai(
                 req.tenDanhMuc(), Category.TrangThai.ACTIVE)) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục đã tồn tại");
@@ -39,7 +39,7 @@ public class CategoryService {
     public CategoryResponse update(Long id, CategoryRequest req) {
         Category c = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("danh mục", id));
-        // Đổi tên → check trùng trong ACTIVE (loại trừ chính nó).
+
         if (!c.getTenDanhMuc().equalsIgnoreCase(req.tenDanhMuc())
                 && categoryRepository.existsByTenDanhMucAndTrangThai(
                         req.tenDanhMuc(), Category.TrangThai.ACTIVE)) {
@@ -48,18 +48,13 @@ public class CategoryService {
         String oldImg = c.getHinhAnh();
         applyFields(c, req);
         Category saved = categoryRepository.save(c);
-        // Xoá file ảnh cũ nếu admin thay/xoá ảnh
+
         if (oldImg != null && !Objects.equals(oldImg, saved.getHinhAnh())) {
             uploadService.deleteByUrl(oldImg);
         }
         return toResponse(saved);
     }
 
-    /**
-     * Xoá danh mục:
-     *  - Còn sản phẩm tham chiếu (kể cả HIDDEN) → soft-delete (set HIDDEN), giữ ảnh
-     *  - Không có sản phẩm → hard delete + xoá file ảnh
-     */
     @Transactional
     public void delete(Long id) {
         Category c = categoryRepository.findById(id)
@@ -69,7 +64,7 @@ public class CategoryService {
             categoryRepository.save(c);
             return;
         }
-        // Hard delete: xoá file ảnh trước khi xoá row
+
         if (c.getHinhAnh() != null) {
             uploadService.deleteByUrl(c.getHinhAnh());
         }

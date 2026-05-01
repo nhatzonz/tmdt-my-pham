@@ -12,13 +12,12 @@ export type VietnamAddress = {
   tinh: string;
   quan: string;
   phuong: string;
-  fullText: string; // "<phuong>, <quan>, <tinh>"
+  fullText: string;
 };
 
 type Props = {
   value?: VietnamAddress;
   onChange: (addr: VietnamAddress) => void;
-  /** Đánh dấu * đỏ + chặn submit nếu chưa chọn. Default true (cho checkout). */
   required?: boolean;
 };
 
@@ -33,10 +32,8 @@ export function VietnamAddressPicker({ value, onChange, required = true }: Props
   const [loadingDist, setLoadingDist] = useState(false);
   const [loadingWard, setLoadingWard] = useState(false);
 
-  // Đánh dấu đã rehydrate từng cấp để useEffect không hydrate lại sau khi user đã chọn.
   const [hydrated, setHydrated] = useState({ p: false, d: false, w: false });
 
-  // Load provinces once
   useEffect(() => {
     setLoadingProv(true);
     fetch(`${API}/p/`)
@@ -48,7 +45,6 @@ export function VietnamAddressPicker({ value, onChange, required = true }: Props
       .finally(() => setLoadingProv(false));
   }, []);
 
-  // When province changes → load districts
   useEffect(() => {
     if (provinceCode === "") {
       setDistricts([]);
@@ -66,7 +62,6 @@ export function VietnamAddressPicker({ value, onChange, required = true }: Props
       .finally(() => setLoadingDist(false));
   }, [provinceCode]);
 
-  // When district changes → load wards
   useEffect(() => {
     if (districtCode === "") {
       setWards([]);
@@ -109,8 +104,6 @@ export function VietnamAddressPicker({ value, onChange, required = true }: Props
     onChange({ tinh, quan, phuong, fullText: parts.join(", ") });
   }
 
-  // Rehydrate từ value (do shippingStorage prefill) — match theo tên → code.
-  // Mỗi cấp chỉ chạy 1 lần khi danh sách tương ứng load xong.
   useEffect(() => {
     if (hydrated.p) return;
     if (!value?.tinh || provinces.length === 0) return;

@@ -5,10 +5,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
-/**
- * Helper lấy thông tin user hiện tại từ SecurityContext.
- * Dùng khắp service/controller khi cần user đang đăng nhập.
- */
 public final class SecurityUtils {
 
     private SecurityUtils() {}

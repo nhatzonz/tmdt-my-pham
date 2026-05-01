@@ -17,7 +17,6 @@ public class StoreConfigService {
     private final StoreConfigRepository repository;
     private final UploadService uploadService;
 
-    /** Lấy cấu hình. Tự tạo row default nếu chưa có (lần boot đầu). */
     @Transactional
     public StoreConfigResponse get() {
         return StoreConfigResponse.from(loadOrCreate());
@@ -44,8 +43,6 @@ public class StoreConfigService {
         c.setUpdatedAt(Instant.now());
         StoreConfig saved = repository.save(c);
 
-        // Xoá file logo cũ nếu admin đã thay (hoặc xoá hẳn).
-        // deleteByUrl chỉ động vào file trong /uploads/, URL ngoài tự bỏ qua.
         if (oldLogo != null && !Objects.equals(oldLogo, newLogo)) {
             uploadService.deleteByUrl(oldLogo);
         }

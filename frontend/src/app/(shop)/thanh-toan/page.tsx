@@ -61,8 +61,6 @@ export default function ThanhToanPage() {
   useEffect(() => {
     couponApi.listPublic().then(setCoupons).catch(() => setCoupons([]));
 
-    // Realtime: cập nhật danh sách khi coupon được tạo/sửa/xoá/dùng/hoàn.
-    // CREATED/UPDATED/USED/RESTORED → upsert; DELETED → bỏ khỏi list.
     return subscribeCoupons((event) => {
       setCoupons((prev) => {
         if (event.type === "DELETED") {
@@ -86,7 +84,6 @@ export default function ThanhToanPage() {
       .finally(() => setLoadingProducts(false));
   }, []);
 
-  // Prefill: ưu tiên shippingStorage (đã lưu lần trước), fallback về user.
   useEffect(() => {
     const saved = shippingStorage.get();
     if (saved) {
@@ -141,7 +138,6 @@ export default function ThanhToanPage() {
     );
   }
 
-  // Mua ngay: chỉ checkout 1 sp duy nhất, không dùng giỏ.
   const checkoutItems = buyNow ? [buyNow] : cartItems;
 
   if (checkoutItems.length === 0) {
@@ -189,10 +185,9 @@ export default function ThanhToanPage() {
         maCoupon: maCoupon || undefined,
         phuongThucTt: "COD",
       });
-      // Lưu thông tin giao hàng cho lần sau (đặt thành công = thông tin hợp lệ).
+
       persistShipping();
-      // Mua ngay: chỉ xoá buyNowStorage; giỏ giữ nguyên.
-      // Checkout từ giỏ: clear cart như cũ.
+
       if (buyNow) {
         buyNowStorage.clear();
       } else {
@@ -350,9 +345,7 @@ export default function ThanhToanPage() {
                 Chọn mã
               </Button>
             </div>
-            <p className="text-[11px] text-[color:var(--color-muted)]">
-              Server sẽ kiểm tra & tính giảm khi đặt hàng.
-            </p>
+           
           </div>
 
           <div className="flex flex-col gap-2 border-t border-[color:var(--color-border)] pt-4 text-sm">
@@ -371,9 +364,7 @@ export default function ThanhToanPage() {
           <Button size="lg" type="submit" className="w-full" disabled={submitting}>
             {submitting ? "Đang đặt..." : `Đặt hàng · ${formatCurrency(total)}`}
           </Button>
-          <p className="text-center text-[11px] text-[color:var(--color-muted)]">
-            Bằng việc đặt hàng bạn đồng ý với Điều khoản &amp; Chính sách bảo mật.
-          </p>
+          
         </aside>
       </form>
 

@@ -17,7 +17,7 @@ export type UserAdminRequest = {
   email: string;
   soDienThoai?: string;
   vaiTro: UserRole;
-  matKhau?: string;  // bắt buộc khi tạo, optional khi update
+  matKhau?: string;
 };
 
 export type PasswordResetRequest = {

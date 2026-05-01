@@ -18,7 +18,7 @@ export type Coupon = {
 export type CouponRequest = {
   maCode: string;
   phanTramGiam: number;
-  startAt: string;  // ISO
+  startAt: string;
   endAt: string;
   status?: CouponStatus;
   soLuong?: number | null;

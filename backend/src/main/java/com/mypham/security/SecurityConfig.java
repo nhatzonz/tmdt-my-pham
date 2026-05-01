@@ -26,7 +26,6 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint entryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
 
-    /** Các endpoint public — không cần đăng nhập. */
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/ping",
             "/api/auth/register",
@@ -40,7 +39,7 @@ public class SecurityConfig {
             "/api/ai/click",
             "/uploads/**",
             "/ws/**",
-            // Swagger UI
+
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
@@ -50,7 +49,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> {})  // picks up CorsConfigurationSource bean từ WebConfig
+                .cors(cors -> {})
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(entryPoint)

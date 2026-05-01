@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/** Tạo user mới hoặc cập nhật thông tin (không bao gồm mật khẩu — endpoint riêng). */
 public record UserAdminRequest(
         @NotBlank(message = "Họ tên không được để trống")
         @Size(min = 2, max = 100, message = "Họ tên dài 2-100 ký tự")
@@ -26,7 +25,6 @@ public record UserAdminRequest(
 
         @NotNull(message = "Phải chọn vai trò") User.Role vaiTro,
 
-        // matKhau chỉ bắt buộc khi tạo mới; ignore khi update.
         @Size(min = 6, max = 100, message = "Mật khẩu dài 6-100 ký tự")
         String matKhau
 ) {}

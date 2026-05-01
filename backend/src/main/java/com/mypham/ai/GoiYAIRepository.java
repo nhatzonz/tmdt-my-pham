@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface GoiYAIRepository extends JpaRepository<GoiYAI, Long> {
 
-    /** Tìm impression mới nhất cho cặp user×sp (để mark click trên impression đó). */
     @Query("""
             SELECT g FROM GoiYAI g
             WHERE g.sanPhamId = :sanPhamId
@@ -21,10 +20,6 @@ public interface GoiYAIRepository extends JpaRepository<GoiYAI, Long> {
             @Param("userId") Long userId,
             @Param("sanPhamId") Long sanPhamId);
 
-    /**
-     * CTR theo ngày trong N ngày gần nhất.
-     * Trả {ngay, impressions, clicks}.
-     */
     @Query(value = """
             SELECT TO_CHAR(DATE(created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD') AS ngay,
                    COUNT(*) AS impressions,
@@ -36,11 +31,9 @@ public interface GoiYAIRepository extends JpaRepository<GoiYAI, Long> {
             """, nativeQuery = true)
     List<Object[]> ctrByDay(@Param("from") Instant from);
 
-    /** Tổng impressions trong khoảng. */
     @Query("SELECT COUNT(g) FROM GoiYAI g WHERE g.createdAt >= :from")
     long countImpressionsSince(@Param("from") Instant from);
 
-    /** Tổng clicks trong khoảng. */
     @Query("SELECT COUNT(g) FROM GoiYAI g WHERE g.createdAt >= :from AND g.daClick = true")
     long countClicksSince(@Param("from") Instant from);
 }

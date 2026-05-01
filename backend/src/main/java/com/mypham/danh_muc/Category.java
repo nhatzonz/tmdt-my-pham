@@ -4,10 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Map bảng danh_muc (PDF 2.6).
- * Class Diagram PDF 2.8: Category (categoryName).
- */
 @Entity
 @Table(name = "danh_muc")
 @Getter

@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Admin Tồn kho — plan Tuần 9 sequence 2.5.7 / BPMN 2.7.3.
- */
 @RestController
 @RequestMapping("/api/admin/inventory")
 @PreAuthorize("hasRole('ADMIN')")

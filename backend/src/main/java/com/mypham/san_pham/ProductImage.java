@@ -6,7 +6,6 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/** Map bảng san_pham_anh — 1 sản phẩm có N ảnh. */
 @Entity
 @Table(name = "san_pham_anh")
 @Getter

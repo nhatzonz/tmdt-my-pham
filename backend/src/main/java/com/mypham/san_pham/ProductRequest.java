@@ -8,9 +8,6 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * UC 2.3.3: loai_da là input AI, bắt buộc khi tạo.
- */
 public record ProductRequest(
         @Size(max = 50) String maSanPham,
         @NotBlank @Size(min = 2, max = 255) String tenSanPham,

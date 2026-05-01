@@ -29,11 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Plan §2.3 sequence 2.5.4 / BPMN 2.7.1.
- * createOrder: kiểm tồn kho → kiểm coupon → tính tổng → INSERT order + chi tiết → UPDATE ton_kho.
- * Toàn bộ @Transactional — fail bất kỳ bước nào → rollback.
- */
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -49,16 +44,6 @@ public class OrderService {
     private final CouponService couponService;
     private final UserRepository userRepository;
 
-    /** Quy tắc chuyển trạng thái — Plan §2.7.1.
-     *  PENDING   → SHIPPING | CANCELLED
-     *  SHIPPING  → COMPLETED | CANCELLED
-     *  COMPLETED → (đóng — không đổi nữa)
-     *  CANCELLED → (đóng — không đổi nữa)
-     */
-    /**
-     * Load user theo email từ JWT. Reject HIDDEN user — tránh kẻ tấn công có
-     * token còn live trước khi admin xoá vẫn dùng API như bình thường.
-     */
     private User loadActiveUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
@@ -79,7 +64,6 @@ public class OrderService {
     public OrderResponse createOrder(String email, CheckoutRequest req) {
         User user = loadActiveUser(email);
 
-        // 0. Dedup items theo sanPhamId — phòng trường hợp client gửi 2 dòng cùng sản phẩm
         Map<Long, Integer> mergedQuantities = new java.util.LinkedHashMap<>();
         for (CartLineRequest line : req.items()) {
             mergedQuantities.merge(line.sanPhamId(), line.soLuong(), Integer::sum);
@@ -88,7 +72,6 @@ public class OrderService {
                 .map(e -> new CartLineRequest(e.getKey(), e.getValue()))
                 .toList();
 
-        // 1. Validate items + lock product/inventory in memory
         Map<Long, Product> productMap = new HashMap<>();
         Map<Long, Inventory> invMap = new HashMap<>();
         BigDecimal subtotal = BigDecimal.ZERO;
@@ -117,7 +100,6 @@ public class OrderService {
             subtotal = subtotal.add(p.getGia().multiply(BigDecimal.valueOf(line.soLuong())));
         }
 
-        // 2. Coupon
         Coupon coupon = couponService.findValid(req.maCoupon());
         BigDecimal discount = BigDecimal.ZERO;
         if (coupon != null) {
@@ -128,7 +110,6 @@ public class OrderService {
         BigDecimal total = subtotal.subtract(discount);
         if (total.compareTo(BigDecimal.ZERO) < 0) total = BigDecimal.ZERO;
 
-        // 3. INSERT order
         Order order = new Order();
         order.setNguoiDungId(user.getId());
         order.setTongTien(total);
@@ -141,7 +122,6 @@ public class OrderService {
         order.setTrangThai(Order.TrangThai.PENDING);
         Order saved = orderRepository.save(order);
 
-        // 4. INSERT details + UPDATE stock
         for (CartLineRequest line : mergedItems) {
             Product p = productMap.get(line.sanPhamId());
             OrderDetail detail = new OrderDetail();
@@ -157,7 +137,6 @@ public class OrderService {
             inv.setSoLuongTon(sau);
             inventoryRepository.save(inv);
 
-            // Audit log: ORDER consumption
             inventoryService.recordOrderConsumption(
                     line.sanPhamId(),
                     user.getId(),
@@ -167,7 +146,6 @@ public class OrderService {
                     saved.getId());
         }
 
-        // 5. Tăng số lượng đã dùng của coupon (cùng transaction — rollback nếu lỗi)
         if (coupon != null) {
             couponService.incrementUsed(coupon.getId());
         }
@@ -182,10 +160,6 @@ public class OrderService {
         return buildOrderResponses(orders);
     }
 
-    /**
-     * UC 2.5.5 — khách huỷ đơn của chính mình khi còn ở trạng thái PENDING.
-     * Tự hoàn kho + ghi audit log.
-     */
     @Transactional
     public OrderResponse cancelMine(Long id, String email) {
         User user = loadActiveUser(email);
@@ -214,14 +188,9 @@ public class OrderService {
         return buildOrderResponses(List.of(o)).get(0);
     }
 
-    /**
-     * Batch-build responses cho nhiều đơn — tránh N+1 trên list page.
-     * Một query: details, products, images, coupons.
-     */
     private List<OrderResponse> buildOrderResponses(List<Order> orders) {
         if (orders.isEmpty()) return List.of();
 
-        // 1. fetch all order details in one query
         List<Long> orderIds = orders.stream().map(Order::getId).toList();
         List<OrderDetail> allDetails = detailRepository.findByDonHangIdIn(orderIds);
         Map<Long, List<OrderDetail>> detailsByOrderId = new HashMap<>();
@@ -229,7 +198,6 @@ public class OrderService {
             detailsByOrderId.computeIfAbsent(d.getDonHangId(), k -> new java.util.ArrayList<>()).add(d);
         }
 
-        // 2. fetch all products + first-image per product in batch
         java.util.Set<Long> productIds = new java.util.HashSet<>();
         for (OrderDetail d : allDetails) productIds.add(d.getSanPhamId());
         Map<Long, Product> productMap = new HashMap<>();
@@ -241,7 +209,6 @@ public class OrderService {
             firstImageMap.putIfAbsent(img.getSanPhamId(), img.getUrl());
         }
 
-        // 3. fetch coupons referenced by these orders in batch
         java.util.Set<Long> couponIds = new java.util.HashSet<>();
         for (Order o : orders) if (o.getKhuyenMaiId() != null) couponIds.add(o.getKhuyenMaiId());
         Map<Long, Coupon> couponMap = new HashMap<>();
@@ -251,7 +218,6 @@ public class OrderService {
             }
         }
 
-        // 4. assemble
         return orders.stream().map(o -> {
             List<OrderDetail> details = detailsByOrderId.getOrDefault(o.getId(), List.of());
             List<OrderLineResponse> items = details.stream().map(d -> {
@@ -273,8 +239,7 @@ public class OrderService {
             if (o.getKhuyenMaiId() != null) {
                 Coupon c = couponMap.get(o.getKhuyenMaiId());
                 if (c != null) {
-                    // Strip prefix __deleted_<id>_ — đặt khi tái sử dụng mã đã soft-delete.
-                    // Đơn cũ vẫn nên hiển thị tên mã gốc để user nhận diện.
+
                     String code = c.getMaCode();
                     String prefix = "__deleted_" + c.getId() + "_";
                     if (code != null && code.startsWith(prefix)) {
@@ -298,8 +263,6 @@ public class OrderService {
                     items);
         }).toList();
     }
-
-    // ===== ADMIN =====
 
     @Transactional(readOnly = true)
     public List<AdminOrderResponse> listAdmin(Order.TrangThai status) {
@@ -325,10 +288,6 @@ public class OrderService {
         return map;
     }
 
-    /**
-     * Đổi trạng thái — kèm restock nếu CANCELLED.
-     * Chỉ cho phép theo bảng ALLOWED_TRANSITIONS.
-     */
     @Transactional
     public AdminOrderResponse updateStatus(Long id, Order.TrangThai next, String adminEmail) {
         Order order = orderRepository.findById(id)
@@ -354,7 +313,6 @@ public class OrderService {
         return toAdminResponse(order);
     }
 
-    /** Hoàn lại tồn kho khi huỷ đơn — log với action=IMPORT, nguon=huy_don_<id>. */
     private void restockOrder(Order order, String adminEmail) {
         Long adminId = userRepository.findByEmail(adminEmail).map(User::getId).orElse(null);
         List<OrderDetail> details = detailRepository.findByDonHangId(order.getId());
@@ -376,11 +334,10 @@ public class OrderService {
             h.setNguon("huy_don_" + order.getId());
             h.setGhiChu("Hoàn kho do huỷ đơn #" + order.getId());
             inventoryHistoryRepository.save(h);
-            // Broadcast tồn kho mới cho admin /quan-tri/ton-kho
+
             inventoryService.broadcastCurrent(d.getSanPhamId());
         }
 
-        // Hoàn 1 lượt cho coupon nếu đơn có dùng
         if (order.getKhuyenMaiId() != null) {
             couponService.decrementUsed(order.getKhuyenMaiId());
         }
@@ -390,7 +347,6 @@ public class OrderService {
         return buildAdminOrderResponses(List.of(o)).get(0);
     }
 
-    /** Batch admin response — fetch users theo batch + reuse buildOrderResponses. */
     private List<AdminOrderResponse> buildAdminOrderResponses(List<Order> orders) {
         if (orders.isEmpty()) return List.of();
 
@@ -409,8 +365,7 @@ public class OrderService {
             int soLuongMon = base.items().stream()
                     .mapToInt(it -> it.soLuong() == null ? 0 : it.soLuong())
                     .sum();
-            // Strip prefix __deleted_<id>_ — đặt khi admin tạo user mới trùng
-            // email của user HIDDEN. Admin xem đơn cũ vẫn nên thấy email gốc.
+
             String email = u == null ? null : u.getEmail();
             if (u != null && email != null) {
                 String prefix = "__deleted_" + u.getId() + "_";

@@ -158,7 +158,7 @@ export default function GioHangPage() {
             size="lg"
             className="w-full"
             onClick={() => {
-              // Đảm bảo checkout từ giỏ không bị buy-now session cũ override.
+
               buyNowStorage.clear();
               window.location.href = "/thanh-toan";
             }}

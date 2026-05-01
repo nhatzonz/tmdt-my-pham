@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, Lock, Mail, Phone, User } from "lucide-react";
+import { ArrowRight, Loader2, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
@@ -19,7 +19,6 @@ export default function DangKyPage() {
   const toast = useToast();
   const [hoTen, setHoTen] = useState("");
   const [email, setEmail] = useState("");
-  const [soDienThoai, setSoDienThoai] = useState("");
   const [matKhau, setMatKhau] = useState("");
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,6 @@ export default function DangKyPage() {
         hoTen,
         email,
         matKhau,
-        soDienThoai: soDienThoai || undefined,
       });
       login(result.token, result.user);
       toast.success("Tạo tài khoản thành công", `Chào mừng ${result.user.hoTen}!`);
@@ -79,13 +77,6 @@ export default function DangKyPage() {
           required
         />
         <Input
-          name="so_dien_thoai"
-          label="Số điện thoại"
-          value={soDienThoai}
-          onChange={(e) => setSoDienThoai(e.target.value)}
-          leftIcon={<Phone className="size-4" />}
-        />
-        <Input
           name="mat_khau"
           type="password"
           label="Mật khẩu"
@@ -112,15 +103,32 @@ export default function DangKyPage() {
           <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
         )}
 
-        <Button size="lg" className="w-full" type="submit" disabled={loading}>
-          {loading ? "Đang tạo..." : "Tạo tài khoản"}
-          {!loading && <ArrowRight className="size-4" />}
+        <Button
+          size="lg"
+          className="w-full shadow-sm hover:shadow-md"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Đang tạo tài khoản
+            </>
+          ) : (
+            <>
+              Tạo tài khoản
+              <ArrowRight className="size-4" />
+            </>
+          )}
         </Button>
       </form>
 
-      <p className="text-center text-sm">
+      <p className="text-center text-sm text-[color:var(--color-muted)]">
         Đã có tài khoản?{" "}
-        <Link href="/dang-nhap" className="underline underline-offset-4">
+        <Link
+          href="/dang-nhap"
+          className="font-medium text-[color:var(--color-ink)] underline underline-offset-4 hover:text-[color:var(--color-primary)]"
+        >
           Đăng nhập
         </Link>
       </p>

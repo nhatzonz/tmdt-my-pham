@@ -62,8 +62,7 @@ export function AddToCartBlock({ productId, price, hetHang, soLuongTon }: Props)
   async function handleBuyNow() {
     const ok = await checkStock();
     if (!ok) return;
-    // Mua ngay không động vào giỏ — lưu sản phẩm vào buyNowStorage
-    // để /thanh-toan đọc và checkout 1 sản phẩm duy nhất.
+
     buyNowStorage.set({ sanPhamId: productId, soLuong: qty });
     router.push("/thanh-toan");
   }

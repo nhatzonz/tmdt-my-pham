@@ -39,7 +39,6 @@ public class ProductService {
     private final AIClient aiClient;
     private final AIProperties aiProperties;
 
-    // ---------- Admin ----------
     @Transactional
     public ProductResponse create(ProductRequest req) {
         validateCategory(req.danhMucId());
@@ -50,7 +49,7 @@ public class ProductService {
         Product saved = productRepository.save(p);
 
         List<String> urls = saveImages(saved.getId(), req.hinhAnh());
-        // Auto-tạo row ton_kho (so_luong_ton=0, ngưỡng=10)
+
         inventoryService.ensureRow(saved.getId());
         triggerIngest(saved);
         return ProductResponse.from(saved, urls);
@@ -65,8 +64,6 @@ public class ProductService {
         applyFields(p, req);
         Product saved = productRepository.save(p);
 
-        // Diff ảnh cũ vs mới — chỉ delete ảnh bị bỏ + insert ảnh mới + update thứ tự khi cần.
-        // Không wipe-all để khách đọc giữa lúc update không thấy mảng rỗng tạm thời.
         List<ProductImage> oldImages = imageRepository.findBySanPhamIdOrderByThuTuAsc(id);
         List<String> newUrls = req.hinhAnh() == null
                 ? List.of()
@@ -76,7 +73,6 @@ public class ProductService {
                         .toList();
         Set<String> newUrlSet = new HashSet<>(newUrls);
 
-        // 1. Xoá ảnh cũ không còn trong list mới (cả file + DB row)
         for (ProductImage img : oldImages) {
             if (!newUrlSet.contains(img.getUrl())) {
                 uploadService.deleteByUrl(img.getUrl());
@@ -84,7 +80,6 @@ public class ProductService {
             }
         }
 
-        // 2. Update thứ tự + insert ảnh mới
         java.util.Map<String, ProductImage> existingByUrl = new java.util.HashMap<>();
         for (ProductImage img : oldImages) existingByUrl.put(img.getUrl(), img);
         int order = 0;
@@ -108,21 +103,13 @@ public class ProductService {
         return ProductResponse.from(saved, newUrls);
     }
 
-    /**
-     * Xoá sản phẩm:
-     *  - Nếu đã có lịch sử đơn hàng → soft-delete (set HIDDEN) để giữ tính toàn vẹn
-     *    của lịch sử đặt hàng, FE customer sẽ không còn thấy nhưng đơn cũ vẫn nguyên vẹn.
-     *  - Nếu chưa có đơn nào → hard-delete + xoá file ảnh vật lý.
-     */
     @Transactional
     public void delete(Long id) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("sản phẩm", id));
 
         if (orderDetailRepository.existsBySanPhamId(id)) {
-            // Soft delete — giữ ảnh để đơn cũ còn hiển thị thumbnail.
-            // Blank maSanPham để mã có thể tái sử dụng cho sản phẩm mới (UNIQUE constraint trên DB
-            // bỏ qua NULL nên không vướng).
+
             p.setMaSanPham(null);
             p.setTrangThai(Product.TrangThai.HIDDEN);
             productRepository.save(p);
@@ -130,24 +117,22 @@ public class ProductService {
             return;
         }
 
-        // Hard delete — xoá file ảnh vật lý trước khi xoá DB row
         List<ProductImage> images = imageRepository.findBySanPhamIdOrderByThuTuAsc(id);
         for (ProductImage img : images) {
             uploadService.deleteByUrl(img.getUrl());
         }
-        // CASCADE sẽ xoá san_pham_anh + ton_kho khi delete san_pham
+
         productRepository.delete(p);
         triggerDeleteEmbedding(id);
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> list() {
-        // Admin list cũng ẩn HIDDEN — đã xoá là biến mất hẳn khỏi UI.
+
         return buildListResponses(
                 productRepository.findByTrangThaiOrderByIdDesc(Product.TrangThai.ACTIVE));
     }
 
-    // ---------- Public ----------
     @Transactional(readOnly = true)
     public List<ProductResponse> listPublic(
             List<Long> danhMucIds,
@@ -165,8 +150,6 @@ public class ProductService {
                     .map(String::toLowerCase)
                     .collect(java.util.stream.Collectors.toSet());
 
-        // Sp thuộc danh mục đã xoá mềm cũng phải ẩn khỏi storefront — chỉ liệt kê
-        // các sp có danh mục ACTIVE.
         Set<Long> activeCategoryIds = categoryRepository
                 .findByTrangThaiOrderByThuTuAscIdAsc(com.mypham.danh_muc.Category.TrangThai.ACTIVE)
                 .stream()
@@ -199,7 +182,7 @@ public class ProductService {
         if (p.getTrangThai() != Product.TrangThai.ACTIVE) {
             throw new ResourceNotFoundException("sản phẩm", id);
         }
-        // Cũng ẩn nếu danh mục đã bị xoá mềm
+
         com.mypham.danh_muc.Category cat = categoryRepository.findById(p.getDanhMucId()).orElse(null);
         if (cat == null || cat.getTrangThai() != com.mypham.danh_muc.Category.TrangThai.ACTIVE) {
             throw new ResourceNotFoundException("sản phẩm", id);
@@ -225,7 +208,6 @@ public class ProductService {
         return buildListResponses(filtered);
     }
 
-    /** NFD decompose + remove combining marks + map đ→d. Khớp với SQL phía DB. */
     private static String stripDiacritics(String s) {
         if (s == null || s.isEmpty()) return "";
         String n = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
@@ -233,7 +215,6 @@ public class ProductService {
         return n.replace('đ', 'd').replace('Đ', 'D');
     }
 
-    /** Batch fetch images + inventory cho danh sách sản phẩm — tránh N+1. */
     private List<ProductResponse> buildListResponses(List<Product> products) {
         if (products.isEmpty()) return List.of();
 
@@ -261,7 +242,6 @@ public class ProductService {
                 .toList();
     }
 
-    // ---------- Helpers ----------
     private static boolean isEmpty(List<?> list) {
         return list == null || list.isEmpty();
     }
@@ -272,10 +252,6 @@ public class ProductService {
         }
     }
 
-    /**
-     * Check mã sản phẩm trùng — chỉ với sản phẩm ACTIVE khác (HIDDEN đã set
-     * ma_san_pham=NULL nên không xung đột UNIQUE). Loại trừ chính sp đang sửa.
-     */
     private void validateMaSanPhamUnique(String maSanPham, Long excludeId) {
         String code = blankToNull(maSanPham);
         if (code == null) return;
@@ -308,10 +284,6 @@ public class ProductService {
                 .toList();
     }
 
-    /**
-     * Fire-and-forget gọi AI service để re-embed sản phẩm sau create/update.
-     * Không block product save nếu AI service down — chỉ log warning.
-     */
     private void triggerIngest(Product p) {
         if (!aiProperties.isIngestOnProductChange()) return;
         if (p.getTrangThai() != Product.TrangThai.ACTIVE) return;
@@ -336,7 +308,6 @@ public class ProductService {
         }
     }
 
-    /** Báo AI service xoá embedding tương ứng khi sp bị xoá / ẩn. */
     private void triggerDeleteEmbedding(Long sanPhamId) {
         if (!aiProperties.isIngestOnProductChange()) return;
         try {
@@ -346,7 +317,6 @@ public class ProductService {
         }
     }
 
-    /** Lưu các URL thành ProductImage rows (không trùng), giữ thứ tự. */
     private List<String> saveImages(Long sanPhamId, List<String> urls) {
         if (urls == null || urls.isEmpty()) return List.of();
         Set<String> seen = new HashSet<>();

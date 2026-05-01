@@ -18,7 +18,6 @@ type ToastInput = {
   variant?: ToastVariant;
   title: string;
   description?: string;
-  /** ms — default 3500. Set 0 = không tự ẩn. */
   duration?: number;
 };
 
@@ -69,7 +68,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [dismiss],
   );
 
-  // Cleanup timers on unmount
   useEffect(() => {
     const map = timers.current;
     return () => {
@@ -94,13 +92,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Hook hiển thị toast.
- * Gọi ở mọi client component:
- *   const toast = useToast();
- *   toast.success("Đã thêm vào giỏ", "Sản phẩm đã sẵn sàng để thanh toán");
- *   toast.error("Đăng nhập thất bại", "Email hoặc mật khẩu không đúng");
- */
 export function useToast() {
   const ctx = useContext(ToastCtx);
   if (!ctx) {

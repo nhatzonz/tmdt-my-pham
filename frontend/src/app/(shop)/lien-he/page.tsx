@@ -9,7 +9,6 @@ export default async function LienHePage() {
   try {
     config = await storeConfigApi.get();
   } catch {
-    /* fallback */
   }
 
   const tenCuaHang = config?.tenCuaHang || "Ngọc Lan Beauty";
@@ -23,7 +22,6 @@ export default async function LienHePage() {
     { label: "YouTube", href: config?.linkYoutube, badge: "YT" },
   ].filter((s) => s.href);
 
-  // Google Maps embed (free, no API key) — mặc dù chỉ là search query, đủ cho demo
   const mapsQuery = diaChi ? encodeURIComponent(diaChi) : null;
 
   return (
@@ -44,7 +42,7 @@ export default async function LienHePage() {
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_400px]">
-        {/* Map */}
+        {}
         <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-[color:var(--color-border)]">
           {mapsQuery ? (
             <iframe
@@ -61,7 +59,7 @@ export default async function LienHePage() {
           )}
         </div>
 
-        {/* Info */}
+        {}
         <aside className="flex h-fit flex-col gap-5 rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
           <h2 className="font-medium">Thông tin liên hệ</h2>
 

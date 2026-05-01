@@ -7,9 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Public product API (plan §2.3 sequence 2.5.2).
- */
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor

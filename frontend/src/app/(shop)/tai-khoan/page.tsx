@@ -15,12 +15,10 @@ export default function TaiKhoanPage() {
   const { user, loaded, updateUser } = useAuth();
   const toast = useToast();
 
-  // Profile form
   const [hoTen, setHoTen] = useState("");
   const [soDienThoai, setSoDienThoai] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // Password form
   const [matKhauCu, setMatKhauCu] = useState("");
   const [matKhauMoi, setMatKhauMoi] = useState("");
   const [matKhauMoi2, setMatKhauMoi2] = useState("");

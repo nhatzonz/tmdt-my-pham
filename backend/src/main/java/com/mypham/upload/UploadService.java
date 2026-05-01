@@ -71,19 +71,18 @@ public class UploadService {
         }
     }
 
-    /** Detect image MIME type bằng magic bytes — chống giả mạo Content-Type header. */
     private static String detectImageType(byte[] data) {
         if (data == null || data.length < 12) return null;
-        // JPEG: FF D8 FF
+
         if ((data[0] & 0xFF) == 0xFF && (data[1] & 0xFF) == 0xD8 && (data[2] & 0xFF) == 0xFF) {
             return "image/jpeg";
         }
-        // PNG: 89 50 4E 47 0D 0A 1A 0A
+
         if ((data[0] & 0xFF) == 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G'
                 && data[4] == 0x0D && data[5] == 0x0A && data[6] == 0x1A && data[7] == 0x0A) {
             return "image/png";
         }
-        // WEBP: "RIFF" .... "WEBP"
+
         if (data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F'
                 && data[8] == 'W' && data[9] == 'E' && data[10] == 'B' && data[11] == 'P') {
             return "image/webp";
@@ -91,7 +90,6 @@ public class UploadService {
         return null;
     }
 
-    /** Xoá file vật lý nếu URL trỏ tới /uploads/ — bỏ qua nếu là URL ngoài. */
     public void deleteByUrl(String url) {
         if (url == null || !url.startsWith("/uploads/")) return;
         String filename = url.substring("/uploads/".length());

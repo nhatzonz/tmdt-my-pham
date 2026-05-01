@@ -17,7 +17,7 @@ export type Overview = {
 };
 
 export type RevenueDay = {
-  ngay: string; // 'YYYY-MM-DD'
+  ngay: string;
   tongTien: number;
   soDon: number;
 };
@@ -37,7 +37,7 @@ export type CTRDay = {
   ngay: string;
   impressions: number;
   clicks: number;
-  ctr: number; // 0..1
+  ctr: number;
 };
 
 export type CTROverview = {

@@ -20,12 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Filter chạy 1 lần / request:
- * - Đọc header Authorization: Bearer <token>
- * - Parse JWT, set Authentication vào SecurityContext
- * - Không throw nếu token invalid — để endpoint public vẫn chạy được
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

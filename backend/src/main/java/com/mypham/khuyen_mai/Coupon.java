@@ -33,12 +33,10 @@ public class Coupon {
     @Column(length = 20)
     private Status status = Status.ACTIVE;
 
-    /** Tổng số lần mã có thể được dùng. NULL = không giới hạn. */
     @Column(name = "so_luong",
             columnDefinition = "integer")
     private Integer soLuong;
 
-    /** Đã dùng bao nhiêu lần. Tăng khi checkout, giảm khi huỷ đơn. */
     @Column(name = "da_su_dung", nullable = false,
             columnDefinition = "integer NOT NULL DEFAULT 0")
     private Integer daSuDung = 0;
@@ -46,6 +44,6 @@ public class Coupon {
     public enum Status {
         ACTIVE,
         INACTIVE,
-        HIDDEN     // Soft-delete: ẩn khỏi mọi UI, đơn cũ vẫn ref
+        HIDDEN
     }
 }

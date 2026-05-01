@@ -15,10 +15,9 @@ export type CreateCategoryRequest = {
 };
 
 export const categoryApi = {
-  // Public
+
   list: () => apiClient.get<Category[]>("/api/categories", { cache: "no-store" }),
 
-  // Admin
   listAdmin: () => apiClient.get<Category[]>("/api/admin/categories"),
   createAdmin: (body: CreateCategoryRequest) =>
     apiClient.post<Category>("/api/admin/categories", body),

@@ -1,12 +1,4 @@
-/**
- * Lưu thông tin giao hàng (tên, SĐT, địa chỉ) vào localStorage để
- * lần sau quay lại /thanh-toan tự fill.
- *
- * Khác với cartStorage / authStorage — KHÔNG clear khi logout.
- * Chỉ ghi đè khi user:
- *   1. Bấm nút "Lưu thông tin giao hàng" thủ công
- *   2. Đặt hàng thành công (dùng đúng thông tin đó là OK → lưu lại)
- */
+
 
 const SHIPPING_KEY = "ngoclan.shipping.v1";
 

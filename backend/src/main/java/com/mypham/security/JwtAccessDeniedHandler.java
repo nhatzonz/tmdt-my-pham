@@ -15,10 +15,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 
-/**
- * Trả về JSON chuẩn khi user đã xác thực nhưng không đủ quyền (role).
- * Ví dụ CUSTOMER gọi /api/admin/* → 403 JSON thay vì HTML mặc định.
- */
 @Component
 @RequiredArgsConstructor
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {

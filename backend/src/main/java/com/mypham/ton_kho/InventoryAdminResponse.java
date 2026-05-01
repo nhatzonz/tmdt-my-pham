@@ -8,6 +8,6 @@ public record InventoryAdminResponse(
         String hinhAnh,
         Integer soLuongTon,
         Integer nguongCanhBao,
-        boolean canhBao,    // soLuongTon < nguongCanhBao
-        boolean hetHang     // soLuongTon == 0
+        boolean canhBao,
+        boolean hetHang
 ) {}

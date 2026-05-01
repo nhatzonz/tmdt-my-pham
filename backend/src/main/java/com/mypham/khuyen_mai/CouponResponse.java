@@ -13,7 +13,7 @@ public record CouponResponse(
         Integer soLuong,
         Integer daSuDung,
         Integer conLai,
-        boolean isLive   // status==ACTIVE && now ∈ [startAt, endAt] && còn lượt
+        boolean isLive
 ) {
     public static CouponResponse from(Coupon c) {
         Instant now = Instant.now();

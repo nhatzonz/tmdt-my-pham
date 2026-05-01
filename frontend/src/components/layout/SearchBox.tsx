@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -19,13 +18,6 @@ const RECENT_LIMIT = 6;
 const SUGGEST_LIMIT = 8;
 const DEBOUNCE_MS = 250;
 
-/**
- * SearchBox — autocomplete như Shopee.
- * - Gõ ≥1 ký tự: debounce 250ms → call /api/products/search
- * - Mũi tên ↑↓ chọn gợi ý, Enter mở chi tiết hoặc trang search
- * - Esc / click ngoài: đóng dropdown
- * - Lưu 6 từ khoá gần nhất ở localStorage để gợi ý khi focus mà chưa gõ
- */
 export function SearchBox() {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -38,7 +30,6 @@ export function SearchBox() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxId = useId();
 
-  // Load recent từ localStorage 1 lần
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -48,11 +39,9 @@ export function SearchBox() {
         if (Array.isArray(parsed)) setRecent(parsed.slice(0, RECENT_LIMIT));
       }
     } catch {
-      /* ignore corrupt */
     }
   }, []);
 
-  // Click ngoài → đóng
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
@@ -61,10 +50,6 @@ export function SearchBox() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  // Debounce search — chỉ gọi API khi query ổn định ≥DEBOUNCE_MS.
-  // Cancelled flag phải khai báo Ở NGOÀI setTimeout để cleanup useEffect
-  // có thể flip nó trước khi callback fire — tránh request cũ overwrite kết
-  // quả mới khi user gõ nhanh.
   useEffect(() => {
     const q = query.trim();
     if (q.length === 0) {
@@ -97,7 +82,6 @@ export function SearchBox() {
     };
   }, [query]);
 
-  // Items hiển thị: chỉ render results khi user đã gõ
   const items = query.trim().length > 0 ? results : [];
 
   function persistRecent(q: string) {
@@ -111,7 +95,6 @@ export function SearchBox() {
     try {
       window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
     } catch {
-      /* quota exceeded — ignore */
     }
   }
 
@@ -120,7 +103,6 @@ export function SearchBox() {
     try {
       window.localStorage.removeItem(RECENT_KEY);
     } catch {
-      /* ignore */
     }
   }
 
@@ -141,9 +123,7 @@ export function SearchBox() {
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    // IME đang compose (gõ tiếng Việt Telex/VNI, gõ tiếng Trung/Nhật/Hàn): Enter / Arrow
-    // được IME dùng để chốt candidate. KHÔNG xử lý ở đây nếu không bị double text +
-    // navigate khi vừa compose vừa submit.
+
     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
 
     const max = items.length;
@@ -216,7 +196,7 @@ export function SearchBox() {
           role="listbox"
           className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-[28rem] overflow-y-auto rounded-2xl border border-black/5 bg-white shadow-xl"
         >
-          {/* Recent searches — khi chưa gõ */}
+          {}
           {showRecent && (
             <div className="p-2">
               <div className="flex items-center justify-between px-2 py-1.5 text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
@@ -246,7 +226,7 @@ export function SearchBox() {
             </div>
           )}
 
-          {/* Đang gõ — loading state */}
+          {}
           {showResults && loading && results.length === 0 && (
             <div className="flex items-center gap-2 px-4 py-6 text-sm text-[color:var(--color-muted)]">
               <Loader2 className="size-4 animate-spin" />
@@ -254,7 +234,7 @@ export function SearchBox() {
             </div>
           )}
 
-          {/* Đang gõ — không có kết quả */}
+          {}
           {showResults && !loading && results.length === 0 && (
             <div className="px-4 py-6 text-center text-sm text-[color:var(--color-muted)]">
               Không tìm thấy sản phẩm cho{" "}
@@ -264,7 +244,7 @@ export function SearchBox() {
             </div>
           )}
 
-          {/* Đang gõ — có kết quả */}
+          {}
           {showResults && results.length > 0 && (
             <div className="p-1">
               {results.map((p, idx) => (
@@ -328,14 +308,10 @@ export function SearchBox() {
   );
 }
 
-/** Mã hiển thị: ưu tiên maSanPham thật, fallback "NL-00x" theo id (khớp logic
- *  trang chi tiết sp). BE search cũng accept fake code này. */
 function displayCode(p: Product): string {
   return p.maSanPham ?? `NL-${String(p.id).padStart(3, "0")}`;
 }
 
-/** Bôi đậm phần text khớp query — không xử lý dấu tiếng Việt nâng cao,
- *  chỉ match plain substring case-insensitive. */
 function highlight(text: string, query: string) {
   const q = query.trim();
   if (!q) return text;

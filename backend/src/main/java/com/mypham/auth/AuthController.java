@@ -8,12 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Sequence 2.5.1 (PDF):
- * - POST /api/auth/register
- * - POST /api/auth/login
- * - GET  /api/auth/me
- */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

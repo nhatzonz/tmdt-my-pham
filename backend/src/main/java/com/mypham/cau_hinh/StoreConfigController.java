@@ -13,13 +13,11 @@ public class StoreConfigController {
 
     private final StoreConfigService service;
 
-    /** Public — Footer/Header/Liên hệ đọc cấu hình. */
     @GetMapping("/api/cau-hinh")
     public ResponseEntity<ApiResponse<StoreConfigResponse>> get() {
         return ResponseEntity.ok(ApiResponse.success(service.get()));
     }
 
-    /** Admin update toàn bộ cấu hình. */
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/api/admin/cau-hinh")
     public ResponseEntity<ApiResponse<StoreConfigResponse>> update(

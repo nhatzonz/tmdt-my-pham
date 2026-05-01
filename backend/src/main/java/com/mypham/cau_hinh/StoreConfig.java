@@ -6,10 +6,6 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * Cấu hình cửa hàng — singleton (luôn 1 row, id=1).
- * Pattern: row with fixed id=1 + CHECK constraint ngăn tạo nhiều row.
- */
 @Entity
 @Table(name = "cau_hinh_cua_hang")
 @Getter

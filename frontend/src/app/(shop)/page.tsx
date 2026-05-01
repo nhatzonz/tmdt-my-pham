@@ -26,7 +26,7 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* HERO */}
+      {}
       <section className="relative overflow-hidden">
         <div className="mx-auto grid w-full grid-cols-1 items-center gap-6 px-4 pt-5 md:w-4/5 md:gap-12 md:px-6 lg:grid-cols-2">
           <div className="flex flex-col gap-6">
@@ -70,7 +70,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CATEGORIES */}
+      {}
       {categories.length > 0 && (
         <section className="mx-auto w-full px-4 py-12 md:w-4/5 md:px-6 md:py-16">
           <div className="mb-10 flex items-end justify-between">
@@ -94,7 +94,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* FEATURED PRODUCTS */}
+      {}
       {featured.length > 0 && (
         <section className="mx-auto w-full px-4 pb-16 md:w-4/5 md:px-6 md:pb-20">
           <div className="mb-10 flex items-end justify-between">

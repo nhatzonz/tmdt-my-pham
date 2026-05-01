@@ -48,7 +48,7 @@ export type ListParams = {
 };
 
 export const productApi = {
-  // Public
+
   list: (params?: ListParams) =>
     apiClient.get<Product[]>("/api/products", {
       query: params,
@@ -62,7 +62,6 @@ export const productApi = {
       cache: "no-store",
     }),
 
-  // Admin
   listAdmin: () => apiClient.get<Product[]>("/api/admin/products"),
   createAdmin: (body: CreateProductRequest) =>
     apiClient.post<Product>("/api/admin/products", body),
@@ -77,14 +76,12 @@ export const productApi = {
   },
 };
 
-/** Build full URL cho ảnh server: `/uploads/abc.jpg` → `http://localhost:8080/uploads/abc.jpg`. */
 export function imageUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
   return `${env.apiBaseUrl}${path}`;
 }
 
-// Helper: pastel background class từ id (deterministic)
 const PASTELS = [
   "bg-[color:var(--color-pastel-beige)]",
   "bg-[color:var(--color-pastel-mint)]",

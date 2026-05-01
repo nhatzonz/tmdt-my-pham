@@ -19,7 +19,7 @@ import { useToast } from "@/lib/toast";
 type FormState = {
   maCode: string;
   phanTramGiam: string;
-  startAt: string; // datetime-local
+  startAt: string;
   endAt: string;
   status: CouponStatus;
   soLuong: string;
@@ -57,9 +57,7 @@ export default function AdminCouponPage() {
 
   useEffect(() => {
     load();
-    // Realtime: USED/RESTORED chỉ cần update inline (count thay đổi); CRUD sự kiện
-    // khác cũng có thể inline, nhưng để chắc state nhất quán giữa nhiều admin tab,
-    // re-fetch list mỗi lần có event.
+
     return subscribeCoupons(() => {
       load();
     });
@@ -432,12 +430,10 @@ function StatusBadge({ coupon, now }: { coupon: Coupon; now: number }) {
   );
 }
 
-/** "2026-04-30T15:30" (local) → ISO with timezone */
 function localToIso(local: string): string {
   return new Date(local).toISOString();
 }
 
-/** ISO → "2026-04-30T15:30" (local time, format datetime-local) */
 function isoToLocal(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");

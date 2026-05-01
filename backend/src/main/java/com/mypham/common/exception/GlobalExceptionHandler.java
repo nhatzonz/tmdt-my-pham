@@ -19,14 +19,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Bắt mọi exception trong controller layer → trả về ApiResponse chuẩn.
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    // ---- Nghiệp vụ tự định nghĩa ----
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Object>> handleBusiness(BusinessException ex) {
@@ -41,8 +36,6 @@ public class GlobalExceptionHandler {
                         Instant.now()));
     }
 
-    // ---- Validation ----
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
@@ -52,8 +45,7 @@ public class GlobalExceptionHandler {
                         (a, b) -> a,
                         LinkedHashMap::new));
         log.warn("[Validation] {}", fieldErrors);
-        // 1 field lỗi → đưa message cụ thể lên top-level cho FE hiển thị trực tiếp;
-        // nhiều field → giữ message tổng quát + chi tiết trong data.fields.
+
         String topMessage = fieldErrors.size() == 1
                 ? fieldErrors.values().iterator().next()
                 : ErrorCode.VALIDATION_FAILED.getDefaultMessage();
@@ -95,8 +87,6 @@ public class GlobalExceptionHandler {
                         Instant.now()));
     }
 
-    // ---- Security ----
-
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity
@@ -129,8 +119,6 @@ public class GlobalExceptionHandler {
                         Map.of("errorCode", ErrorCode.FORBIDDEN.getCode()),
                         Instant.now()));
     }
-
-    // ---- Fallback ----
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleUnexpected(Exception ex) {

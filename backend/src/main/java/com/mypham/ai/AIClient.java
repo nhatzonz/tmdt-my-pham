@@ -15,10 +15,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 
-/**
- * HTTP client gọi FastAPI AI service. Dùng JDK 21 java.net.http (không thêm dep mới).
- * Trả thẳng JsonNode để controller tự forward — tránh map chi tiết schema có thể đổi.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -28,8 +24,7 @@ public class AIClient {
     private final ObjectMapper mapper = new ObjectMapper();
 
     private HttpClient http() {
-        // Force HTTP/1.1 — uvicorn h11 không hỗ trợ HTTP/2 h2c upgrade,
-        // nếu để default HTTP_2 thì body request bị drop ở upgrade handshake.
+
         return HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(5))
@@ -44,7 +39,6 @@ public class AIClient {
         return send("POST", path, body);
     }
 
-    /** Fire-and-forget — dùng cho ingest async, không block product save. */
     public void postAsync(String path, Object body) {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
@@ -112,7 +106,6 @@ public class AIClient {
         }
     }
 
-    /** Helper build ingest payload (gọi từ ProductService hook). */
     public Map<String, Object> ingestPayload(
             Long sanPhamId,
             String tenSanPham,

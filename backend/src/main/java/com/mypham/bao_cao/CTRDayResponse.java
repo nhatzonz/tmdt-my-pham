@@ -4,5 +4,5 @@ public record CTRDayResponse(
         String ngay,
         long impressions,
         long clicks,
-        double ctr      // 0.0 - 1.0
+        double ctr
 ) {}

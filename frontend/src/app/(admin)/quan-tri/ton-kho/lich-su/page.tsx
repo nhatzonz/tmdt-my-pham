@@ -211,7 +211,6 @@ function ActionBadge({ action }: { action: InventoryLogAction }) {
 function NguonChip({ nguon }: { nguon?: string }) {
   if (!nguon) return <span className="text-xs text-[color:var(--color-muted)]">—</span>;
 
-  // Admin context — link tới /quan-tri/don-hang/{id}, không phải route khách hàng.
   const orderRef =
     nguon.startsWith("don_hang_")
       ? { id: nguon.slice("don_hang_".length), label: "Đơn" }

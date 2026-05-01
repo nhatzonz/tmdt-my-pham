@@ -14,15 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Quản lý người dùng (admin only).
- *
- * Guard rails quan trọng (senior-dev):
- *  - Không cho admin tự xoá / tự hạ vai trò chính mình
- *  - Không cho hạ vai trò admin cuối cùng → đảm bảo hệ thống luôn có admin
- *  - User đã có đơn → soft-delete (giữ lịch sử); chưa có đơn → hard-delete
- *  - Email trùng với user đã soft-delete: rename email cũ thành __deleted_<id>_<email>
- */
 @Service
 @RequiredArgsConstructor
 public class UserAdminService {
@@ -34,12 +25,12 @@ public class UserAdminService {
     @Transactional(readOnly = true)
     public List<UserAdminResponse> list() {
         List<User> users = userRepository.findByTrangThaiOrderByIdDesc(User.TrangThai.ACTIVE);
-        // Batch count đơn — tránh N+1 nếu sau này nhiều user
+
         Map<Long, Long> orderCounts = new HashMap<>();
         for (User u : users) {
             orderCounts.put(u.getId(), 0L);
         }
-        // Đơn giản: 1 user list ~chục → countByNguoiDungId per user OK; nếu list lớn refactor sang GROUP BY
+
         List<User> allUsers = users;
         for (User u : allUsers) {
             long count = orderRepository.findByNguoiDungIdOrderByIdDesc(u.getId()).size();
@@ -65,7 +56,6 @@ public class UserAdminService {
         String email = req.email().trim().toLowerCase();
         String sdt = blankToNull(req.soDienThoai());
 
-        // Email: trùng với user ACTIVE → reject; trùng HIDDEN → rename để giải phóng UNIQUE
         Optional<User> existing = userRepository.findByEmail(email);
         if (existing.isPresent() && existing.get().getTrangThai() == User.TrangThai.ACTIVE) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email đã tồn tại");
@@ -76,7 +66,6 @@ public class UserAdminService {
             userRepository.saveAndFlush(old);
         }
 
-        // SDT: chỉ check unique trong ACTIVE user (HIDDEN giải phóng SDT)
         if (sdt != null) {
             userRepository.findBySoDienThoaiAndTrangThai(sdt, User.TrangThai.ACTIVE)
                     .ifPresent(u -> {
@@ -101,13 +90,12 @@ public class UserAdminService {
         User u = loadActive(id);
         boolean isSelf = u.getEmail().equalsIgnoreCase(currentAdminEmail);
 
-        // Self-protect: không cho admin tự hạ vai trò mình
         if (isSelf && u.getVaiTro() == User.Role.ADMIN && req.vaiTro() != User.Role.ADMIN) {
             throw new BusinessException(
                     ErrorCode.VALIDATION_FAILED,
                     "Không thể tự hạ vai trò ADMIN của chính bạn");
         }
-        // Last-admin: không cho hạ admin cuối cùng
+
         if (u.getVaiTro() == User.Role.ADMIN && req.vaiTro() != User.Role.ADMIN) {
             long activeAdmins = userRepository.countByVaiTroAndTrangThai(
                     User.Role.ADMIN, User.TrangThai.ACTIVE);
@@ -118,7 +106,6 @@ public class UserAdminService {
             }
         }
 
-        // Đổi email → check trùng (loại trừ chính nó, loại HIDDEN)
         String newEmail = req.email().trim().toLowerCase();
         if (!u.getEmail().equalsIgnoreCase(newEmail)) {
             Optional<User> dup = userRepository.findByEmail(newEmail);
@@ -133,7 +120,6 @@ public class UserAdminService {
             }
         }
 
-        // SDT: check trùng (loại trừ chính nó, loại HIDDEN)
         String newSdt = blankToNull(req.soDienThoai());
         boolean sdtChanged = newSdt != null
                 && !newSdt.equalsIgnoreCase(u.getSoDienThoai() == null ? "" : u.getSoDienThoai());
@@ -155,7 +141,6 @@ public class UserAdminService {
         return UserAdminResponse.from(userRepository.save(u), count);
     }
 
-    /** Admin reset mật khẩu cho user — không cần biết mật khẩu cũ. */
     @Transactional
     public void resetPassword(Long id, PasswordResetRequest req) {
         User u = loadActive(id);
@@ -163,13 +148,6 @@ public class UserAdminService {
         userRepository.save(u);
     }
 
-    /**
-     * Xoá user:
-     *  - Không cho xoá chính mình
-     *  - Không cho xoá admin cuối cùng
-     *  - Đã có đơn → soft-delete (rename email để giải phóng UNIQUE)
-     *  - Chưa có đơn → hard-delete
-     */
     @Transactional
     public void delete(Long id, String currentAdminEmail) {
         User u = loadActive(id);
@@ -190,11 +168,7 @@ public class UserAdminService {
 
         boolean hasOrder = !orderRepository.findByNguoiDungIdOrderByIdDesc(u.getId()).isEmpty();
         if (hasOrder) {
-            // Soft-delete: chỉ set HIDDEN, GIỮ NGUYÊN email gốc.
-            // Khi user đó cố login → check password vẫn đúng → trả ACCOUNT_DISABLED 403
-            //   với message "Tài khoản đã bị vô hiệu hoá" (UX rõ ràng).
-            // Email sẽ được rename thành __deleted_<id>_<email> CHỈ KHI admin tạo
-            //   user mới trùng email — xử lý ở method create()/update().
+
             u.setTrangThai(User.TrangThai.HIDDEN);
             userRepository.save(u);
             return;

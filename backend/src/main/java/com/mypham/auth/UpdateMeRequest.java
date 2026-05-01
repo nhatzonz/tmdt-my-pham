@@ -4,10 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/**
- * Customer cập nhật thông tin cá nhân của chính mình.
- * KHÔNG cho đổi email (định danh) và vai trò qua endpoint này.
- */
 public record UpdateMeRequest(
         @NotBlank(message = "Họ tên không được để trống")
         @Size(min = 2, max = 100, message = "Họ tên dài 2-100 ký tự")

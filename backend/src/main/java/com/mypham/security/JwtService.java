@@ -17,15 +17,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Sinh và xác thực JWT access / refresh token.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class JwtService {
 
-    /** Secret default đã commit trong application.yml — bị từ chối ở mọi profile khác `dev`. */
     private static final String COMMITTED_DEFAULT_SECRET =
             "dGhpc19pc19hX3ZlcnlfbG9uZ19zZWNyZXRfa2V5X2Zvcl9kZXZlbG9wbWVudF9vbmx5Xzg0MjM=";
 

@@ -4,9 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Admin view: thêm thông tin khách hàng so với OrderResponse cho khách.
- */
 public record AdminOrderResponse(
         Long id,
         Long nguoiDungId,

@@ -6,10 +6,6 @@ import { aiApi, aiItemToProduct, type AIRecommendItem } from "@/features/ai/api"
 import { ProductCard } from "@/features/san-pham/components/ProductCard";
 import { authStorage } from "@/lib/auth-storage";
 
-/**
- * Widget "Dành riêng cho bạn" — hiển thị trên home khi đã login.
- * Strategy: BE chọn PERSONALIZED nếu user có order history, fallback POPULAR.
- */
 export function RecommendedForYou() {
   const [items, setItems] = useState<AIRecommendItem[] | null>(null);
   const [strategy, setStrategy] = useState<string | null>(null);
@@ -32,7 +28,6 @@ export function RecommendedForYou() {
       });
   }, []);
 
-  // Loading state — render nothing để không nháy section trống
   if (items === null) return null;
   if (items.length === 0) return null;
 

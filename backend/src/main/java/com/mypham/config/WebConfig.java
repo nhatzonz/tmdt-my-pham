@@ -13,9 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-/**
- * CORS + serve static `/uploads/**` từ thư mục đĩa.
- */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 

@@ -6,7 +6,6 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/** Audit log mỗi thay đổi tồn kho. */
 @Entity
 @Table(name = "lich_su_kho")
 @Getter
@@ -46,9 +45,9 @@ public class InventoryHistory {
     private Instant createdAt;
 
     public enum LogAction {
-        IMPORT,   // nhập kho (admin)
-        EXPORT,   // xuất kho thủ công (admin)
-        SET,      // đặt cứng (kiểm kê)
-        ORDER     // trừ kho do customer đặt hàng
+        IMPORT,
+        EXPORT,
+        SET,
+        ORDER
     }
 }

@@ -15,9 +15,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 
-/**
- * Trả về JSON chuẩn khi user chưa xác thực truy cập endpoint bảo vệ.
- */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {

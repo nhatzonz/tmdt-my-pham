@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Admin Khuyến mãi — plan Tuần 10 sequence 2.5.8.
- */
 @RestController
 @RequestMapping("/api/admin/coupons")
 @PreAuthorize("hasRole('ADMIN')")

@@ -19,7 +19,6 @@ public class UploadAdminController {
 
     private final OrphanUploadCleanupJob job;
 
-    /** Admin trigger thủ công — trả luôn kết quả để FE/script in ra. */
     @PostMapping("/cleanup")
     public ResponseEntity<ApiResponse<OrphanUploadCleanupJob.CleanupResult>> cleanup(
             Authentication auth

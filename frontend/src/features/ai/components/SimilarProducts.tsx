@@ -5,10 +5,6 @@ import { Sparkles } from "lucide-react";
 import { aiApi, aiItemToProduct, type AIRecommendItem } from "@/features/ai/api";
 import { ProductCard } from "@/features/san-pham/components/ProductCard";
 
-/**
- * Section "Sản phẩm tương tự" — hiển thị trên trang chi tiết sp.
- * Strategy SIMILAR (BE dùng embedding của chính sp đang xem để tìm láng giềng cosine).
- */
 export function SimilarProducts({ productId }: { productId: number }) {
   const [items, setItems] = useState<AIRecommendItem[] | null>(null);
 

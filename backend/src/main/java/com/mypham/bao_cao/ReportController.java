@@ -13,11 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Reports cho admin dashboard — sequence 2.5.9 PDF.
- * 4 endpoint riêng lẻ để FE chỉ load những gì cần (overview cho stat cards
- * dùng chung; các chart load riêng).
- */
 @RestController
 @RequestMapping("/api/admin/reports")
 @PreAuthorize("hasRole('ADMIN')")

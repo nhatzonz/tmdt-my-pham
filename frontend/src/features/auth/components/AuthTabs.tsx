@@ -7,15 +7,15 @@ export function AuthTabs({ active }: { active: "dang-nhap" | "dang-ky" }) {
     { id: "dang-ky", label: "Đăng ký", href: "/dang-ky" },
   ] as const;
   return (
-    <div className="inline-flex rounded-full bg-[color:var(--color-ivory-2)] p-1">
+    <div className="flex w-full rounded-full bg-[color:var(--color-ivory-2)] p-1 ring-1 ring-black/5">
       {tabs.map((t) => (
         <Link
           key={t.id}
           href={t.href}
           className={cn(
-            "rounded-full px-4 py-1.5 text-sm transition",
+            "flex-1 rounded-full py-1.5 text-center text-sm font-medium transition",
             active === t.id
-              ? "bg-[color:var(--color-ink)] text-white"
+              ? "bg-[color:var(--color-ink)] text-white shadow-sm"
               : "text-[color:var(--color-ink-soft)] hover:text-[color:var(--color-ink)]",
           )}
         >

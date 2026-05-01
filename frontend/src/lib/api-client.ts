@@ -3,16 +3,11 @@ import { authStorage } from "@/lib/auth-storage";
 import { cartStorage } from "@/lib/cart-storage";
 import type { ApiResponse } from "@/types/api";
 
-/**
- * Global 401 handler — chỉ trigger 1 lần (debounce qua sessionExpired flag)
- * để tránh nhiều request đồng thời cùng spam alert.
- */
 let sessionExpired = false;
 function handleSessionExpired() {
   if (sessionExpired) return;
   if (typeof window === "undefined") return;
-  // Chỉ áp dụng cho user đã có token (đã đăng nhập trước đó).
-  // Public 401 (vd: form đăng nhập sai mật khẩu) — không xử lý ở đây.
+
   if (!authStorage.getToken()) return;
   sessionExpired = true;
   authStorage.clear();

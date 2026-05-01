@@ -18,9 +18,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     long countByTrangThai(Order.TrangThai trangThai);
     boolean existsByKhuyenMaiId(Long khuyenMaiId);
 
-    // ========== REPORTS ==========
-
-    /** Tổng doanh thu COMPLETED từ thời điểm `from` tới hiện tại. NULL → 0. */
     @Query("""
             SELECT COALESCE(SUM(o.tongTien), 0) FROM Order o
             WHERE o.trangThai = com.mypham.don_hang.Order.TrangThai.COMPLETED
@@ -28,7 +25,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             """)
     BigDecimal sumRevenueSince(@Param("from") Instant from);
 
-    /** Đếm đơn COMPLETED từ `from` tới hiện tại. */
     @Query("""
             SELECT COUNT(o) FROM Order o
             WHERE o.trangThai = com.mypham.don_hang.Order.TrangThai.COMPLETED
@@ -36,7 +32,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             """)
     long countCompletedSince(@Param("from") Instant from);
 
-    /** Đếm đơn CANCELLED từ `from` tới hiện tại. */
     @Query("""
             SELECT COUNT(o) FROM Order o
             WHERE o.trangThai = com.mypham.don_hang.Order.TrangThai.CANCELLED
@@ -44,10 +39,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             """)
     long countCancelledSince(@Param("from") Instant from);
 
-    /**
-     * Doanh thu theo ngày — chỉ COMPLETED, group theo timezone Asia/Ho_Chi_Minh.
-     * Trả Object[] {ngay (string YYYY-MM-DD), tong (numeric), soDon (bigint)}.
-     */
     @Query(value = """
             SELECT TO_CHAR(DATE(created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD') AS ngay,
                    SUM(tong_tien) AS tong,
@@ -60,10 +51,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             """, nativeQuery = true)
     List<Object[]> revenueByDay(@Param("from") Instant from);
 
-    /**
-     * Top sản phẩm bán chạy — chỉ tính từ đơn COMPLETED.
-     * Trả {san_pham_id, ten, ma, so_luong_ban, doanh_thu}.
-     */
     @Query(value = """
             SELECT ct.san_pham_id, sp.ten_san_pham, sp.ma_san_pham,
                    SUM(ct.so_luong) AS so_luong_ban,

@@ -2,10 +2,6 @@ package com.mypham.common.exception;
 
 import lombok.Getter;
 
-/**
- * Base exception cho mọi lỗi nghiệp vụ.
- * Ném ra từ service layer, được xử lý bởi GlobalExceptionHandler.
- */
 @Getter
 public class BusinessException extends RuntimeException {
 

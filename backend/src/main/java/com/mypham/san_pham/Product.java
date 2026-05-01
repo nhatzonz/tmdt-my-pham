@@ -7,11 +7,6 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/**
- * Map bảng san_pham (PDF 2.6).
- * Class Diagram PDF 2.8: Product (name, price, skinType, description).
- * loai_da = input AI (UC 2.3.3) — bắt buộc.
- */
 @Entity
 @Table(name = "san_pham")
 @Getter

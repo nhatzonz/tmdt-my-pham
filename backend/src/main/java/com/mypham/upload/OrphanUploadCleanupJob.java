@@ -20,18 +20,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Dọn file orphan trong /uploads/ — file vật lý không còn URL tham chiếu trong DB.
- * Lý do tồn tại: upload là eager (file lên disk ngay khi click), nếu admin
- * tạo sản phẩm/danh mục/cấu hình bị fail validation hoặc đóng tab giữa chừng
- * → file vẫn ở disk, không bao giờ được liên kết.
- *
- * Cơ chế:
- *  - Cron `0 0 3 * * *` (3h sáng theo giờ Việt Nam) — chạy khi BE đang up.
- *  - Endpoint /api/admin/uploads/cleanup — admin trigger thủ công.
- *  - Guard: chỉ xoá file ≥ 24h tuổi (tránh xoá nhầm file admin vừa upload
- *    mà chưa kịp Submit form).
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -46,17 +34,15 @@ public class OrphanUploadCleanupJob {
     private final CategoryRepository categoryRepository;
     private final StoreConfigRepository storeConfigRepository;
 
-    /** Kết quả 1 lần dọn rác. */
     public record CleanupResult(
-            int scanned,         // tổng file vật lý quét được
-            int referenced,      // số URL đang được tham chiếu trong DB
-            int orphan,          // file không có trong DB (= scanned - referenced trong /uploads/)
-            int skippedYoung,    // orphan nhưng < 24h tuổi → skip
-            int deleted,         // số file đã xoá
+            int scanned,
+            int referenced,
+            int orphan,
+            int skippedYoung,
+            int deleted,
             List<String> deletedFiles
     ) {}
 
-    /** Cron production: 3h sáng mỗi ngày theo giờ VN. */
     @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Ho_Chi_Minh")
     public void scheduled() {
         log.info("[CleanupJob] Cron 3h sáng — bắt đầu dọn file orphan");
@@ -66,11 +52,9 @@ public class OrphanUploadCleanupJob {
                 res.scanned, res.referenced, res.orphan, res.skippedYoung, res.deleted);
     }
 
-    /** Logic chính — gọi từ cron + endpoint admin. */
     public CleanupResult run() {
         long start = System.currentTimeMillis();
 
-        // 1. Thu thập tất cả URL đang được tham chiếu trong DB
         Set<String> referencedUrls = new HashSet<>();
         productImageRepository.findAll().forEach(img -> {
             if (img.getUrl() != null) referencedUrls.add(img.getUrl());
@@ -82,7 +66,6 @@ public class OrphanUploadCleanupJob {
             if (c.getLogoUrl() != null) referencedUrls.add(c.getLogoUrl());
         });
 
-        // Quy về tên file (bỏ prefix /uploads/) để so với file trên disk
         Set<String> referencedFilenames = referencedUrls.stream()
                 .filter(u -> u.startsWith("/uploads/"))
                 .map(u -> u.substring("/uploads/".length()))
@@ -91,7 +74,6 @@ public class OrphanUploadCleanupJob {
         log.info("[CleanupJob] Tham chiếu trong DB: {} URL ({} file trong /uploads/)",
                 referencedUrls.size(), referencedFilenames.size());
 
-        // 2. Quét thư mục uploads
         Path dir = Paths.get(uploadsDir).toAbsolutePath();
         if (!Files.isDirectory(dir)) {
             log.warn("[CleanupJob] Thư mục không tồn tại: {}", dir);

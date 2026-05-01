@@ -119,7 +119,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Stat cards */}
+      {}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<CheckCircle2 className="size-5" />}
@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Revenue line chart */}
+      {}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
           <h2 className="font-medium">Doanh thu {days} ngày gần nhất</h2>
@@ -222,9 +222,9 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      {/* Bottom: Top products + Order status */}
+      {}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Top products */}
+        {}
         <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
           <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
             <h2 className="font-medium">Top 10 sản phẩm bán chạy</h2>
@@ -268,7 +268,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
                 ))}
-                {/* Cũng vẽ mini-bar chart phân phối */}
+                {}
                 <div className="mt-3 h-40 border-t border-[color:var(--color-border)] pt-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -297,7 +297,7 @@ export default function AdminDashboardPage() {
           </div>
         </section>
 
-        {/* Order status pie */}
+        {}
         <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
           <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
             <h2 className="font-medium">Phân bố trạng thái đơn</h2>
@@ -354,7 +354,7 @@ export default function AdminDashboardPage() {
         </section>
       </div>
 
-      {/* AI CTR — UC 2.5.9 revenue_ai */}
+      {}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
           <div className="flex items-center gap-2">
@@ -467,7 +467,7 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      {/* Quick links */}
+      {}
       <section>
         <h2 className="mb-4 font-medium text-[color:var(--color-muted)]">Truy cập nhanh</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

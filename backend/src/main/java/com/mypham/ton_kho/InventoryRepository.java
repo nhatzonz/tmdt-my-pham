@@ -14,7 +14,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     Optional<Inventory> findBySanPhamId(Long sanPhamId);
     List<Inventory> findBySanPhamIdIn(Collection<Long> sanPhamIds);
 
-    /** Khoá row cho transaction checkout — chống race oversell. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT i FROM Inventory i WHERE i.sanPhamId = :sanPhamId")
     Optional<Inventory> findBySanPhamIdForUpdate(@Param("sanPhamId") Long sanPhamId);

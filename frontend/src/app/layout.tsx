@@ -24,7 +24,6 @@ export async function generateMetadata(): Promise<Metadata> {
     const cfg = await storeConfigApi.get();
     if (cfg?.tenCuaHang) tenCuaHang = cfg.tenCuaHang;
   } catch {
-    /* fallback */
   }
   return {
     title: `${tenCuaHang} — Mỹ phẩm & nhân hoá theo làn da Á Đông`,

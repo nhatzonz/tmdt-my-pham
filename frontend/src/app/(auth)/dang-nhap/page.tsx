@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
@@ -30,8 +30,7 @@ export default function DangNhapPage() {
       const result = await authApi.login({ email, matKhau });
       login(result.token, result.user);
       toast.success("Đăng nhập thành công", `Chào mừng ${result.user.hoTen}`);
-      // Nếu bị redirect tới đăng nhập do session expired (?next=...), quay lại trang gốc.
-      // Chỉ accept relative path để chống open-redirect.
+
       let target: string;
       if (result.user.vaiTro === "ADMIN") {
         target = "/quan-tri";
@@ -88,19 +87,35 @@ export default function DangNhapPage() {
           <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
         )}
 
-        <Button size="lg" className="w-full" type="submit" disabled={loading}>
-          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-          {!loading && <ArrowRight className="size-4" />}
+        <Button
+          size="lg"
+          className="w-full shadow-sm hover:shadow-md"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Đang đăng nhập
+            </>
+          ) : (
+            <>
+              Đăng nhập
+              <ArrowRight className="size-4" />
+            </>
+          )}
         </Button>
       </form>
 
-      <p className="text-center text-sm">
+      <p className="text-center text-sm text-[color:var(--color-muted)]">
         Chưa có tài khoản?{" "}
-        <Link href="/dang-ky" className="underline underline-offset-4">
+        <Link
+          href="/dang-ky"
+          className="font-medium text-[color:var(--color-ink)] underline underline-offset-4 hover:text-[color:var(--color-primary)]"
+        >
           Đăng ký miễn phí
         </Link>
       </p>
-
     </div>
   );
 }

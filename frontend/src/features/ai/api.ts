@@ -1,7 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import type { Product } from "@/features/san-pham/api";
 
-/** Source impression — match enum BE com.mypham.ai.GoiYAI.Nguon */
 export type AINguon = "CHAT" | "HOMEPAGE" | "PRODUCT_DETAIL";
 
 export type AIRecommendItem = {
@@ -28,7 +27,6 @@ export type AIChatResponse = {
 };
 
 export const aiApi = {
-  /** POST /api/ai/chat — public, BE forward userId nếu logged-in. */
   chat: (message: string, sessionId?: number | null) =>
     apiClient.post<AIChatResponse>(
       "/api/ai/chat",
@@ -36,14 +34,12 @@ export const aiApi = {
       { auth: true },
     ),
 
-  /** GET /api/recommendations/{userId} — chỉ chính chủ hoặc ADMIN. */
   recommendForUser: (userId: number, limit = 6) =>
     apiClient.get<AIRecommendResponse>(`/api/recommendations/${userId}`, {
       query: { limit },
       cache: "no-store",
     }),
 
-  /** GET /api/products/{id}/similar — public. */
   similar: (productId: number, limit = 4) =>
     apiClient.get<AIRecommendResponse>(`/api/products/${productId}/similar`, {
       query: { limit },
@@ -51,15 +47,10 @@ export const aiApi = {
       cache: "no-store",
     }),
 
-  /** POST /api/ai/click — track CTR khi user click sp gợi ý. */
   trackClick: (sanPhamId: number, nguon: AINguon) =>
     apiClient.post<null>("/api/ai/click", { sanPhamId, nguon }, { auth: true }),
 };
 
-/**
- * Convert AI item → Product shape để dùng chung ProductCard.
- * AI service trả ít field, các field thiếu sẽ default an toàn cho card.
- */
 export function aiItemToProduct(item: AIRecommendItem): Product {
   return {
     id: item.sanPhamId,

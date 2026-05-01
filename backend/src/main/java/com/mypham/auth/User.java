@@ -6,10 +6,6 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * User entity — khớp bảng nguoi_dung (PDF 2.6).
- * Class Diagram PDF 2.8: fullName, email, password, role.
- */
 @Entity
 @Table(name = "nguoi_dung")
 @Getter
@@ -51,6 +47,6 @@ public class User {
 
     public enum TrangThai {
         ACTIVE,
-        HIDDEN  // soft-delete
+        HIDDEN
     }
 }

@@ -19,7 +19,7 @@ public record StoreConfigResponse(
         Instant updatedAt
 ) {
     public static StoreConfigResponse from(StoreConfig c) {
-        // Ghép địa chỉ đầy đủ cho FE hiển thị nhanh ở Footer / Liên hệ
+
         StringBuilder full = new StringBuilder();
         if (c.getDiaChiChiTiet() != null && !c.getDiaChiChiTiet().isBlank()) full.append(c.getDiaChiChiTiet());
         if (c.getDiaChiPhuong() != null && !c.getDiaChiPhuong().isBlank()) {

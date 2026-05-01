@@ -30,7 +30,6 @@ public class InventoryService {
     private final UserRepository userRepository;
     private final InventoryEventPublisher events;
 
-    /** Plan §2.3 sequence 2.5.3: chỉ check tồn kho, không lưu giỏ. */
     @Transactional(readOnly = true)
     public CartCheckResponse checkStock(Long sanPhamId, int soLuong) {
         Product p = productRepository.findById(sanPhamId).orElse(null);
@@ -46,7 +45,6 @@ public class InventoryService {
         return CartCheckResponse.ok(inv.getSoLuongTon());
     }
 
-    /** Auto-create row khi tạo sản phẩm mới (so_luong_ton=0). */
     @Transactional
     public Inventory ensureRow(Long sanPhamId) {
         return inventoryRepository.findBySanPhamId(sanPhamId).orElseGet(() -> {
@@ -60,7 +58,7 @@ public class InventoryService {
 
     @Transactional(readOnly = true)
     public List<InventoryAdminResponse> listAdmin() {
-        // Chỉ trả sp ACTIVE — sp đã xoá mềm không quản lý kho nữa.
+
         List<Product> products = productRepository.findByTrangThaiOrderByIdDesc(Product.TrangThai.ACTIVE);
         Map<Long, Inventory> invMap = new HashMap<>();
         for (Inventory i : inventoryRepository.findAll()) {
@@ -104,7 +102,6 @@ public class InventoryService {
         inv.setSoLuongTon(sau);
         inventoryRepository.save(inv);
 
-        // Audit log
         Long adminId = userRepository.findByEmail(adminEmail).map(User::getId).orElse(null);
         InventoryHistory h = new InventoryHistory();
         h.setSanPhamId(p.getId());
@@ -133,7 +130,6 @@ public class InventoryService {
         return res;
     }
 
-    /** Gọi từ OrderService khi customer checkout — log mỗi line. */
     @Transactional
     public void recordOrderConsumption(
             Long sanPhamId,
@@ -155,7 +151,6 @@ public class InventoryService {
         broadcastCurrent(sanPhamId);
     }
 
-    /** Broadcast tồn kho hiện tại cho sản phẩm — gọi sau bất kỳ mutation nào kể cả từ ngoài. */
     @Transactional(readOnly = true)
     public void broadcastCurrent(Long sanPhamId) {
         Product p = productRepository.findById(sanPhamId).orElse(null);

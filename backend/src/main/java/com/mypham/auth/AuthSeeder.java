@@ -8,10 +8,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Seed tài khoản test (CUSTOMER + ADMIN) khi chạy profile dev.
- * Idempotent — chỉ tạo nếu email chưa tồn tại.
- */
 @Slf4j
 @Component
 @Profile("dev")

@@ -14,11 +14,10 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     const u = cfg?.logoUrl ? imageUrl(cfg.logoUrl) : null;
     if (u) logoSrc = u;
   } catch {
-    /* fallback */
   }
   return (
     <div className="flex min-h-screen bg-[color:var(--color-ivory)]">
-      {/* Left — brand panel */}
+      {}
       <section
   className="relative hidden w-1/2 overflow-hidden p-12 lg:flex lg:flex-col bg-cover bg-center"
   style={{
@@ -45,10 +44,10 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         
       </section>
 
-      {/* Right — form */}
+      {}
       <section className="flex w-full flex-col lg:w-1/2">
         <div className="flex items-center justify-between px-4 py-5 sm:px-8 sm:py-6 lg:justify-end">
-          {/* Logo nhỏ trên mobile (ẩn vì panel trái không hiện) */}
+          {}
           <Link href="/" className="flex items-center gap-2 lg:hidden">
             <Image
               src={logoSrc}

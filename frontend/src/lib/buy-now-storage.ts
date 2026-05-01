@@ -1,9 +1,4 @@
-/**
- * Tách "Mua ngay" khỏi giỏ hàng — lưu trong sessionStorage để chỉ
- * tồn tại trong tab hiện tại và tự xoá khi đóng tab.
- * Trang /thanh-toan đọc buyNowStorage trước; nếu có → checkout với 1 sp duy nhất,
- * không động vào giỏ.
- */
+
 
 const BUYNOW_KEY = "ngoclan.buynow.v1";
 

@@ -7,21 +7,15 @@ import { LogOut, Menu, Package, User, X } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import type { Category } from "@/features/danh-muc/api";
 
-/**
- * Drawer hamburger cho mobile (<md). Trên md+ component này tự ẩn.
- * Mở drawer lock body scroll, click ngoài / nút X / chọn link đều đóng.
- */
 export function MobileMenu({ categories = [] }: { categories?: Category[] }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { user, loaded, logout } = useAuth();
 
-  // Đợi mount xong mới portal — tránh hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Lock body scroll khi drawer mở
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -31,7 +25,6 @@ export function MobileMenu({ categories = [] }: { categories?: Category[] }) {
     }
   }, [open]);
 
-  // Đóng khi resize qua breakpoint md
   useEffect(() => {
     function onResize() {
       if (window.innerWidth >= 768) setOpen(false);
@@ -48,7 +41,7 @@ export function MobileMenu({ categories = [] }: { categories?: Category[] }) {
 
   const drawer = open && (
     <div className="fixed inset-0 z-[60] md:hidden">
-          {/* Backdrop */}
+          {}
           <button
             type="button"
             aria-label="Đóng menu"
@@ -56,7 +49,7 @@ export function MobileMenu({ categories = [] }: { categories?: Category[] }) {
             className="absolute inset-0 bg-black/40"
           />
 
-          {/* Drawer */}
+          {}
           <aside className="absolute left-0 top-0 flex h-full w-[85%] max-w-sm flex-col gap-4 overflow-y-auto bg-white p-5 shadow-xl">
             <div className="flex items-center justify-between">
               <span className="font-serif text-lg italic">Menu</span>
@@ -141,9 +134,7 @@ export function MobileMenu({ categories = [] }: { categories?: Category[] }) {
       >
         <Menu className="size-6" />
       </button>
-      {/* Portal ra body — tránh containing block của <header> với backdrop-filter
-          nuốt position:fixed của drawer (chrome bug spec — backdrop-filter tạo
-          containing block mới cho fixed/absolute con). */}
+      {}
       {mounted && drawer ? createPortal(drawer, document.body) : null}
     </>
   );

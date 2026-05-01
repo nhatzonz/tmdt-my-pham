@@ -43,7 +43,7 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public OverviewResponse overview() {
-        // Khoảng "30 ngày gần nhất" tính theo timezone VN: từ 00:00 30 ngày trước → giờ
+
         java.time.Instant since30 = LocalDate.now(TZ).minusDays(29).atStartOfDay(TZ).toInstant();
         java.time.Instant sinceToday = LocalDate.now(TZ).atStartOfDay(TZ).toInstant();
 
@@ -63,11 +63,6 @@ public class ReportService {
         );
     }
 
-    /**
-     * Doanh thu theo ngày — N ngày gần nhất (mặc định 30).
-     * Trả về đầy đủ N dòng kể cả ngày không có đơn (tongTien=0, soDon=0)
-     * để FE vẽ chart liên tục, không bị răng cưa.
-     */
     @Transactional(readOnly = true)
     public List<RevenueDayResponse> revenueByDay(int days) {
         if (days < 1) days = 30;
@@ -77,7 +72,6 @@ public class ReportService {
         LocalDate fromDate = today.minusDays(days - 1);
         java.time.Instant from = fromDate.atStartOfDay(TZ).toInstant();
 
-        // Map ngày → data từ DB
         Map<String, RevenueDayResponse> byDay = new HashMap<>();
         for (Object[] row : orderRepository.revenueByDay(from)) {
             String ngay = (String) row[0];
@@ -86,10 +80,9 @@ public class ReportService {
             byDay.put(ngay, new RevenueDayResponse(ngay, tong, soDon));
         }
 
-        // Build sequence đầy đủ
         List<RevenueDayResponse> result = new ArrayList<>(days);
         for (int i = 0; i < days; i++) {
-            String ngay = fromDate.plusDays(i).toString();   // ISO YYYY-MM-DD
+            String ngay = fromDate.plusDays(i).toString();
             RevenueDayResponse data = byDay.get(ngay);
             if (data == null) {
                 result.add(new RevenueDayResponse(ngay, BigDecimal.ZERO, 0));
@@ -108,7 +101,6 @@ public class ReportService {
         List<Object[]> rows = orderRepository.topProducts(limit);
         if (rows.isEmpty()) return List.of();
 
-        // Batch fetch first image per product để tránh N+1
         java.util.Set<Long> ids = new HashSet<>();
         for (Object[] r : rows) ids.add(((Number) r[0]).longValue());
 
@@ -140,10 +132,6 @@ public class ReportService {
         return map;
     }
 
-    /**
-     * UC 2.5.9 — báo cáo CTR AI (impressions vs clicks).
-     * Trả overview tổng N ngày: impressions, clicks, ctr (0.0-1.0).
-     */
     @Transactional(readOnly = true)
     public Map<String, Object> aiCtrOverview(int days) {
         if (days < 1) days = 30;
@@ -162,10 +150,6 @@ public class ReportService {
         return map;
     }
 
-    /**
-     * CTR AI theo ngày — N ngày gần nhất (mặc định 30).
-     * Fill ngày trống bằng 0/0/0 để FE vẽ chart liên tục.
-     */
     @Transactional(readOnly = true)
     public List<CTRDayResponse> aiCtrByDay(int days) {
         if (days < 1) days = 30;

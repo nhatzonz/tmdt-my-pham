@@ -3,11 +3,6 @@
 import { useEffect, useState } from "react";
 import { cartStorage, type CartItem } from "@/lib/cart-storage";
 
-/**
- * Reactive cart state (localStorage). Sync qua:
- * - `storage` event (khi tab khác update)
- * - `cart:updated` custom event (same-tab update)
- */
 export function useCart() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loaded, setLoaded] = useState(false);

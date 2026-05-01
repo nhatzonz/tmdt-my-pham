@@ -97,8 +97,6 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
   const sort: SortKey | undefined =
     sortRaw === "price_asc" || sortRaw === "price_desc" ? sortRaw : undefined;
 
-  // Có query keyword → /api/products/search (BE đã match tên + mã + thương hiệu),
-  // sau đó áp filter còn lại ở client để giữ logic single-source.
   const baseProducts = q
     ? await productApi.search(q).catch(() => [])
     : await productApi
@@ -242,7 +240,7 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Mobile filter trigger — chỉ <md */}
+      {}
       <div className="mt-6 md:hidden">
         <MobileFilterDrawer>
           <ProductFilters
@@ -260,7 +258,7 @@ export default async function SanPhamPage({ searchParams }: PageProps) {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:mt-10 md:grid-cols-[220px_1fr] md:gap-8 lg:grid-cols-[240px_1fr] lg:gap-10">
-        {/* Desktop sidebar — md+ */}
+        {}
         <div className="hidden md:block">
           <ProductFilters
             categories={categories}

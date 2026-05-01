@@ -15,7 +15,6 @@ export async function Footer() {
   try {
     config = await storeConfigApi.get();
   } catch {
-    /* fallback to hard-coded defaults below */
   }
 
   const tenCuaHang = config?.tenCuaHang || "Ngọc Lan Beauty";
@@ -27,7 +26,7 @@ export async function Footer() {
   return (
     <footer className="mt-20 bg-[color:var(--color-footer-bg)] text-white/80">
       <div className="mx-auto grid w-full grid-cols-1 gap-8 px-4 py-10 md:w-4/5 md:grid-cols-3 md:gap-12 md:px-6 md:py-14">
-        {/* Brand */}
+        {}
         <div className="md:col-span-1">
           <div className="flex items-center gap-2">
             <Image
@@ -46,7 +45,7 @@ export async function Footer() {
             Mỹ phẩm Á Đông — thành phần minh bạch, công thức dịu nhẹ, dành riêng cho
             làn da và khí hậu nhiệt đới.
           </p>
-          {/* Social */}
+          {}
           {(config?.linkFacebook
             || config?.linkInstagram
             || config?.linkTiktok
@@ -76,7 +75,7 @@ export async function Footer() {
           )}
         </div>
 
-        {/* Quick links */}
+        {}
         <div>
           <p className="mb-4 text-[11px] uppercase tracking-widest text-white/50">
             Khám phá
@@ -92,7 +91,7 @@ export async function Footer() {
           </ul>
         </div>
 
-        {/* Contact */}
+        {}
         <div>
           <p className="mb-4 text-[11px] uppercase tracking-widest text-white/50">
             Liên hệ
@@ -156,8 +155,6 @@ function SocialIcon({
     </a>
   );
 }
-
-/* Brand SVG icons — lucide v1 không export Facebook/Instagram/Youtube. */
 
 function FacebookIcon() {
   return (

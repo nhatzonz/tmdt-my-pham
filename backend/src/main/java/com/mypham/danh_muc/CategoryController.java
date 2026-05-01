@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Admin CRUD danh mục (plan Tuần 7).
- */
 @RestController
 @RequestMapping("/api/admin/categories")
 @PreAuthorize("hasRole('ADMIN')")

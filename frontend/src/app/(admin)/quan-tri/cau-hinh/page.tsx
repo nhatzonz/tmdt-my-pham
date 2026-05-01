@@ -135,7 +135,7 @@ export default function AdminCauHinhPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div className="flex flex-col gap-6">
-      {/* Tên + logo */}
+      {}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
           <Building2 className="size-5 text-[color:var(--color-muted)]" />
@@ -196,7 +196,7 @@ export default function AdminCauHinhPage() {
         </div>
       </section>
 
-      {/* Liên hệ */}
+      {}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
           <Phone className="size-5 text-[color:var(--color-muted)]" />
@@ -226,7 +226,7 @@ export default function AdminCauHinhPage() {
       </div>
 
       <div className="flex flex-col gap-6">
-      {/* Địa chỉ */}
+      {}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
           <MapPin className="size-5 text-[color:var(--color-muted)]" />
@@ -265,7 +265,7 @@ export default function AdminCauHinhPage() {
         </div>
       </section>
 
-      {/* Mạng xã hội */}
+      {}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center gap-2 border-b border-[color:var(--color-border)] pb-3">
           <Share2 className="size-5 text-[color:var(--color-muted)]" />

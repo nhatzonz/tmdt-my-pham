@@ -12,10 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
-/**
- * Sequence 2.5.1 (PDF): đăng ký / đăng nhập.
- * Class Diagram PDF 2.8: login(), register().
- */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -32,8 +28,6 @@ public class AuthService {
                 ? null
                 : req.soDienThoai().trim();
 
-        // Check email: chỉ với user ACTIVE; user HIDDEN dùng email cũ → tự rename
-        // để giải phóng UNIQUE constraint cho user mới.
         var existing = userRepository.findByEmail(email);
         if (existing.isPresent() && existing.get().getTrangThai() == User.TrangThai.ACTIVE) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -43,7 +37,7 @@ public class AuthService {
             old.setEmail("__deleted_" + old.getId() + "_" + old.getEmail());
             userRepository.saveAndFlush(old);
         }
-        // Check SDT: chỉ với user ACTIVE (HIDDEN giải phóng SDT).
+
         if (sdt != null) {
             userRepository.findBySoDienThoaiAndTrangThai(sdt, User.TrangThai.ACTIVE)
                     .ifPresent(u -> {
@@ -69,9 +63,7 @@ public class AuthService {
     public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmail(req.email())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
-        // Check mật khẩu TRƯỚC — sai mật khẩu luôn trả thông điệp generic để
-        // tránh email enumeration. Mật khẩu đúng + tài khoản HIDDEN → mới báo
-        // rõ "đã bị vô hiệu hoá" cho user nhận diện.
+
         if (!passwordEncoder.matches(req.matKhau(), user.getMatKhau())) {
             throw new BadCredentialsException("Invalid credentials");
         }
@@ -86,7 +78,6 @@ public class AuthService {
         return toUserInfo(loadActiveUser(email));
     }
 
-    /** Customer cập nhật hoTen + soDienThoai. Không cho đổi email/vai trò qua đây. */
     @Transactional
     public AuthResponse.UserInfo updateMe(String email, UpdateMeRequest req) {
         User user = loadActiveUser(email);
@@ -109,7 +100,6 @@ public class AuthService {
         return toUserInfo(userRepository.save(user));
     }
 
-    /** Customer đổi mật khẩu — phải nhập đúng mật khẩu hiện tại. */
     @Transactional
     public void changePassword(String email, ChangePasswordRequest req) {
         User user = loadActiveUser(email);
