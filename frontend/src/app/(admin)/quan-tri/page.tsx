@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Boxes, Package, Receipt, Tag, Ticket, Users } from "lucide-react";
+import { ArrowRight, Boxes, Package, Receipt, Settings, Tag, Ticket, Users } from "lucide-react";
 
 export default function AdminDashboardPage() {
   return (
@@ -45,6 +45,12 @@ export default function AdminDashboardPage() {
           icon={<Users className="size-7" />}
           title="Người dùng"
           desc="Tạo, sửa, đặt lại mật khẩu và xoá tài khoản"
+        />
+        <AdminCard
+          href="/quan-tri/cau-hinh"
+          icon={<Settings className="size-7" />}
+          title="Cấu hình cửa hàng"
+          desc="Tên, logo, địa chỉ, liên hệ và mạng xã hội"
         />
       </div>
     </div>

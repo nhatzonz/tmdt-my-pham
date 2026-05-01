@@ -131,6 +131,25 @@ CREATE TABLE goi_y_ai (
 );
 CREATE INDEX idx_goi_y_ai_nguoi_dung ON goi_y_ai(nguoi_dung_id, created_at DESC);
 
+-- Cấu hình cửa hàng — singleton (luôn 1 row id=1)
+CREATE TABLE cau_hinh_cua_hang (
+    id                BIGINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    ten_cua_hang      VARCHAR(255) NOT NULL DEFAULT 'Ngọc Lan Beauty',
+    logo_url          TEXT,
+    dia_chi_tinh      VARCHAR(100),
+    dia_chi_quan      VARCHAR(100),
+    dia_chi_phuong    VARCHAR(100),
+    dia_chi_chi_tiet  VARCHAR(255),
+    so_dien_thoai     VARCHAR(20),
+    email_lien_he     VARCHAR(100),
+    link_facebook     TEXT,
+    link_instagram    TEXT,
+    link_tiktok       TEXT,
+    link_youtube      TEXT,
+    updated_at        TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO cau_hinh_cua_hang (id, ten_cua_hang) VALUES (1, 'Ngọc Lan Beauty');
+
 
 
 -- Tài khoản test sẽ được AuthSeeder tạo khi BE boot (profile=dev).

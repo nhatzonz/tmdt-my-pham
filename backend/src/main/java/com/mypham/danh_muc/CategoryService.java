@@ -4,6 +4,7 @@ import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
 import com.mypham.san_pham.ProductRepository;
+import com.mypham.upload.UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +20,7 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final UploadService uploadService;
 
     @Transactional
     public CategoryResponse create(CategoryRequest req) {
@@ -42,14 +45,20 @@ public class CategoryService {
                         req.tenDanhMuc(), Category.TrangThai.ACTIVE)) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "Danh mục đã tồn tại");
         }
+        String oldImg = c.getHinhAnh();
         applyFields(c, req);
-        return toResponse(categoryRepository.save(c));
+        Category saved = categoryRepository.save(c);
+        // Xoá file ảnh cũ nếu admin thay/xoá ảnh
+        if (oldImg != null && !Objects.equals(oldImg, saved.getHinhAnh())) {
+            uploadService.deleteByUrl(oldImg);
+        }
+        return toResponse(saved);
     }
 
     /**
      * Xoá danh mục:
-     *  - Nếu còn sản phẩm tham chiếu (kể cả HIDDEN) → soft-delete (set HIDDEN)
-     *  - Nếu không có sản phẩm nào → hard delete
+     *  - Còn sản phẩm tham chiếu (kể cả HIDDEN) → soft-delete (set HIDDEN), giữ ảnh
+     *  - Không có sản phẩm → hard delete + xoá file ảnh
      */
     @Transactional
     public void delete(Long id) {
@@ -59,6 +68,10 @@ public class CategoryService {
             c.setTrangThai(Category.TrangThai.HIDDEN);
             categoryRepository.save(c);
             return;
+        }
+        // Hard delete: xoá file ảnh trước khi xoá row
+        if (c.getHinhAnh() != null) {
+            uploadService.deleteByUrl(c.getHinhAnh());
         }
         categoryRepository.delete(c);
     }
