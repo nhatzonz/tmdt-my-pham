@@ -1,5 +1,4 @@
 
-DROP TABLE IF EXISTS goi_y_ai CASCADE;
 DROP TABLE IF EXISTS chi_tiet_don_hang CASCADE;
 DROP TABLE IF EXISTS don_hang CASCADE;
 DROP TABLE IF EXISTS khuyen_mai CASCADE;
@@ -118,18 +117,6 @@ CREATE TABLE chi_tiet_don_hang (
     gia_ban       NUMERIC(12,2) NOT NULL CHECK (gia_ban >= 0)  -- snapshot giá lúc đặt
 );
 CREATE INDEX idx_chi_tiet_don_hang_don_hang ON chi_tiet_don_hang(don_hang_id);
-
-CREATE TABLE goi_y_ai (
-    id                BIGSERIAL PRIMARY KEY,
-    nguoi_dung_id     BIGINT NOT NULL REFERENCES nguoi_dung(id) ON DELETE CASCADE,
-    san_pham_id       BIGINT NOT NULL REFERENCES san_pham(id) ON DELETE CASCADE,
-    diem_tuong_thich  NUMERIC(5,4) NOT NULL CHECK (diem_tuong_thich >= 0 AND diem_tuong_thich <= 1),
-    nguon             VARCHAR(20) DEFAULT 'HOMEPAGE'
-                      CHECK (nguon IN ('CHAT', 'HOMEPAGE', 'PRODUCT_DETAIL')),
-    da_click          BOOLEAN DEFAULT FALSE,      -- dùng tính CTR AI
-    created_at        TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_goi_y_ai_nguoi_dung ON goi_y_ai(nguoi_dung_id, created_at DESC);
 
 -- Cấu hình cửa hàng — singleton (luôn 1 row id=1)
 CREATE TABLE cau_hinh_cua_hang (

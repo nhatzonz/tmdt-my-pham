@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { categoryApi } from "@/features/danh-muc/api";
-import { CategoryCard } from "@/features/danh-muc/components/CategoryCard";
+import { CategoryGrid } from "@/features/danh-muc/components/CategoryGrid";
 import { productApi } from "@/features/san-pham/api";
 import { ProductCard } from "@/features/san-pham/components/ProductCard";
 
@@ -82,15 +82,7 @@ export default async function HomePage() {
               Xem tất cả
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {categories.map((c) => (
-              <CategoryCard
-                key={c.id}
-                category={c}
-                productCount={c.productCount}
-              />
-            ))}
-          </div>
+          <CategoryGrid categories={categories} />
         </section>
       )}
 

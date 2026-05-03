@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Leaf, RotateCcw, Truck } from "lucide-react";
 import { InventoryRealtimeRefresher } from "@/components/realtime/InventoryRealtimeRefresher";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { SimilarProducts } from "@/features/ai/components/SimilarProducts";
 import { categoryApi } from "@/features/danh-muc/api";
 import { pastelBg, productApi, type Product } from "@/features/san-pham/api";
 import { ProductCard } from "@/features/san-pham/components/ProductCard";
@@ -181,8 +180,6 @@ export default async function SanPhamDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {}
-      <SimilarProducts productId={product.id} />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { TopBar } from "@/components/layout/TopBar";
-import { ChatWidget } from "@/features/ai/components/ChatWidget";
 import { storeConfigApi, type StoreConfig } from "@/features/cau-hinh/api";
 import { categoryApi } from "@/features/danh-muc/api";
 
@@ -34,7 +33,6 @@ export default async function ShopLayout({
         <AuthGuard>{children}</AuthGuard>
       </main>
       <Footer />
-      <ChatWidget />
     </div>
   );
 }
