@@ -9,11 +9,10 @@ import {
   type KeyboardEvent,
 } from "react";
 import { Loader2, Search, X } from "lucide-react";
-import { imageUrl, productApi, type Product } from "@/features/san-pham/api";
+import { maLoiApi, type MaLoi } from "@/features/ma-loi/api";
 import { cn } from "@/lib/cn";
-import { formatCurrency } from "@/lib/format";
 
-const RECENT_KEY = "mypham.search.recent";
+const RECENT_KEY = "tracuu.search.recent";
 const RECENT_LIMIT = 6;
 const SUGGEST_LIMIT = 8;
 const DEBOUNCE_MS = 250;
@@ -21,7 +20,7 @@ const DEBOUNCE_MS = 250;
 export function SearchBox() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Product[]>([]);
+  const [results, setResults] = useState<MaLoi[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -38,8 +37,7 @@ export function SearchBox() {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) setRecent(parsed.slice(0, RECENT_LIMIT));
       }
-    } catch {
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -60,7 +58,7 @@ export function SearchBox() {
     let cancelled = false;
     setLoading(true);
     const handle = setTimeout(() => {
-      productApi
+      maLoiApi
         .search(q)
         .then((rs) => {
           if (cancelled) return;
@@ -87,23 +85,18 @@ export function SearchBox() {
   function persistRecent(q: string) {
     const trimmed = q.trim();
     if (!trimmed) return;
-    const next = [trimmed, ...recent.filter((r) => r !== trimmed)].slice(
-      0,
-      RECENT_LIMIT,
-    );
+    const next = [trimmed, ...recent.filter((r) => r !== trimmed)].slice(0, RECENT_LIMIT);
     setRecent(next);
     try {
       window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-    } catch {
-    }
+    } catch {}
   }
 
   function clearRecent() {
     setRecent([]);
     try {
       window.localStorage.removeItem(RECENT_KEY);
-    } catch {
-    }
+    } catch {}
   }
 
   function submitSearch(q: string) {
@@ -112,18 +105,17 @@ export function SearchBox() {
     persistRecent(trimmed);
     setOpen(false);
     inputRef.current?.blur();
-    router.push(`/san-pham?q=${encodeURIComponent(trimmed)}`);
+    router.push(`/tra-cuu?q=${encodeURIComponent(trimmed)}`);
   }
 
-  function selectProduct(p: Product) {
-    persistRecent(p.tenSanPham);
+  function selectMaLoi(m: MaLoi) {
+    persistRecent(m.maLoi);
     setOpen(false);
     inputRef.current?.blur();
-    router.push(`/san-pham/${p.id}`);
+    router.push(`/tra-cuu/${m.id}`);
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-
     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
 
     const max = items.length;
@@ -136,7 +128,7 @@ export function SearchBox() {
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (activeIdx >= 0 && items[activeIdx]) {
-        selectProduct(items[activeIdx]);
+        selectMaLoi(items[activeIdx]);
       } else {
         submitSearch(query);
       }
@@ -162,7 +154,7 @@ export function SearchBox() {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Tìm theo tên, mã sản phẩm..."
+        placeholder="Tìm theo mã lỗi, tên lỗi..."
         autoComplete="off"
         spellCheck={false}
         enterKeyHint="search"
@@ -170,9 +162,7 @@ export function SearchBox() {
         aria-expanded={open}
         aria-controls={listboxId}
         aria-autocomplete="list"
-        aria-activedescendant={
-          activeIdx >= 0 ? `${listboxId}-opt-${activeIdx}` : undefined
-        }
+        aria-activedescendant={activeIdx >= 0 ? `${listboxId}-opt-${activeIdx}` : undefined}
         className="w-full rounded-full border border-[color:var(--color-border)] bg-white/60 py-2 pl-10 pr-10 text-sm placeholder:text-[color:var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ink-soft)]/20"
       />
       {query && (
@@ -196,7 +186,6 @@ export function SearchBox() {
           role="listbox"
           className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 max-h-[28rem] overflow-y-auto rounded-2xl border border-black/5 bg-white shadow-xl"
         >
-          {}
           {showRecent && (
             <div className="p-2">
               <div className="flex items-center justify-between px-2 py-1.5 text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
@@ -226,7 +215,6 @@ export function SearchBox() {
             </div>
           )}
 
-          {}
           {showResults && loading && results.length === 0 && (
             <div className="flex items-center gap-2 px-4 py-6 text-sm text-[color:var(--color-muted)]">
               <Loader2 className="size-4 animate-spin" />
@@ -234,28 +222,24 @@ export function SearchBox() {
             </div>
           )}
 
-          {}
           {showResults && !loading && results.length === 0 && (
             <div className="px-4 py-6 text-center text-sm text-[color:var(--color-muted)]">
-              Không tìm thấy sản phẩm cho{" "}
-              <span className="text-[color:var(--color-ink)]">
-                &ldquo;{query}&rdquo;
-              </span>
+              Không tìm thấy mã lỗi cho{" "}
+              <span className="text-[color:var(--color-ink)]">&ldquo;{query}&rdquo;</span>
             </div>
           )}
 
-          {}
           {showResults && results.length > 0 && (
             <div className="p-1">
-              {results.map((p, idx) => (
+              {results.map((m, idx) => (
                 <button
-                  key={p.id}
+                  key={m.id}
                   id={`${listboxId}-opt-${idx}`}
                   type="button"
                   role="option"
                   aria-selected={idx === activeIdx}
                   onMouseEnter={() => setActiveIdx(idx)}
-                  onClick={() => selectProduct(p)}
+                  onClick={() => selectMaLoi(m)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition",
                     idx === activeIdx
@@ -263,30 +247,20 @@ export function SearchBox() {
                       : "hover:bg-black/5",
                   )}
                 >
-                  <div className="size-12 flex-shrink-0 overflow-hidden rounded-lg bg-[color:var(--color-pastel-cream)]">
-                    {p.hinhAnh?.[0] && (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={imageUrl(p.hinhAnh[0]) ?? ""}
-                        alt={p.tenSanPham}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
-                  </div>
+                  <span className="rounded-md bg-[color:var(--color-ink)] px-2 py-1 font-mono text-xs text-white">
+                    {highlight(m.maLoi, query)}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-[color:var(--color-ink)]">
-                      {highlight(p.tenSanPham, query)}
+                      {highlight(m.tenLoi, query)}
                     </p>
-                    <p className="flex items-center gap-2 text-[11px] text-[color:var(--color-muted)]">
-                      <span className="font-mono">
-                        {highlight(displayCode(p), query)}
-                      </span>
-                      {p.thuongHieu && <span>· {p.thuongHieu}</span>}
-                    </p>
+                    {m.tenThietBi && (
+                      <p className="text-[11px] text-[color:var(--color-muted)]">
+                        {m.tenThietBi}
+                        {m.hangThietBi ? ` · ${m.hangThietBi}` : ""}
+                      </p>
+                    )}
                   </div>
-                  <span className="text-sm text-[color:var(--color-ink)]">
-                    {formatCurrency(p.gia)}
-                  </span>
                 </button>
               ))}
               <button
@@ -306,10 +280,6 @@ export function SearchBox() {
       )}
     </div>
   );
-}
-
-function displayCode(p: Product): string {
-  return p.maSanPham ?? `NL-${String(p.id).padStart(3, "0")}`;
 }
 
 function highlight(text: string, query: string) {

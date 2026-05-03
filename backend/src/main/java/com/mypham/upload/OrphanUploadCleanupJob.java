@@ -1,8 +1,8 @@
 package com.mypham.upload;
 
-import com.mypham.cau_hinh.StoreConfigRepository;
-import com.mypham.danh_muc.CategoryRepository;
-import com.mypham.san_pham.ProductImageRepository;
+import com.mypham.cau_hinh.SystemConfigRepository;
+import com.mypham.ma_loi.MaLoiAnhRepository;
+import com.mypham.thiet_bi.ThietBiRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,9 +30,9 @@ public class OrphanUploadCleanupJob {
     @Value("${app.uploads.dir:uploads}")
     private String uploadsDir;
 
-    private final ProductImageRepository productImageRepository;
-    private final CategoryRepository categoryRepository;
-    private final StoreConfigRepository storeConfigRepository;
+    private final MaLoiAnhRepository maLoiAnhRepository;
+    private final ThietBiRepository thietBiRepository;
+    private final SystemConfigRepository systemConfigRepository;
 
     public record CleanupResult(
             int scanned,
@@ -56,13 +56,13 @@ public class OrphanUploadCleanupJob {
         long start = System.currentTimeMillis();
 
         Set<String> referencedUrls = new HashSet<>();
-        productImageRepository.findAll().forEach(img -> {
+        maLoiAnhRepository.findAll().forEach(img -> {
             if (img.getUrl() != null) referencedUrls.add(img.getUrl());
         });
-        categoryRepository.findAll().forEach(c -> {
-            if (c.getHinhAnh() != null) referencedUrls.add(c.getHinhAnh());
+        thietBiRepository.findAll().forEach(t -> {
+            if (t.getHinhAnh() != null) referencedUrls.add(t.getHinhAnh());
         });
-        storeConfigRepository.findAll().forEach(c -> {
+        systemConfigRepository.findAll().forEach(c -> {
             if (c.getLogoUrl() != null) referencedUrls.add(c.getLogoUrl());
         });
 

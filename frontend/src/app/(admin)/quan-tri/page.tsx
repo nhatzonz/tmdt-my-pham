@@ -2,83 +2,32 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  AlertTriangle,
-  ArrowUpRight,
-  CheckCircle2,
-  Package,
-  PackageX,
-  Receipt,
-  Sparkles,
-  Truck,
-  Users,
-} from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
-  type CTRDay,
-  type CTROverview,
-  type Overview,
-  type OrderStatusBreakdown,
-  type RevenueDay,
-  type TopProduct,
-  reportApi,
-} from "@/features/bao-cao/api";
-import { ORDER_STATUS_LABEL, type OrderStatus } from "@/features/don-hang/api";
-import { imageUrl } from "@/features/san-pham/api";
+import { AlertCircle, ArrowUpRight, Cpu, Eye, Settings, Users } from "lucide-react";
+import { maLoiApi, MUC_DO_BADGE, MUC_DO_LABEL, type MaLoi } from "@/features/ma-loi/api";
+import { thietBiApi, type ThietBi } from "@/features/thiet-bi/api";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
-import { formatCurrency } from "@/lib/format";
 import { useToast } from "@/lib/toast";
 
 export default function AdminDashboardPage() {
   const toast = useToast();
-  const [overview, setOverview] = useState<Overview | null>(null);
-  const [revenue, setRevenue] = useState<RevenueDay[]>([]);
-  const [top, setTop] = useState<TopProduct[]>([]);
-  const [breakdown, setBreakdown] = useState<OrderStatusBreakdown | null>(null);
-  const [ctrOverview, setCtrOverview] = useState<CTROverview | null>(null);
-  const [ctrByDay, setCtrByDay] = useState<CTRDay[]>([]);
+  const [thietBis, setThietBis] = useState<ThietBi[]>([]);
+  const [maLois, setMaLois] = useState<MaLoi[]>([]);
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState<7 | 14 | 30 | 90>(30);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([
-      reportApi.overview(),
-      reportApi.revenue(days),
-      reportApi.topProducts(10),
-      reportApi.orderStatus(),
-      reportApi.aiCtrOverview(days).catch(() => null),
-      reportApi.aiCtrByDay(days).catch(() => [] as CTRDay[]),
-    ])
-      .then(([o, r, t, s, ctrOv, ctrDays]) => {
+    Promise.all([thietBiApi.listAdmin(), maLoiApi.listAdmin()])
+      .then(([tbs, list]) => {
         if (cancelled) return;
-        setOverview(o);
-        setRevenue(r);
-        setTop(t);
-        setBreakdown(s);
-        setCtrOverview(ctrOv);
-        setCtrByDay(ctrDays ?? []);
+        setThietBis(tbs);
+        setMaLois(list);
       })
       .catch((e) => {
         if (cancelled) return;
         toast.error(
-          "Lỗi tải báo cáo",
+          "Lỗi tải dữ liệu",
           e instanceof ApiError ? e.message : "Lỗi không xác định",
         );
       })
@@ -89,404 +38,119 @@ export default function AdminDashboardPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days]);
+  }, []);
+
+  const tongLuotXem = maLois.reduce((s, m) => s + (m.luotXem ?? 0), 0);
+  const topMaLois = [...maLois]
+    .sort((a, b) => (b.luotXem ?? 0) - (a.luotXem ?? 0))
+    .slice(0, 8);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-3xl md:text-4xl">Bảng điều khiển</h1>
-          <p className="mt-2 text-sm text-[color:var(--color-muted)]">
-            Tổng quan doanh thu, đơn hàng, tồn kho — cập nhật theo thời gian thực.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {([7, 14, 30, 90] as const).map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => setDays(d)}
-              className={cn(
-                "cursor-pointer rounded-full border px-3 py-1.5 text-xs transition",
-                days === d
-                  ? "border-[color:var(--color-ink)] bg-[color:var(--color-ink)] text-white"
-                  : "border-[color:var(--color-border)] text-[color:var(--color-ink-soft)] hover:border-[color:var(--color-ink)]",
-              )}
-            >
-              {d} ngày
-            </button>
-          ))}
-        </div>
+      <div>
+        <h1 className="font-serif text-3xl md:text-4xl">Bảng điều khiển</h1>
+        <p className="mt-2 text-sm text-[color:var(--color-muted)]">
+          Tổng quan thiết bị, mã lỗi và lượt tra cứu của hệ thống.
+        </p>
       </div>
 
-      {}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={<CheckCircle2 className="size-5" />}
-          tone="emerald"
-          label="Doanh thu 30 ngày"
-          value={overview ? formatCurrency(overview.doanhThu30Ngay) : "—"}
-          hint={
-            overview
-              ? `Hôm nay: ${formatCurrency(overview.doanhThuHomNay)}`
-              : undefined
-          }
-          loading={loading}
-        />
-        <StatCard
-          icon={<Receipt className="size-5" />}
+          icon={<Cpu className="size-5" />}
           tone="ink"
-          label="Đơn hoàn tất 30 ngày"
-          value={overview ? String(overview.donCompleted30Ngay) : "—"}
-          hint={
-            overview
-              ? `${overview.donCancelled30Ngay} đơn đã huỷ`
-              : undefined
-          }
-          loading={loading}
+          label="Tổng thiết bị"
+          value={loading ? "···" : String(thietBis.length)}
         />
         <StatCard
-          icon={<Truck className="size-5" />}
+          icon={<AlertCircle className="size-5" />}
           tone="amber"
-          label="Đơn đang xử lý"
-          value={
-            overview
-              ? String(overview.donPending + overview.donShipping)
-              : "—"
-          }
-          hint={
-            overview
-              ? `${overview.donPending} chờ · ${overview.donShipping} đang giao`
-              : undefined
-          }
-          loading={loading}
+          label="Tổng mã lỗi"
+          value={loading ? "···" : String(maLois.length)}
         />
         <StatCard
-          icon={<PackageX className="size-5" />}
+          icon={<Eye className="size-5" />}
+          tone="emerald"
+          label="Tổng lượt tra cứu"
+          value={loading ? "···" : tongLuotXem.toLocaleString("vi-VN")}
+        />
+        <StatCard
+          icon={<AlertCircle className="size-5" />}
           tone="rose"
-          label="Sản phẩm hết hàng"
-          value={overview ? String(overview.spHetHang) : "—"}
-          hint={
-            overview
-              ? `${overview.spCanhBao} sp dưới ngưỡng cảnh báo`
-              : undefined
+          label="Lỗi nghiêm trọng"
+          value={
+            loading
+              ? "···"
+              : String(maLois.filter((m) => m.mucDo === "NGHIEM_TRONG").length)
           }
-          loading={loading}
         />
       </div>
 
-      {}
       <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
         <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
-          <h2 className="font-medium">Doanh thu {days} ngày gần nhất</h2>
-          <span className="text-xs text-[color:var(--color-muted)]">
-            Chỉ tính đơn đã hoàn tất
-          </span>
+          <h2 className="font-medium">Mã lỗi được tra nhiều nhất</h2>
+          <Link
+            href="/quan-tri/ma-loi"
+            className="text-xs text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]"
+          >
+            Tất cả →
+          </Link>
         </div>
-        <div className="mt-4 h-72">
-          {loading ? (
-            <SkeletonBlock />
-          ) : revenue.every((d) => d.tongTien === 0) ? (
-            <EmptyChart message="Chưa có đơn hoàn tất nào trong khoảng này" />
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenue} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
-                <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="ngay"
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v: string) => v.slice(5)}
-                />
-                <YAxis
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(1)}M`}
-                />
-                <Tooltip
-                  formatter={(v) => [formatCurrency(Number(v)), "Doanh thu"]}
-                  labelFormatter={(v) =>
-                    new Date(String(v)).toLocaleDateString("vi-VN")
-                  }
-                  contentStyle={{ borderRadius: 12, fontSize: 12 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="tongTien"
-                  stroke="#1a1a1a"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </section>
-
-      {}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {}
-        <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
-          <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
-            <h2 className="font-medium">Top 10 sản phẩm bán chạy</h2>
-            <Link
-              href="/quan-tri/san-pham"
-              className="text-xs text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]"
-            >
-              Tất cả →
-            </Link>
-          </div>
-          <div className="mt-4">
-            {loading ? (
-              <SkeletonBlock />
-            ) : top.length === 0 ? (
-              <EmptyChart message="Chưa có sản phẩm nào được mua" />
-            ) : (
-              <div className="flex flex-col gap-3">
-                {top.map((p, idx) => (
-                  <div key={p.sanPhamId} className="flex items-center gap-3">
-                    <span className="w-6 text-xs font-medium text-[color:var(--color-muted)]">
-                      #{idx + 1}
-                    </span>
-                    <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-[color:var(--color-ivory-2)]">
-                      {p.hinhAnh && (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={imageUrl(p.hinhAnh) ?? ""}
-                          alt={p.tenSanPham}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium">{p.tenSanPham}</p>
-                      <p className="text-xs text-[color:var(--color-muted)]">
-                        Đã bán {p.soLuongDaBan}
-                      </p>
-                    </div>
-                    <div className="text-right text-sm font-medium">
-                      {formatCurrency(p.doanhThu)}
-                    </div>
-                  </div>
-                ))}
-                {}
-                <div className="mt-3 h-40 border-t border-[color:var(--color-border)] pt-3">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={top.slice(0, 5)}
-                      margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
-                    >
-                      <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="tenSanPham"
-                        tick={{ fontSize: 10 }}
-                        tickFormatter={(v: string) =>
-                          v.length > 12 ? v.slice(0, 11) + "…" : v
-                        }
-                      />
-                      <YAxis tick={{ fontSize: 10 }} />
-                      <Tooltip
-                        formatter={(v) => [String(v), "Đã bán"]}
-                        contentStyle={{ borderRadius: 12, fontSize: 12 }}
-                      />
-                      <Bar dataKey="soLuongDaBan" fill="#1a1a1a" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {}
-        <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
-          <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
-            <h2 className="font-medium">Phân bố trạng thái đơn</h2>
-            <Link
-              href="/quan-tri/don-hang"
-              className="text-xs text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]"
-            >
-              Tất cả →
-            </Link>
-          </div>
-          <div className="mt-4 h-72">
-            {loading ? (
-              <SkeletonBlock />
-            ) : !breakdown ||
-              Object.values(breakdown).every((v) => v === 0) ? (
-              <EmptyChart message="Chưa có đơn nào" />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    iconType="circle"
-                    formatter={(value: string) =>
-                      ORDER_STATUS_LABEL[value as OrderStatus] ?? value
-                    }
-                    wrapperStyle={{ fontSize: 12 }}
-                  />
-                  <Pie
-                    data={(Object.keys(breakdown) as OrderStatus[])
-                      .filter((s) => breakdown[s] > 0)
-                      .map((s) => ({
-                        name: s,
-                        value: breakdown[s],
-                      }))}
-                    dataKey="value"
-                    cx="50%"
-                    cy="45%"
-                    outerRadius={80}
-                    innerRadius={40}
-                    paddingAngle={2}
-                  >
-                    {(Object.keys(breakdown) as OrderStatus[])
-                      .filter((s) => breakdown[s] > 0)
-                      .map((s) => (
-                        <Cell key={s} fill={STATUS_COLORS[s]} />
-                      ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </section>
-      </div>
-
-      {}
-      <section className="rounded-2xl bg-white p-6 ring-1 ring-[color:var(--color-border)]">
-        <div className="flex items-center justify-between border-b border-[color:var(--color-border)] pb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-[color:var(--color-primary)]" />
-            <h2 className="font-medium">Hiệu quả gợi ý AI ({days} ngày)</h2>
-          </div>
-          {ctrOverview && (
-            <div className="flex flex-wrap gap-4 text-xs text-[color:var(--color-muted)]">
-              <span>
-                Impressions:{" "}
-                <strong className="text-[color:var(--color-ink)]">
-                  {ctrOverview.impressions.toLocaleString("vi-VN")}
-                </strong>
-              </span>
-              <span>
-                Clicks:{" "}
-                <strong className="text-[color:var(--color-ink)]">
-                  {ctrOverview.clicks.toLocaleString("vi-VN")}
-                </strong>
-              </span>
-              <span>
-                CTR:{" "}
-                <strong className="text-[color:var(--color-primary)]">
-                  {(ctrOverview.ctr * 100).toFixed(2)}%
-                </strong>
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="mt-4 h-64">
-          {loading ? (
-            <SkeletonBlock />
-          ) : ctrByDay.length === 0 ||
-            ctrByDay.every((d) => d.impressions === 0) ? (
-            <EmptyChart message="Chưa có dữ liệu impression nào (cần user xem sp hoặc chat)" />
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={ctrByDay}
-                margin={{ top: 10, right: 16, left: -8, bottom: 0 }}
+        {loading ? (
+          <p className="py-6 text-center text-xs text-[color:var(--color-muted)]">
+            Đang tải...
+          </p>
+        ) : topMaLois.length === 0 ? (
+          <p className="py-6 text-center text-xs text-[color:var(--color-muted)]">
+            Chưa có mã lỗi nào.
+          </p>
+        ) : (
+          <div className="mt-4 flex flex-col gap-2">
+            {topMaLois.map((m) => (
+              <Link
+                key={m.id}
+                href={`/tra-cuu/${m.id}`}
+                target="_blank"
+                className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-[color:var(--color-ivory-2)]"
               >
-                <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="ngay"
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v: string) => v.slice(5)}
-                />
-                <YAxis
-                  yAxisId="count"
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v: number) => String(v)}
-                />
-                <YAxis
-                  yAxisId="ctr"
-                  orientation="right"
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
-                  domain={[0, 1]}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, fontSize: 12 }}
-                  labelFormatter={(v) =>
-                    new Date(String(v)).toLocaleDateString("vi-VN")
-                  }
-                  formatter={(value, name) => {
-                    if (name === "ctr") {
-                      return [`${(Number(value) * 100).toFixed(2)}%`, "CTR"];
-                    }
-                    return [String(value), name === "impressions" ? "Impressions" : "Clicks"];
-                  }}
-                />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: 11 }}
-                  formatter={(v: string) =>
-                    v === "impressions"
-                      ? "Impressions"
-                      : v === "clicks"
-                        ? "Clicks"
-                        : "CTR"
-                  }
-                />
-                <Line
-                  yAxisId="count"
-                  type="monotone"
-                  dataKey="impressions"
-                  stroke="#94a3b8"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  yAxisId="count"
-                  type="monotone"
-                  dataKey="clicks"
-                  stroke="#1a1a1a"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  yAxisId="ctr"
-                  type="monotone"
-                  dataKey="ctr"
-                  stroke="#e11d48"
-                  strokeWidth={2}
-                  dot={{ r: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+                <span className="rounded-md bg-[color:var(--color-ink)] px-2 py-1 font-mono text-xs text-white">
+                  {m.maLoi}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{m.tenLoi}</p>
+                  <p className="text-xs text-[color:var(--color-muted)]">
+                    {m.tenThietBi ?? "—"}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] uppercase ring-1",
+                    MUC_DO_BADGE[m.mucDo],
+                  )}
+                >
+                  {MUC_DO_LABEL[m.mucDo]}
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-[color:var(--color-muted)]">
+                  <Eye className="size-3" />
+                  {m.luotXem.toLocaleString("vi-VN")}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
-      {}
       <section>
         <h2 className="mb-4 font-medium text-[color:var(--color-muted)]">Truy cập nhanh</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          <QuickLink href="/quan-tri/san-pham" icon={<Package />} title="Sản phẩm" count={overview?.tongSanPham} />
-          <QuickLink href="/quan-tri/danh-muc" icon={<Package />} title="Danh mục" count={overview?.tongDanhMuc} />
-          <QuickLink href="/quan-tri/nguoi-dung" icon={<Users />} title="Người dùng" count={overview?.tongUser} />
-          <QuickLink href="/quan-tri/khuyen-mai" icon={<Receipt />} title="Mã giảm giá" count={overview?.tongCouponHoatDong} />
+          <QuickLink href="/quan-tri/thiet-bi" icon={<Cpu />} title="Thiết bị" count={thietBis.length} />
+          <QuickLink href="/quan-tri/ma-loi" icon={<AlertCircle />} title="Mã lỗi" count={maLois.length} />
+          <QuickLink href="/quan-tri/nguoi-dung" icon={<Users />} title="Người dùng" />
+          <QuickLink href="/quan-tri/cau-hinh" icon={<Settings />} title="Cấu hình" />
         </div>
       </section>
     </div>
   );
 }
-
-const STATUS_COLORS: Record<OrderStatus, string> = {
-  PENDING: "#f59e0b",
-  SHIPPING: "#10b981",
-  COMPLETED: "#1a1a1a",
-  CANCELLED: "#e11d48",
-};
 
 function StatCard({
   icon,
@@ -494,14 +158,12 @@ function StatCard({
   label,
   value,
   hint,
-  loading,
 }: {
   icon: React.ReactNode;
   tone: "emerald" | "rose" | "amber" | "ink";
   label: string;
   value: string;
   hint?: string;
-  loading?: boolean;
 }) {
   const tones = {
     emerald: "bg-emerald-50 text-emerald-700 ring-emerald-100",
@@ -524,10 +186,8 @@ function StatCard({
           {icon}
         </div>
       </div>
-      <p className="mt-3 font-serif text-2xl">{loading ? "···" : value}</p>
-      {hint && (
-        <p className="mt-1 text-xs text-[color:var(--color-muted)]">{hint}</p>
-      )}
+      <p className="mt-3 font-serif text-2xl">{value}</p>
+      {hint && <p className="mt-1 text-xs text-[color:var(--color-muted)]">{hint}</p>}
     </div>
   );
 }
@@ -561,21 +221,3 @@ function QuickLink({
     </Link>
   );
 }
-
-function SkeletonBlock() {
-  return (
-    <div className="flex h-full items-center justify-center text-xs text-[color:var(--color-muted)]">
-      Đang tải...
-    </div>
-  );
-}
-
-function EmptyChart({ message }: { message: string }) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 text-[color:var(--color-muted)]">
-      <AlertTriangle className="size-6 opacity-40" />
-      <p className="text-xs">{message}</p>
-    </div>
-  );
-}
-

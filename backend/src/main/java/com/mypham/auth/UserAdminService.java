@@ -3,15 +3,12 @@ package com.mypham.auth;
 import com.mypham.common.exception.BusinessException;
 import com.mypham.common.exception.ErrorCode;
 import com.mypham.common.exception.ResourceNotFoundException;
-import com.mypham.don_hang.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -19,33 +16,18 @@ import java.util.Optional;
 public class UserAdminService {
 
     private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<UserAdminResponse> list() {
         List<User> users = userRepository.findByTrangThaiOrderByIdDesc(User.TrangThai.ACTIVE);
-
-        Map<Long, Long> orderCounts = new HashMap<>();
-        for (User u : users) {
-            orderCounts.put(u.getId(), 0L);
-        }
-
-        List<User> allUsers = users;
-        for (User u : allUsers) {
-            long count = orderRepository.findByNguoiDungIdOrderByIdDesc(u.getId()).size();
-            orderCounts.put(u.getId(), count);
-        }
-        return users.stream()
-                .map(u -> UserAdminResponse.from(u, orderCounts.getOrDefault(u.getId(), 0L)))
-                .toList();
+        return users.stream().map(u -> UserAdminResponse.from(u, 0L)).toList();
     }
 
     @Transactional(readOnly = true)
     public UserAdminResponse getById(Long id) {
         User u = loadActive(id);
-        long count = orderRepository.findByNguoiDungIdOrderByIdDesc(u.getId()).size();
-        return UserAdminResponse.from(u, count);
+        return UserAdminResponse.from(u, 0L);
     }
 
     @Transactional
@@ -137,8 +119,7 @@ public class UserAdminService {
         u.setEmail(newEmail);
         u.setSoDienThoai(newSdt);
         u.setVaiTro(req.vaiTro());
-        long count = orderRepository.findByNguoiDungIdOrderByIdDesc(u.getId()).size();
-        return UserAdminResponse.from(userRepository.save(u), count);
+        return UserAdminResponse.from(userRepository.save(u), 0L);
     }
 
     @Transactional
@@ -164,14 +145,6 @@ public class UserAdminService {
                         ErrorCode.VALIDATION_FAILED,
                         "Phải còn ít nhất 1 admin trong hệ thống");
             }
-        }
-
-        boolean hasOrder = !orderRepository.findByNguoiDungIdOrderByIdDesc(u.getId()).isEmpty();
-        if (hasOrder) {
-
-            u.setTrangThai(User.TrangThai.HIDDEN);
-            userRepository.save(u);
-            return;
         }
         userRepository.delete(u);
     }

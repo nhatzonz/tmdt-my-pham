@@ -2,56 +2,31 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { LogOut, Package, ShoppingCart, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { SearchBox } from "@/components/layout/SearchBox";
 import { routes } from "@/config/routes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import type { StoreConfig } from "@/features/cau-hinh/api";
-import type { Category } from "@/features/danh-muc/api";
-import { orderApi } from "@/features/don-hang/api";
-import { useCart } from "@/features/gio-hang/hooks/use-cart";
-import { imageUrl } from "@/features/san-pham/api";
+import type { SystemConfig } from "@/features/cau-hinh/api";
+import { imageUrl } from "@/features/ma-loi/api";
+import type { ThietBi } from "@/features/thiet-bi/api";
 
-const STATIC_NAV = [{ label: "Sản phẩm", href: "/san-pham" }];
+const STATIC_NAV = [
+  { label: "Tra cứu", href: "/tra-cuu" },
+  { label: "Thiết bị", href: "/thiet-bi" },
+];
 
 export function Header({
-  categories = [],
-  storeConfig,
+  thietBis = [],
+  systemConfig,
 }: {
-  categories?: Category[];
-  storeConfig?: StoreConfig | null;
+  thietBis?: ThietBi[];
+  systemConfig?: SystemConfig | null;
 }) {
   const { user, loaded, logout } = useAuth();
-  const { totalCount } = useCart();
-  const [orderCount, setOrderCount] = useState(0);
-  const topCategories = categories.slice(0, 3);
-  const tenCuaHang = storeConfig?.tenCuaHang || "Ngọc Lan Beauty";
-  const logoSrc = (storeConfig?.logoUrl && imageUrl(storeConfig.logoUrl)) || "/logo.png";
-
-  useEffect(() => {
-    if (!loaded || !user) {
-      setOrderCount(0);
-      return;
-    }
-    let cancelled = false;
-    orderApi
-      .mine()
-      .then((orders) => {
-        if (cancelled) return;
-        const active = orders.filter(
-          (o) => o.trangThai === "PENDING" || o.trangThai === "SHIPPING",
-        );
-        setOrderCount(active.length);
-      })
-      .catch(() => {
-        if (!cancelled) setOrderCount(0);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [loaded, user]);
+  const topThietBis = thietBis.slice(0, 3);
+  const tenHeThong = systemConfig?.tenHeThong || "Tra Cứu Mã Lỗi";
+  const logoSrc = (systemConfig?.logoUrl && imageUrl(systemConfig.logoUrl)) || "/logo.png";
 
   function handleLogout() {
     logout();
@@ -61,13 +36,12 @@ export function Header({
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--color-border)] bg-white/80 shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:gap-10 md:px-6 md:py-4">
-        {}
-        <MobileMenu categories={topCategories} />
+        <MobileMenu thietBis={topThietBis} />
 
         <Link href={routes.home} className="flex items-center gap-2">
           <Image
             src={logoSrc}
-            alt={tenCuaHang}
+            alt={tenHeThong}
             width={48}
             height={48}
             unoptimized
@@ -75,11 +49,10 @@ export function Header({
             priority
           />
           <span className="hidden font-serif text-2xl italic leading-none sm:inline">
-            {tenCuaHang}
+            {tenHeThong}
           </span>
         </Link>
 
-        {}
         <nav className="hidden flex-1 items-center gap-7 text-sm md:flex">
           {STATIC_NAV.map((item) => (
             <Link
@@ -90,18 +63,17 @@ export function Header({
               {item.label}
             </Link>
           ))}
-          {topCategories.map((c) => (
+          {topThietBis.map((t) => (
             <Link
-              key={c.id}
-              href={`/san-pham?danhMucId=${c.id}`}
+              key={t.id}
+              href={`/tra-cuu?thietBiId=${t.id}`}
               className="text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
             >
-              {c.tenDanhMuc}
+              {t.tenThietBi}
             </Link>
           ))}
         </nav>
 
-        {}
         <div className="flex-1 md:hidden" />
 
         <div className="hidden md:block">
@@ -109,36 +81,20 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-3 md:gap-4">
-          <Link
-            href="/gio-hang"
-            aria-label="Giỏ hàng"
-            className="relative text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)]"
-          >
-            <ShoppingCart className="size-5" />
-            {totalCount > 0 && (
-              <span className="absolute -right-2 -top-2 inline-flex size-4 items-center justify-center rounded-full bg-[color:var(--color-ink)] px-1 text-[10px] text-white">
-                {totalCount > 99 ? "99+" : totalCount}
-              </span>
-            )}
-          </Link>
           {!loaded ? (
             <div className="size-5" aria-hidden />
           ) : user ? (
             <>
-              {}
-              <Link
-                href="/don-hang"
-                aria-label="Đơn hàng của tôi"
-                title={`Đơn hàng của tôi${orderCount > 0 ? ` — ${orderCount} đơn đang xử lý` : ""}`}
-                className="relative hidden text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)] md:inline-block"
-              >
-                <Package className="size-5" />
-                {orderCount > 0 && (
-                  <span className="absolute -right-2 -top-2 inline-flex size-4 items-center justify-center rounded-full bg-[color:var(--color-ink)] px-1 text-[10px] text-white">
-                    {orderCount > 99 ? "99+" : orderCount}
-                  </span>
-                )}
-              </Link>
+              {user.vaiTro === "ADMIN" && (
+                <Link
+                  href="/quan-tri"
+                  aria-label="Trang quản trị"
+                  title="Trang quản trị"
+                  className="hidden text-[color:var(--color-ink-soft)] transition hover:text-[color:var(--color-ink)] md:inline-block"
+                >
+                  <Settings className="size-5" />
+                </Link>
+              )}
               <Link
                 href="/tai-khoan"
                 aria-label="Tài khoản"
@@ -157,14 +113,17 @@ export function Header({
               </button>
             </>
           ) : (
-            <Link href="/dang-nhap" aria-label="Đăng nhập">
+            <Link
+              href="/dang-nhap"
+              aria-label="Đăng nhập"
+              className="text-[color:var(--color-ink-soft)] hover:text-[color:var(--color-ink)]"
+            >
               <User className="size-5" />
             </Link>
           )}
         </div>
       </div>
 
-      {}
       <div className="border-t border-[color:var(--color-border)] px-4 pb-3 pt-2 md:hidden">
         <SearchBox />
       </div>

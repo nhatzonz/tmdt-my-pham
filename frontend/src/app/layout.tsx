@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, Geist } from "next/font/google";
-import { storeConfigApi } from "@/features/cau-hinh/api";
+import { systemConfigApi } from "@/features/cau-hinh/api";
 import { ToastProvider } from "@/lib/toast";
 import "./globals.css";
 
@@ -19,16 +19,15 @@ const geist = Geist({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  let tenCuaHang = "Ngọc Lan Beauty";
+  let tenHeThong = "Tra Cứu Mã Lỗi";
   try {
-    const cfg = await storeConfigApi.get();
-    if (cfg?.tenCuaHang) tenCuaHang = cfg.tenCuaHang;
-  } catch {
-  }
+    const cfg = await systemConfigApi.get();
+    if (cfg?.tenHeThong) tenHeThong = cfg.tenHeThong;
+  } catch {}
   return {
-    title: `${tenCuaHang} — Mỹ phẩm & nhân hoá theo làn da Á Đông`,
+    title: `${tenHeThong} — Tra cứu mã lỗi thiết bị điện tử`,
     description:
-      "Routine làm đẹp dành riêng cho làn da của bạn. Quiz 90 giây, gợi ý AI cá nhân hoá.",
+      "Hệ thống tra cứu nhanh mã lỗi của tủ lạnh, máy giặt, điều hoà, tivi và nhiều thiết bị khác — kèm hình ảnh và cách khắc phục.",
   };
 }
 

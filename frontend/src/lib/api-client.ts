@@ -1,6 +1,5 @@
 import { env } from "@/config/env";
 import { authStorage } from "@/lib/auth-storage";
-import { cartStorage } from "@/lib/cart-storage";
 import type { ApiResponse } from "@/types/api";
 
 let sessionExpired = false;
@@ -11,8 +10,6 @@ function handleSessionExpired() {
   if (!authStorage.getToken()) return;
   sessionExpired = true;
   authStorage.clear();
-  cartStorage.clear();
-  window.dispatchEvent(new Event("cart:updated"));
   window.alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
   const next = encodeURIComponent(window.location.pathname + window.location.search);
   window.location.replace(`/dang-nhap?next=${next}`);

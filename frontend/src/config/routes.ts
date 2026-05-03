@@ -1,8 +1,11 @@
 export const routes = {
   home: "/",
-  sanPham: {
-    list: "/san-pham",
-    detail: (id: number | string) => `/san-pham/${id}`,
+  traCuu: {
+    list: "/tra-cuu",
+    detail: (id: number | string) => `/tra-cuu/${id}`,
+  },
+  thietBi: {
+    list: "/thiet-bi",
   },
   auth: {
     dangNhap: "/dang-nhap",
@@ -10,7 +13,9 @@ export const routes = {
   },
   quanTri: {
     dashboard: "/quan-tri",
-    danhMuc: "/quan-tri/danh-muc",
-    sanPham: "/quan-tri/san-pham",
+    thietBi: "/quan-tri/thiet-bi",
+    maLoi: "/quan-tri/ma-loi",
+    nguoiDung: "/quan-tri/nguoi-dung",
+    cauHinh: "/quan-tri/cau-hinh",
   },
 } as const;

@@ -1,10 +1,8 @@
-import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { TopBar } from "@/components/layout/TopBar";
-import { ChatWidget } from "@/features/ai/components/ChatWidget";
-import { storeConfigApi, type StoreConfig } from "@/features/cau-hinh/api";
-import { categoryApi } from "@/features/danh-muc/api";
+import { systemConfigApi, type SystemConfig } from "@/features/cau-hinh/api";
+import { thietBiApi, type ThietBi } from "@/features/thiet-bi/api";
 
 export const dynamic = "force-dynamic";
 
@@ -13,28 +11,25 @@ export default async function ShopLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let categories: Awaited<ReturnType<typeof categoryApi.list>> = [];
-  let storeConfig: StoreConfig | null = null;
+  let thietBis: ThietBi[] = [];
+  let systemConfig: SystemConfig | null = null;
   try {
-    categories = await categoryApi.list();
+    thietBis = await thietBiApi.list();
   } catch {
-    categories = [];
+    thietBis = [];
   }
   try {
-    storeConfig = await storeConfigApi.get();
+    systemConfig = await systemConfigApi.get();
   } catch {
-    storeConfig = null;
+    systemConfig = null;
   }
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[color:var(--color-ivory)]">
       <TopBar />
-      <Header categories={categories} storeConfig={storeConfig} />
-      <main className="flex-1">
-        <AuthGuard>{children}</AuthGuard>
-      </main>
+      <Header thietBis={thietBis} systemConfig={systemConfig} />
+      <main className="flex-1">{children}</main>
       <Footer />
-      <ChatWidget />
     </div>
   );
 }

@@ -4,29 +4,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Boxes, History, LayoutDashboard, LogOut, Package, Receipt, Settings, Tag, Ticket, Users } from "lucide-react";
+import { AlertCircle, Cpu, LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { storeConfigApi, type StoreConfig } from "@/features/cau-hinh/api";
-import { imageUrl } from "@/features/san-pham/api";
+import { systemConfigApi, type SystemConfig } from "@/features/cau-hinh/api";
+import { imageUrl } from "@/features/ma-loi/api";
 import { cn } from "@/lib/cn";
 
 const NAV = [
   { label: "Dashboard", href: "/quan-tri", icon: LayoutDashboard },
-  { label: "Danh mục", href: "/quan-tri/danh-muc", icon: Tag },
-  { label: "Sản phẩm", href: "/quan-tri/san-pham", icon: Package },
-  { label: "Tồn kho", href: "/quan-tri/ton-kho", icon: Boxes },
-  { label: "Lịch sử kho", href: "/quan-tri/ton-kho/lich-su", icon: History },
-  { label: "Khuyến mãi", href: "/quan-tri/khuyen-mai", icon: Ticket },
-  { label: "Đơn hàng", href: "/quan-tri/don-hang", icon: Receipt },
+  { label: "Thiết bị", href: "/quan-tri/thiet-bi", icon: Cpu },
+  { label: "Mã lỗi", href: "/quan-tri/ma-loi", icon: AlertCircle },
   { label: "Người dùng", href: "/quan-tri/nguoi-dung", icon: Users },
-  { label: "Cấu hình cửa hàng", href: "/quan-tri/cau-hinh", icon: Settings },
+  { label: "Cấu hình hệ thống", href: "/quan-tri/cau-hinh", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loaded, logout } = useAuth();
-  const [storeConfig, setStoreConfig] = useState<StoreConfig | null>(null);
+  const [systemConfig, setSystemConfig] = useState<SystemConfig | null>(null);
 
   useEffect(() => {
     if (!loaded) return;
@@ -40,11 +36,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [loaded, user, router]);
 
   useEffect(() => {
-    storeConfigApi.get().then(setStoreConfig).catch(() => setStoreConfig(null));
+    systemConfigApi.get().then(setSystemConfig).catch(() => setSystemConfig(null));
   }, []);
 
-  const tenCuaHang = storeConfig?.tenCuaHang || "Ngọc Lan Beauty";
-  const logoSrc = (storeConfig?.logoUrl && imageUrl(storeConfig.logoUrl)) || "/logo.png";
+  const tenHeThong = systemConfig?.tenHeThong || "Tra Cứu Mã Lỗi";
+  const logoSrc = (systemConfig?.logoUrl && imageUrl(systemConfig.logoUrl)) || "/logo.png";
 
   function handleLogout() {
     logout();
@@ -68,14 +64,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/quan-tri" className="flex items-center gap-2">
           <Image
             src={logoSrc}
-            alt={tenCuaHang}
+            alt={tenHeThong}
             width={40}
             height={40}
             unoptimized
             className="size-10 object-contain"
             priority
           />
-          <span className="font-serif text-xl italic leading-none">{tenCuaHang}</span>
+          <span className="font-serif text-xl italic leading-none">{tenHeThong}</span>
           <span className="text-[10px] uppercase tracking-widest text-[color:var(--color-muted)]">
             Admin
           </span>

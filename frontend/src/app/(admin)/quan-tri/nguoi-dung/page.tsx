@@ -12,7 +12,6 @@ import {
   userAdminApi,
 } from "@/features/nguoi-dung/api";
 import { ApiError } from "@/lib/api-client";
-import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/format";
 import { useToast } from "@/lib/toast";
 
@@ -148,11 +147,7 @@ export default function AdminNguoiDungPage() {
   }
 
   async function handleDelete(u: AdminUser) {
-    const msg =
-      u.soDonHang > 0
-        ? `Xoá ${u.email}? Tài khoản đã có ${u.soDonHang} đơn — sẽ ẩn (đơn cũ giữ nguyên).`
-        : `Xoá hẳn ${u.email}?`;
-    if (!confirm(msg)) return;
+    if (!confirm(`Xoá tài khoản ${u.email}?`)) return;
     try {
       await userAdminApi.delete(u.id);
       await load();
@@ -309,7 +304,6 @@ export default function AdminNguoiDungPage() {
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">SĐT</th>
               <th className="px-4 py-3">Vai trò</th>
-              <th className="px-4 py-3 text-right">Đơn</th>
               <th className="px-4 py-3">Tạo lúc</th>
               <th className="px-4 py-3" />
             </tr>
@@ -317,14 +311,14 @@ export default function AdminNguoiDungPage() {
           <tbody className="divide-y divide-[color:var(--color-border)]">
             {loading && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[color:var(--color-muted)]">
+                <td colSpan={6} className="px-4 py-12 text-center text-[color:var(--color-muted)]">
                   Đang tải...
                 </td>
               </tr>
             )}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[color:var(--color-muted)]">
+                <td colSpan={6} className="px-4 py-12 text-center text-[color:var(--color-muted)]">
                   Không có người dùng phù hợp.
                 </td>
               </tr>
@@ -349,7 +343,6 @@ export default function AdminNguoiDungPage() {
                 <td className="px-4 py-3">
                   <RoleBadge role={u.vaiTro} />
                 </td>
-                <td className="px-4 py-3 text-right font-medium">{u.soDonHang}</td>
                 <td className="px-4 py-3 text-xs text-[color:var(--color-muted)]">
                   {formatDateTime(u.createdAt)}
                 </td>
