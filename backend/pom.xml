@@ -80,10 +80,12 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Lombok — pin 1.18.40 để hỗ trợ JDK 21/23/24 (Spring Boot parent
+             pin sẵn 1.18.34 không đọc được TypeTag mới của javac mới hơn) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>1.18.40</version>
             <optional>true</optional>
         </dependency>
 
